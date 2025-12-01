@@ -4,11 +4,6 @@ from scipy.io import loadmat
 import matplotlib.pyplot as plt
 
 # Differential Evolution
-from pymoo.operators.sampling.lhs import LatinHypercubeSampling
-from pymoo.algorithms.soo.nonconvex.de import DE
-from pymoo.core.problem import Problem
-from pymoo.optimize import minimize
-from pymoo.termination.max_gen import MaximumGenerationTermination
 
 # Particle Swarm Optimization
 from pyswarms.single.general_optimizer import GeneralOptimizerPSO # Graoh specifico
@@ -16,13 +11,8 @@ from pyswarms.single.general_optimizer import GeneralOptimizerPSO # Graoh specif
 # Artificial Bee Colony 
 from beeoptimal.benchmarks import BenchmarkFunction
 
-class CustomProblem(Problem):
-    def __init__(self, fitness_function, lb, ub, dim, *args, **kwargs):
-        super().__init__(n_var=dim, xl=lb, xu=ub, n_obj=1, *args, **kwargs)
-        self._fitness_function = fitness_function
+from Algorithms import DifferentialEvolution, Problem
 
-    def _evaluate(self, X, out, *args, **kwargs):
-        out["F"] = self._fitness_function(X)
 
 class EarlyStop(Exception):
     """Eccezione per fermare anticipatamente differential_evolution."""
@@ -135,7 +125,7 @@ if __name__ == '__main__':
 
     # Preparation and loading of the GNBG parameters based on the chosen problem instance
     if 1 <= ProblemIndex <= 24:
-        filename = f'functions\\{ProblemIndex}.mat'
+        filename = f'functions\\f{ProblemIndex}.mat'
         GNBG_tmp = loadmat(os.path.join(folder_path, filename))['GNBG']
         MaxEvals = np.array([item[0] for item in GNBG_tmp['MaxEvals'].flatten()])[0, 0]
         AcceptanceThreshold = np.array([item[0] for item in GNBG_tmp['AcceptanceThreshold'].flatten()])[0, 0]
@@ -171,26 +161,29 @@ if __name__ == '__main__':
     MULTIPLIER = 100
     lb = -MULTIPLIER*np.ones(Dimension)
     ub = MULTIPLIER*np.ones(Dimension)
-    bounds = []
-    for i in range(0,Dimension):
-        bounds.append(tuple((lb[i],ub[i])))
 
-
-    popsize = 50  # population size for DE
-    maxiter = MaxEvals // popsize # number of generations/iterations for DE
+    popsize = 50  # population size
+    maxiter = MaxEvals // popsize # number of generations/iterations
     maxiter = 10 #! A SOLO SCOPO DI TEST ___________
+    problem = Problem(function=gnbg.fitness, n_var=Dimension, lb=lb, ub=ub)
     try:
 
-        problem = CustomProblem(fitness_function=gnbg.fitness, lb=lb, ub=ub, dim=Dimension)
-        de = DE(popsize, variant="DE/best/1/bin", CR=0.7, F=0.4, jitter=False, sampling=LatinHypercubeSampling(), dither="vector") # type: ignore
-
-        res = minimize(
-            problem, 
-            de, 
-            MaximumGenerationTermination(n_max_gen=maxiter),
-            seed=42, 
-            verbose=True,
+        de = DifferentialEvolution(
+            problem=problem,
+            population=popsize,
+            generations=maxiter,
+            seed=42,
+            CR=0.9,
+            F=0.8,
+            variant="DE/rand/1/bin",
+            elitism=0,
+            sampling_random=True,
+            dither="vector",
+            jitter=False,
+            verbose=True
         )
+        de.run()
+
     except EarlyStop as e:
         print(f"DE fermata anticipatamente: {e}")
 

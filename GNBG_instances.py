@@ -125,7 +125,7 @@ if __name__ == '__main__':
 
     # Preparation and loading of the GNBG parameters based on the chosen problem instance
     if 1 <= ProblemIndex <= 24:
-        filename = f'functions\\f{ProblemIndex}.mat'
+        filename = os.path.join('functions', f'f{ProblemIndex}.mat')
         GNBG_tmp = loadmat(os.path.join(folder_path, filename))['GNBG']
         MaxEvals = np.array([item[0] for item in GNBG_tmp['MaxEvals'].flatten()])[0, 0]
         AcceptanceThreshold = np.array([item[0] for item in GNBG_tmp['AcceptanceThreshold'].flatten()])[0, 0]

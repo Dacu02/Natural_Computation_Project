@@ -62,7 +62,6 @@ class DifferentialEvolution(Algorithm):
                  CR:float, 
                  F:float,
                  variant:Literal["DE/rand/1/bin", "DE/best/1/bin"] = "DE/rand/1/bin", 
-                 elitism:int=0, 
                  sampling_random:bool=False, 
                  dither:Literal["vector", "scalar"]="vector",
                  jitter:bool=False,
@@ -94,7 +93,6 @@ class DifferentialEvolution(Algorithm):
             jitter=jitter, 
             sampling=FloatRandomSampling() if sampling_random else LatinHypercubeSampling(),  # type: ignore
             dither=dither,
-            elitism=elitism,
             repair=Clipping(),
         ) 
 

@@ -3,16 +3,19 @@ import numpy as np
 from scipy.io import loadmat
 import matplotlib.pyplot as plt
 
-# Differential Evolution
-
-# Particle Swarm Optimization
-from pyswarms.single.general_optimizer import GeneralOptimizerPSO # Graoh specifico
 
 # Artificial Bee Colony 
+from beeoptimal.abc import ArtificialBeeColony
 from beeoptimal.benchmarks import BenchmarkFunction
+from pyswarms.utils.plotters import (plot_cost_history, plot_contour, plot_surface)
+from Algorithms import DifferentialEvolution, ParticleSwarmOptimization, Problem
 
-from Algorithms import DifferentialEvolution, Problem
+class CustomFunction(BenchmarkFunction):
+    def __init__(self, gnbg_instance, bounds):
+        super().__init__(fun=gnbg_instance.fitness, bounds=np.array(bounds), name="Custom GNBG Function", optimal_solution=gnbg_instance.OptimumPosition)
 
+    def evaluate(self, x):
+        return self.fun(x)
 
 class EarlyStop(Exception):
     """Eccezione per fermare anticipatamente differential_evolution."""
@@ -121,7 +124,7 @@ if __name__ == '__main__':
     folder_path = os.path.join(current_dir)
 
     # Initialization
-    ProblemIndex = 1  # Choose a problem instance range from f1 to f24
+    ProblemIndex = 23  # Choose a problem instance range from f1 to f24
 
     # Preparation and loading of the GNBG parameters based on the chosen problem instance
     if 1 <= ProblemIndex <= 24:
@@ -168,24 +171,25 @@ if __name__ == '__main__':
     problem = Problem(function=gnbg.fitness, n_var=Dimension, lb=lb, ub=ub)
     try:
 
-        de = DifferentialEvolution(
+        pso = ParticleSwarmOptimization(
             problem=problem,
             population=popsize,
             generations=maxiter,
             seed=42,
-            CR=0.9,
-            F=0.8,
-            variant="DE/rand/1/bin",
-            elitism=0,
-            sampling_random=True,
-            dither="vector",
-            jitter=False,
-            verbose=True
+            topology="Random",
+            local_weight=1.5,
+            global_weight=1.5,
+            inertia=0.7,
+            verbose=True,
         )
-        de.run()
+        best_fitness, best_solution = pso.run()
+        plot_cost_history(cost_history=pso._pso.cost_history)
+        plt.show()
+        # gnbg.BestFoundResult = best_fitness
+        # gnbg.BestFoundPosition = best_solution
 
     except EarlyStop as e:
-        print(f"DE fermata anticipatamente: {e}")
+        print(f"Algoritmo fermato anticipatamente")
 
     # If you use your own algorithm (not from a library), you can use result = gnbg.fitness(X) to calculate the fitness values of multiple solutions stored in a matrix X.
     # The function returns the fitness values of the solutions in the same order as they are stored in the matrix X.

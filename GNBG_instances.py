@@ -5,17 +5,8 @@ import matplotlib.pyplot as plt
 
 
 # Artificial Bee Colony 
-from beeoptimal.abc import ArtificialBeeColony
-from beeoptimal.benchmarks import BenchmarkFunction
 from pyswarms.utils.plotters import (plot_cost_history, plot_contour, plot_surface)
-from Algorithms import DifferentialEvolution, ParticleSwarmOptimization, Problem
-
-class CustomFunction(BenchmarkFunction):
-    def __init__(self, gnbg_instance, bounds):
-        super().__init__(fun=gnbg_instance.fitness, bounds=np.array(bounds), name="Custom GNBG Function", optimal_solution=gnbg_instance.OptimumPosition)
-
-    def evaluate(self, x):
-        return self.fun(x)
+from Algorithms import DifferentialEvolution, ParticleSwarmOptimization, Problem, ArtificialBeeColony
 
 class EarlyStop(Exception):
     """Eccezione per fermare anticipatamente differential_evolution."""
@@ -167,27 +158,19 @@ if __name__ == '__main__':
 
     popsize = 50  # population size
     maxiter = MaxEvals // popsize # number of generations/iterations
-    maxiter = 10 #! A SOLO SCOPO DI TEST ___________
+    #maxiter = 10 #! A SOLO SCOPO DI TEST ___________
     problem = Problem(function=gnbg.fitness, n_var=Dimension, lb=lb, ub=ub)
     try:
-
-        pso = ParticleSwarmOptimization(
-            problem=problem,
-            population=popsize,
-            generations=maxiter,
-            seed=42,
-            topology="Random",
-            local_weight=1.5,
-            global_weight=1.5,
-            inertia=0.7,
-            verbose=True,
+        algorithm = ArtificialBeeColony(
+            problem=problem, 
+            population=popsize, 
+            generations=maxiter, 
+            seed=42, 
+            max_scouts=5, 
+            verbose=True
         )
-        best_fitness, best_solution = pso.run()
-        plot_cost_history(cost_history=pso._pso.cost_history)
-        plt.show()
-        # gnbg.BestFoundResult = best_fitness
-        # gnbg.BestFoundPosition = best_solution
-
+        best_position, best_value = algorithm.run()
+       
     except EarlyStop as e:
         print(f"Algoritmo fermato anticipatamente")
 

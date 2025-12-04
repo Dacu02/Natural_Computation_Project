@@ -1,15 +1,13 @@
 import os
+from time import strftime
 import numpy as np
 from scipy.io import loadmat
 import matplotlib.pyplot as plt
-
-
-# Artificial Bee Colony 
-from pyswarms.utils.plotters import (plot_cost_history, plot_contour, plot_surface)
-from Algorithms import DifferentialEvolution, ParticleSwarmOptimization, Problem, ArtificialBeeColony
-
+import multiprocessing as mp
+from Algorithms import Algorithm, Problem, DifferentialEvolution, ParticleSwarmOptimization, ArtificialBeeColony
+from typing import Any, Dict, List, Type, Type, TypedDict
 class EarlyStop(Exception):
-    """Eccezione per fermare anticipatamente differential_evolution."""
+    """Eccezione per arrestare l'esecuzione anticipatamente."""
     pass
 
 # Define the GNBG class
@@ -106,20 +104,51 @@ class GNBG:
         Y[tmp] = -np.exp(Y[tmp] + Alpha[1] * (np.sin(Beta[2] * Y[tmp]) + np.sin(Beta[3] * Y[tmp])))
         return Y
 
+def execution(seed:int, problem:int, alg_class:Type[Algorithm], alg_args:Dict[str, Any], description:str, folder:str):
+    try:
+        np.random.seed(seed)  
+        instance = load_gnbg_instance(problemIndex=problem)
+        lb = -BOUNDS_MULTIPLIER*np.ones(instance.Dimension)
+        ub = BOUNDS_MULTIPLIER*np.ones(instance.Dimension)
+        alg_args['generations'] = instance.MaxEvals // alg_args['population']
+        problem_custom_instance = Problem(function=instance.fitness, n_var=instance.Dimension, lb=lb, ub=ub)
+        print(f"\nEsecuzione dell'algoritmo {alg_class.__name__} sul problema f{problem} con seed {seed}")
+        alg_instance = alg_class(problem_custom_instance, **alg_args)
+        alg_instance.run()
 
-if __name__ == '__main__':
-    # Get the current script's directory
-    current_dir = os.path.dirname(os.path.abspath(__file__))
+    except EarlyStop as e:
+        print(f"Algoritmo fermato anticipatamente")
+    
+    convergence = []
+    best_error = float('inf')
+    for value in instance.FEhistory:
+        error = abs(value - instance.OptimumValue)
+        if error < best_error:
+            best_error = error
+        convergence.append(best_error)
 
-    # Define the path to the folder where you want to read/write files
-    folder_path = os.path.join(current_dir)
 
-    # Initialization
-    ProblemIndex = 23  # Choose a problem instance range from f1 to f24
+    print(f"Best found objective value: {instance.BestFoundResult} at position {instance.BestFoundPosition}")
+    print(f"Error from the global optimum: {abs(instance.BestFoundResult - instance.OptimumValue)}")
+    print(f"Function evaluations to reach acceptance threshold: {instance.AcceptanceReachPoint if not np.isinf(instance.AcceptanceReachPoint) else 'Not reached'}")
+    print("FE usate:", instance.FE)
+    print("MaxEvals:", instance.MaxEvals)
+    # Plotting the convergence
+    plt.plot(range(1, len(convergence) + 1), convergence)
+    plt.xlabel('Function Evaluation Number (FE)')
+    plt.ylabel('Error')
+    plt.title('Convergence Plot')
+    plt.yscale('log')  # Set y-axis to logarithmic scale
+    plt.savefig(os.path.join(folder, f'convergence_{description}.png'))
+    plt.clf()  # Clear the figure for the next plot
+    with open(os.path.join(folder, f'results_{description}.csv'), 'w') as f:
+        f.write('FunctionEvaluation,Error\n')
+        for fe, err in enumerate(convergence):
+            f.write(f"{fe},{err}\n")
 
-    # Preparation and loading of the GNBG parameters based on the chosen problem instance
-    if 1 <= ProblemIndex <= 24:
-        filename = os.path.join('functions', f'f{ProblemIndex}.mat')
+def load_gnbg_instance(problemIndex: int):
+    if 1 <= problemIndex <= 24:
+        filename = os.path.join('functions', f'f{problemIndex}.mat')
         GNBG_tmp = loadmat(os.path.join(folder_path, filename))['GNBG']
         MaxEvals = np.array([item[0] for item in GNBG_tmp['MaxEvals'].flatten()])[0, 0]
         AcceptanceThreshold = np.array([item[0] for item in GNBG_tmp['AcceptanceThreshold'].flatten()])[0, 0]
@@ -139,66 +168,84 @@ if __name__ == '__main__':
     else:
         raise ValueError('ProblemIndex must be between 1 and 24.')
 
-    print(f"Loaded GNBG problem instance f{ProblemIndex} with dimension {Dimension} and {CompNum} components.\n"
-          f"Global optimum value: {OptimumValue} AcceptanceThreshold: {AcceptanceThreshold}, MaxEvals: {MaxEvals}")
+    print(f"Loaded GNBG problem instance f{problemIndex} with dimension {Dimension} and {CompNum} components.\n"
+        f"Global optimum value: {OptimumValue} AcceptanceThreshold: {AcceptanceThreshold}, MaxEvals: {MaxEvals}")
 
-    gnbg = GNBG(MaxEvals, AcceptanceThreshold, Dimension, CompNum, MinCoordinate, MaxCoordinate, CompMinPos, CompSigma, CompH, Mu, Omega, Lambda, RotationMatrix, OptimumValue, OptimumPosition)
+    return GNBG(MaxEvals, AcceptanceThreshold, Dimension, CompNum, MinCoordinate, MaxCoordinate, CompMinPos, CompSigma, CompH, Mu, Omega, Lambda, RotationMatrix, OptimumValue, OptimumPosition)
 
 
-    # The following code is an example of how a GNBG's problem instance can be solved using an optimizer
-    # The Differential Evolution (DE) optimizer is used here as an example. You can replace it with any other optimizer of your choice.
+class AlgorithmStructure(TypedDict):
+    algorithm: Type[Algorithm]
+    args: Dict[str, Any]
+    name: str|None
 
-    # Set a random seed for the optimizer
+if __name__ == '__main__':
+    # Get the current script's directory
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # Define the path to the folder where you want to read/write files
+    folder_path = os.path.join(current_dir)
+
+    SEEDS: list[int] = [1,2,3]
+    PROBLEMS: list[int] = [1, 16, 23]
     np.random.seed()  # This uses a system-based source to seed the random number generator
 
-    # Define the bounds for the optimizer based on the bounds of the problem instance
-    MULTIPLIER = 100
-    lb = -MULTIPLIER*np.ones(Dimension)
-    ub = MULTIPLIER*np.ones(Dimension)
+    BOUNDS_MULTIPLIER = 100
 
-    popsize = 50  # population size
-    maxiter = MaxEvals // popsize # number of generations/iterations
-    #maxiter = 10 #! A SOLO SCOPO DI TEST ___________
-    problem = Problem(function=gnbg.fitness, n_var=Dimension, lb=lb, ub=ub)
-    try:
-        algorithm = ArtificialBeeColony(
-            problem=problem, 
-            population=popsize, 
-            generations=maxiter, 
-            seed=42, 
-            max_scouts=5, 
-            verbose=True
-        )
-        best_position, best_value = algorithm.run()
-       
-    except EarlyStop as e:
-        print(f"Algoritmo fermato anticipatamente")
+    results = os.path.join(os.getcwd(), 'results', strftime('%d__%H_%M'))
+    os.makedirs(results, exist_ok=True)
 
-    # If you use your own algorithm (not from a library), you can use result = gnbg.fitness(X) to calculate the fitness values of multiple solutions stored in a matrix X.
-    # The function returns the fitness values of the solutions in the same order as they are stored in the matrix X.
+    algorithms: List[AlgorithmStructure] = [{
+        'algorithm': ParticleSwarmOptimization,
+        'args': {
+            'population': 100,
+            'topology': 'VonNeumann',
+            'local_weight': 1.5,
+            'global_weight': 1.5,
+            'inertia': 0.7,
+            'p': 1,
+            'r': 1,
+        },
+        'name': 'ParticleSwarmOptimization'
+    }, {
+        'algorithm': ParticleSwarmOptimization,
+        'args': {
+            'population': 100,
+            'topology': 'Star',
+            'local_weight': 1.5,
+            'global_weight': 1.5,
+            'inertia': 0.7,
+            'k': 3,
+            'p': 2,
+        },
+        'name': 'ParticleSwarmOptimization'
+    }]
 
-    # After running the algorithm, the best fitness value is stored in gnbg.BestFoundResult.
-    # The best found position is stored in gnbg.BestFoundPosition.
-    # The function evaluation number where the algorithm reached the acceptance threshold is stored in gnbg.AcceptanceReachPoint. If the algorithm did not reach the acceptance threshold, it is set to infinity.
-    # For visualizing the convergence behavior, the history of the objective values is stored in gnbg.FEhistory, however it needs to be processed as follows:
 
-    convergence = []
-    best_error = float('inf')
-    for value in gnbg.FEhistory:
-        error = abs(value - OptimumValue)
-        if error < best_error:
-            best_error = error
-        convergence.append(best_error)
+    for problem in PROBLEMS:
+        problem_folder = os.path.join(results, f'f_{problem}')
+        os.makedirs(problem_folder, exist_ok=True)
+        for algorithm in algorithms:
+            alg_class = algorithm['algorithm']
+            alg_args = algorithm['args']
+            description = algorithm.get('name', '_'.join(map(str, alg_args.values())))
+            alg_folder = os.path.join(problem_folder, f'')
+            os.makedirs(alg_folder, exist_ok=True)
+            with open(os.path.join(alg_folder, 'config.txt'), 'w') as f:
+                f.write(f"Algorithm: {algorithm['algorithm'].__name__}\n")
+                f.write(f"Arguments: {algorithm['args']}\n")
+            for seed in SEEDS:
+                alg_args['seed'] = seed
+                execution(seed, problem, alg_class, alg_args, str(seed), alg_folder)
 
-    print(f"Best found objective value: {gnbg.BestFoundResult} at position {gnbg.BestFoundPosition}")
-    print(f"Error from the global optimum: {abs(gnbg.BestFoundResult - OptimumValue)}")
-    print(f"Function evaluations to reach acceptance threshold: {gnbg.AcceptanceReachPoint if not np.isinf(gnbg.AcceptanceReachPoint) else 'Not reached'}")
-    print("FE usate:", gnbg.FE)
-    print("MaxEvals:", gnbg.MaxEvals)
-    # Plotting the convergence
-    plt.plot(range(1, len(convergence) + 1), convergence)
-    plt.xlabel('Function Evaluation Number (FE)')
-    plt.ylabel('Error')
-    plt.title('Convergence Plot')
-    plt.yscale('log')  # Set y-axis to logarithmic scale
-    plt.show()
+                
+                    
+    
+
+# If you use your own algorithm (not from a library), you can use result = gnbg.fitness(X) to calculate the fitness values of multiple solutions stored in a matrix X.
+# The function returns the fitness values of the solutions in the same order as they are stored in the matrix X.
+
+# After running the algorithm, the best fitness value is stored in gnbg.BestFoundResult.
+# The best found position is stored in gnbg.BestFoundPosition.
+# The function evaluation number where the algorithm reached the acceptance threshold is stored in gnbg.AcceptanceReachPoint. If the algorithm did not reach the acceptance threshold, it is set to infinity.
+# For visualizing the convergence behavior, the history of the objective values is stored in gnbg.FEhistory, however it needs to be processed as follows:

@@ -1,3 +1,4 @@
+from re import M
 from typing import Literal
 from pyswarms.single.general_optimizer import GeneralOptimizerPSO # Graoh specifico
 from pyswarms.backend.topology import Pyramid, Star, Ring, VonNeumann, Random
@@ -25,6 +26,15 @@ HYPER_PARAMETERS_STRATEGIES = Literal[
     "random", # takes a uniform random value between (0.5,1)
     "nonlin_mod", # Decreases/increases the parameter between limits according to a nonlinear modulation index.
 ] # Strategie per la gestione dei parametri a runtime, commenti dalla doc.
+
+TOPOLOGIES = Literal[
+    "Pyramid",
+    "Star",
+    "Ring",
+    "VonNeumann",
+    "Random"
+] # Tipi di topologie disponibili per il PSO
+
 class ParticleSwarmOptimization(Algorithm):
     """
         Classe per rappresentare l'algoritmo di Particle Swarm Optimization (PSO).
@@ -34,14 +44,19 @@ class ParticleSwarmOptimization(Algorithm):
                  population:int, 
                  generations:int, 
                  seed:int, 
-                 topology:Literal["Pyramid", "Star", "Ring", "VonNeumann", "Random"], 
+                 topology:TOPOLOGIES, 
                  local_weight:float, 
                  global_weight:float, 
                  inertia:float, 
                  verbose:bool=False,
-                 k:int=0,
-                 p:int=0,
-                 r:int=0):
+                 k:int|None=None,
+                 p:int|None=None,
+                 r:int|None=None,
+                 solution_boundary_strategy:SOLUTIONS_BOUNDARY_STRATEGIES|None=None,
+                 speed_boundary_strategy:SPEED_BOUNDARY_STRATEGIES|None=None,
+                 hyper_parameters_strategy:HYPER_PARAMETERS_STRATEGIES|None=None,
+                 velocity_clamp:tuple[float, float]|None=None
+                 ):
         """
             Inizializza l'algoritmo del PSO con i parametri specificati.
             Args:
@@ -54,6 +69,13 @@ class ParticleSwarmOptimization(Algorithm):
                 global_weight (float): Attrazione verso l'ottimo locale/globale
                 inertia (float): Il peso di inerzia.
                 verbose (bool): Se True, abilita l'output dettagliato.
+                k (int): Numero di vicini per le topologie che lo richiedono (Ring, VonNeumann, Random).
+                p (int): Norma L1 o L2 per le topologie che lo richiedono (Ring, VonNeumann).
+                r (int): Raggio per la topologia VonNeumann.
+                solution_boundary_strategy (str|None): Strategia per la gestione delle particelle che superano i limiti.
+                speed_boundary_strategy (str|None): Strategia per la gestione delle velocità che superano i limiti. Obbligatorio se velocity_clamp è specificato.
+                hyper_parameters_strategy (str|None): Strategia per la gestione dei parametri a runtime.
+                velocity_clamp (tuple|None): Limiti per la velocità delle particelle.
 
         """
         super().__init__(problem, population, generations, seed, verbose)
@@ -63,39 +85,62 @@ class ParticleSwarmOptimization(Algorithm):
             'w': inertia
         }
 
-        if topology == "Pyramid":
-            self._topology = Pyramid()
-        elif topology == "Star":
-            self._topology = Star()
-        elif topology == "Ring":
-            self._topology = Ring()
-            self._options['k'] = k  # Numero di vicini per Ring
-            self._options['p'] = p  # Norma L1 o L2 per Ring
-        elif topology == "VonNeumann":
-            self._topology = VonNeumann()
-            self._options['k'] = k  # Numero di vicini per VonNeumann
-            self._options['p'] = p  # Norma L1 o L2 per VonNeumann
-            self._options['r'] = r  # Raggio per VonNeumann
-        elif topology == "Random":
-            self._topology = Random()
-            self._options['k'] = k  # Numero di vicini per Random
-        else:
-            raise ValueError("Invalid topology type. Choose from 'Pyramid', 'Star', 'Ring', 'VonNeumann', 'Random'.")
-       
+        if p and p not in [1, 2]:
+            raise ValueError("Parameter 'p' must be either 1 or 2.")
+
+        match topology:
+            case "Pyramid":
+                self._topology = Pyramid()
+            case "Star":
+                self._topology = Star()
+            case "Ring":
+                self._topology = Ring()
+                if not k or not p:
+                    raise ValueError("For 'Ring' topology, both 'k' and 'p' parameters must be specified and non-zero.")
+                self._options['k'] = k  # Numero di vicini per Ring
+                self._options['p'] = p  # Norma L1 o L2 per Ring
+            case "VonNeumann":
+                self._topology = VonNeumann()
+                if not p or not r:
+                    raise ValueError("For 'VonNeumann' topology, both 'p' and 'r' parameters must be specified and non-zero.")
+                self._options['p'] = p  # Norma L1 o L2 per VonNeumann
+                self._options['r'] = r  # Raggio per VonNeumann
+            case "Random":
+                if not k:
+                    raise ValueError("For 'Random' topology, 'k' parameter must be specified and non-zero.")
+                self._topology = Random()
+                self._options['k'] = k  # Numero di vicini per Random
+            case _:
+                raise ValueError("Invalid topology type. Choose from 'Pyramid', 'Star', 'Ring', 'VonNeumann', 'Random'.")
+        
+        if velocity_clamp is not None and speed_boundary_strategy is None:
+            raise ValueError("If 'velocity_clamp' is specified, 'speed_boundary_strategy' must also be provided.")
+
+        kwargs = {}
+        if velocity_clamp is not None:
+            kwargs['velocity_clamp'] = velocity_clamp
+        if speed_boundary_strategy is not None:
+            kwargs['vh_strategy'] = speed_boundary_strategy
+        if solution_boundary_strategy is not None:
+            kwargs['bh_strategy'] = solution_boundary_strategy
+        if hyper_parameters_strategy is not None:
+            kwargs['oh_strategy'] = hyper_parameters_strategy
+
         self._pso = GeneralOptimizerPSO(
             n_particles=self._population,
             dimensions=self._dimensions,
             options=self._options,
             bounds=self._bounds,
-            topology=self._topology
+            topology=self._topology,
+            oh_strategy=solution_boundary_strategy,
+            **kwargs
         )
 
     def run(self):
         """
             Esegue l'algoritmo PSO.
         """
-        
-        return self._pso.optimize(self._function, iters=self._generations, verbose=self._verbose, n_processes=4)
+        return self._pso.optimize(self._function, iters=self._generations, verbose=self._verbose)
 
     def _set_problem(self, problem:Problem):
         """

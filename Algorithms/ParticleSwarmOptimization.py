@@ -55,7 +55,8 @@ class ParticleSwarmOptimization(Algorithm):
                  solution_boundary_strategy:SOLUTIONS_BOUNDARY_STRATEGIES|None=None,
                  speed_boundary_strategy:SPEED_BOUNDARY_STRATEGIES|None=None,
                  hyper_parameters_strategy:HYPER_PARAMETERS_STRATEGIES|None=None,
-                 velocity_clamp:tuple[float, float]|None=None
+                 velocity_clamp:tuple[float, float]|None=None,
+                 static:bool=True
                  ):
         """
             Inizializza l'algoritmo del PSO con i parametri specificati.
@@ -76,6 +77,7 @@ class ParticleSwarmOptimization(Algorithm):
                 speed_boundary_strategy (str|None): Strategia per la gestione delle velocità che superano i limiti. Obbligatorio se velocity_clamp è specificato.
                 hyper_parameters_strategy (str|None): Strategia per la gestione dei parametri a runtime.
                 velocity_clamp (tuple|None): Limiti per la velocità delle particelle.
+                static (bool): Se True, le connessioni tra particelle rimangono le stesse durante l'esecuzione.
 
         """
         super().__init__(problem, population, generations, seed, verbose)
@@ -90,17 +92,17 @@ class ParticleSwarmOptimization(Algorithm):
 
         match topology:
             case "Pyramid":
-                self._topology = Pyramid()
+                self._topology = Pyramid(static=static)
             case "Star":
-                self._topology = Star()
+                self._topology = Star(static=static)
             case "Ring":
-                self._topology = Ring()
+                self._topology = Ring(static=static)
                 if not k or not p:
                     raise ValueError("For 'Ring' topology, both 'k' and 'p' parameters must be specified and non-zero.")
                 self._options['k'] = k  # Numero di vicini per Ring
                 self._options['p'] = p  # Norma L1 o L2 per Ring
             case "VonNeumann":
-                self._topology = VonNeumann()
+                self._topology = VonNeumann(static=static)
                 if not p or not r:
                     raise ValueError("For 'VonNeumann' topology, both 'p' and 'r' parameters must be specified and non-zero.")
                 self._options['p'] = p  # Norma L1 o L2 per VonNeumann
@@ -108,7 +110,7 @@ class ParticleSwarmOptimization(Algorithm):
             case "Random":
                 if not k:
                     raise ValueError("For 'Random' topology, 'k' parameter must be specified and non-zero.")
-                self._topology = Random()
+                self._topology = Random(static=static)
                 self._options['k'] = k  # Numero di vicini per Random
             case _:
                 raise ValueError("Invalid topology type. Choose from 'Pyramid', 'Star', 'Ring', 'VonNeumann', 'Random'.")

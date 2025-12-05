@@ -1,9 +1,11 @@
 import os
 from time import strftime
 import numpy as np
+from scipy import stats
 from scipy.io import loadmat
 import matplotlib.pyplot as plt
 import multiprocessing as mp
+from pandas import DataFrame, read_csv
 from Algorithms import Algorithm, Problem, DifferentialEvolution, ParticleSwarmOptimization, ArtificialBeeColony
 from typing import Any, Dict, List, Type, Type, TypedDict
 class EarlyStop(Exception):
@@ -187,7 +189,7 @@ if __name__ == '__main__':
     folder_path = os.path.join(current_dir)
 
     SEEDS: list[int] = [1,2,3]
-    PROBLEMS: list[int] = [1, 16, 23]
+    PROBLEMS: list[int] = [1]
     np.random.seed()  # This uses a system-based source to seed the random number generator
 
     BOUNDS_MULTIPLIER = 100
@@ -206,7 +208,7 @@ if __name__ == '__main__':
             'p': 1,
             'r': 1,
         },
-        'name': 'ParticleSwarmOptimization'
+        'name': 'ParticleSwarmOptimization_VonNeumann'
     }, {
         'algorithm': ParticleSwarmOptimization,
         'args': {
@@ -218,18 +220,20 @@ if __name__ == '__main__':
             'k': 3,
             'p': 2,
         },
-        'name': 'ParticleSwarmOptimization'
+        'name': 'ParticleSwarmOptimization_Star'
     }]
 
 
-    for problem in PROBLEMS:
+    for i, problem in enumerate(PROBLEMS):
         problem_folder = os.path.join(results, f'f_{problem}')
         os.makedirs(problem_folder, exist_ok=True)
         for algorithm in algorithms:
             alg_class = algorithm['algorithm']
             alg_args = algorithm['args']
             description = algorithm.get('name', '_'.join(map(str, alg_args.values())))
-            alg_folder = os.path.join(problem_folder, f'')
+            if not description:
+                description = 'Algorithm_' + str(i+1)
+            alg_folder = os.path.join(problem_folder, description)
             os.makedirs(alg_folder, exist_ok=True)
             with open(os.path.join(alg_folder, 'config.txt'), 'w') as f:
                 f.write(f"Algorithm: {algorithm['algorithm'].__name__}\n")
@@ -237,10 +241,60 @@ if __name__ == '__main__':
             for seed in SEEDS:
                 alg_args['seed'] = seed
                 execution(seed, problem, alg_class, alg_args, str(seed), alg_folder)
+            result_files = [f.path for f in os.scandir(alg_folder) if f.is_file() and f.name.endswith('.csv')]
+            dfs = []
+            for file in result_files:
+                dfs.append(read_csv(file))
 
+            length = len(dfs[0])
+            for df in dfs:
+                if len(df) != length:
+                    raise ValueError("All result CSV files must have the same number of rows.")
                 
-                    
-    
+            arr = np.stack([df.iloc[:, 1].values for df in dfs])  # shape (n_runs, n_gens)
+            
+            n_runs, n_gens = arr.shape
+
+            mean_errors = arr.mean(axis=0)
+            std_errors  = arr.std(axis=0, ddof=1)            # std tra run
+            sem = std_errors / np.sqrt(n_runs)               # std della media
+            t = stats.t.ppf(0.975, df=n_runs - 1)            # 95% CI
+            ci95_low  = mean_errors - t * sem
+            ci95_high = mean_errors + t * sem
+
+            x = np.arange(1, n_gens + 1)
+
+            plt.figure(figsize=(10, 5))
+
+            # singole run 
+            for run in arr:
+                plt.plot(x, run, color='lightblue', alpha=0.25, linewidth=0.8)
+
+
+            # banda CI 95% (precisione della media)
+            plt.fill_between(x, ci95_low, ci95_high,
+                            color='tab:pink', alpha=0.25, label='95% CI mean')
+
+            # banda SD (dispersione tra run)
+            plt.fill_between(x, mean_errors - std_errors, mean_errors + std_errors,
+                            color='tab:gray', alpha=0.4, label='±1 SD (spreading)')
+            
+            # media
+            plt.plot(x, mean_errors, color='tab:blue', linewidth=2, label='Mean Error')
+
+            # opzionale: marker con errorbar che mostra SD come barre verticali
+            # plt.errorbar(x, mean_errors, yerr=std_errors, fmt='o', color='tab:blue',
+                        # ecolor='lightcoral', elinewidth=1, capsize=3, markersize=3, alpha=0.9)
+
+            plt.xlabel('Generations')
+            plt.ylabel('Error')
+            plt.title(alg_folder)
+            plt.legend()
+            plt.grid(alpha=0.3)
+            plt.tight_layout()
+            plt.savefig(os.path.join(alg_folder, f'convergence_summary.png'))
+            plt.clf()
+            
 
 # If you use your own algorithm (not from a library), you can use result = gnbg.fitness(X) to calculate the fitness values of multiple solutions stored in a matrix X.
 # The function returns the fitness values of the solutions in the same order as they are stored in the matrix X.

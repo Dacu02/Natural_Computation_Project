@@ -106,76 +106,6 @@ class GNBG:
         Y[tmp] = -np.exp(Y[tmp] + Alpha[1] * (np.sin(Beta[2] * Y[tmp]) + np.sin(Beta[3] * Y[tmp])))
         return Y
 
-def execution(seed:int, problem:int, alg_class:Type[Algorithm], alg_args:Dict[str, Any], description:str, folder:str):
-    try:
-        np.random.seed(seed)  
-        instance = load_gnbg_instance(problemIndex=problem)
-        lb = -BOUNDS_MULTIPLIER*np.ones(instance.Dimension)
-        ub = BOUNDS_MULTIPLIER*np.ones(instance.Dimension)
-        alg_args['generations'] = instance.MaxEvals // alg_args['population']
-        problem_custom_instance = Problem(function=instance.fitness, n_var=instance.Dimension, lb=lb, ub=ub)
-        print(f"\nEsecuzione dell'algoritmo {alg_class.__name__} sul problema f{problem} con seed {seed}")
-        alg_instance = alg_class(problem_custom_instance, **alg_args)
-        alg_instance.run()
-
-    except EarlyStop as e:
-        print(f"Algoritmo fermato anticipatamente")
-    
-    convergence = []
-    best_error = float('inf')
-    for value in instance.FEhistory:
-        error = abs(value - instance.OptimumValue)
-        if error < best_error:
-            best_error = error
-        convergence.append(best_error)
-
-
-    print(f"Best found objective value: {instance.BestFoundResult} at position {instance.BestFoundPosition}")
-    print(f"Error from the global optimum: {abs(instance.BestFoundResult - instance.OptimumValue)}")
-    print(f"Function evaluations to reach acceptance threshold: {instance.AcceptanceReachPoint if not np.isinf(instance.AcceptanceReachPoint) else 'Not reached'}")
-    print("FE usate:", instance.FE)
-    print("MaxEvals:", instance.MaxEvals)
-    # Plotting the convergence
-    plt.plot(range(1, len(convergence) + 1), convergence)
-    plt.xlabel('Function Evaluation Number (FE)')
-    plt.ylabel('Error')
-    plt.title('Convergence Plot')
-    plt.yscale('log')  # Set y-axis to logarithmic scale
-    plt.savefig(os.path.join(folder, f'convergence_{description}.png'))
-    plt.clf()  # Clear the figure for the next plot
-    with open(os.path.join(folder, f'results_{description}.csv'), 'w') as f:
-        f.write('FunctionEvaluation,Error\n')
-        for fe, err in enumerate(convergence):
-            f.write(f"{fe},{err}\n")
-
-def load_gnbg_instance(problemIndex: int):
-    if 1 <= problemIndex <= 24:
-        filename = os.path.join('functions', f'f{problemIndex}.mat')
-        GNBG_tmp = loadmat(os.path.join(folder_path, filename))['GNBG']
-        MaxEvals = np.array([item[0] for item in GNBG_tmp['MaxEvals'].flatten()])[0, 0]
-        AcceptanceThreshold = np.array([item[0] for item in GNBG_tmp['AcceptanceThreshold'].flatten()])[0, 0]
-        Dimension = np.array([item[0] for item in GNBG_tmp['Dimension'].flatten()])[0, 0]
-        CompNum = np.array([item[0] for item in GNBG_tmp['o'].flatten()])[0, 0]  # Number of components
-        MinCoordinate = np.array([item[0] for item in GNBG_tmp['MinCoordinate'].flatten()])[0, 0]
-        MaxCoordinate = np.array([item[0] for item in GNBG_tmp['MaxCoordinate'].flatten()])[0, 0]
-        CompMinPos = np.array(GNBG_tmp['Component_MinimumPosition'][0, 0])
-        CompSigma = np.array(GNBG_tmp['ComponentSigma'][0, 0], dtype=np.float64)
-        CompH = np.array(GNBG_tmp['Component_H'][0, 0])
-        Mu = np.array(GNBG_tmp['Mu'][0, 0])
-        Omega = np.array(GNBG_tmp['Omega'][0, 0])
-        Lambda = np.array(GNBG_tmp['lambda'][0, 0])
-        RotationMatrix = np.array(GNBG_tmp['RotationMatrix'][0, 0])
-        OptimumValue = np.array([item[0] for item in GNBG_tmp['OptimumValue'].flatten()])[0, 0]
-        OptimumPosition = np.array(GNBG_tmp['OptimumPosition'][0, 0])
-    else:
-        raise ValueError('ProblemIndex must be between 1 and 24.')
-
-    print(f"Loaded GNBG problem instance f{problemIndex} with dimension {Dimension} and {CompNum} components.\n"
-        f"Global optimum value: {OptimumValue} AcceptanceThreshold: {AcceptanceThreshold}, MaxEvals: {MaxEvals}")
-
-    return GNBG(MaxEvals, AcceptanceThreshold, Dimension, CompNum, MinCoordinate, MaxCoordinate, CompMinPos, CompSigma, CompH, Mu, Omega, Lambda, RotationMatrix, OptimumValue, OptimumPosition)
-
-
 class AlgorithmStructure(TypedDict):
     algorithm: Type[Algorithm]
     args: Dict[str, Any]
@@ -196,6 +126,76 @@ if __name__ == '__main__':
 
     results = os.path.join(os.getcwd(), 'results', strftime('%d__%H_%M'))
     os.makedirs(results, exist_ok=True)
+
+    def load_gnbg_instance(problemIndex: int):
+        if 1 <= problemIndex <= 24:
+            filename = os.path.join('functions', f'f{problemIndex}.mat')
+            GNBG_tmp = loadmat(os.path.join(folder_path, filename))['GNBG']
+            MaxEvals = np.array([item[0] for item in GNBG_tmp['MaxEvals'].flatten()])[0, 0]
+            AcceptanceThreshold = np.array([item[0] for item in GNBG_tmp['AcceptanceThreshold'].flatten()])[0, 0]
+            Dimension = np.array([item[0] for item in GNBG_tmp['Dimension'].flatten()])[0, 0]
+            CompNum = np.array([item[0] for item in GNBG_tmp['o'].flatten()])[0, 0]  # Number of components
+            MinCoordinate = np.array([item[0] for item in GNBG_tmp['MinCoordinate'].flatten()])[0, 0]
+            MaxCoordinate = np.array([item[0] for item in GNBG_tmp['MaxCoordinate'].flatten()])[0, 0]
+            CompMinPos = np.array(GNBG_tmp['Component_MinimumPosition'][0, 0])
+            CompSigma = np.array(GNBG_tmp['ComponentSigma'][0, 0], dtype=np.float64)
+            CompH = np.array(GNBG_tmp['Component_H'][0, 0])
+            Mu = np.array(GNBG_tmp['Mu'][0, 0])
+            Omega = np.array(GNBG_tmp['Omega'][0, 0])
+            Lambda = np.array(GNBG_tmp['lambda'][0, 0])
+            RotationMatrix = np.array(GNBG_tmp['RotationMatrix'][0, 0])
+            OptimumValue = np.array([item[0] for item in GNBG_tmp['OptimumValue'].flatten()])[0, 0]
+            OptimumPosition = np.array(GNBG_tmp['OptimumPosition'][0, 0])
+        else:
+            raise ValueError('ProblemIndex must be between 1 and 24.')
+
+        print(f"Loaded GNBG problem instance f{problemIndex} with dimension {Dimension} and {CompNum} components.\n"
+            f"Global optimum value: {OptimumValue} AcceptanceThreshold: {AcceptanceThreshold}, MaxEvals: {MaxEvals}")
+
+        return GNBG(MaxEvals, AcceptanceThreshold, Dimension, CompNum, MinCoordinate, MaxCoordinate, CompMinPos, CompSigma, CompH, Mu, Omega, Lambda, RotationMatrix, OptimumValue, OptimumPosition)
+
+    
+    def execution(seed:int, problem:int, alg_class:Type[Algorithm], alg_args:Dict[str, Any], description:str, folder:str):
+        try:
+            np.random.seed(seed)  
+            instance = load_gnbg_instance(problemIndex=problem)
+            lb = -BOUNDS_MULTIPLIER*np.ones(instance.Dimension)
+            ub = BOUNDS_MULTIPLIER*np.ones(instance.Dimension)
+            alg_args['generations'] = instance.MaxEvals // alg_args['population']
+            problem_custom_instance = Problem(function=instance.fitness, n_var=instance.Dimension, lb=lb, ub=ub)
+            print(f"\nEsecuzione dell'algoritmo {alg_class.__name__} sul problema f{problem} con seed {seed}")
+            alg_instance = alg_class(problem_custom_instance, **alg_args)
+            alg_instance.run()
+
+        except EarlyStop as e:
+            print(f"Algoritmo fermato anticipatamente")
+        
+        convergence = []
+        best_error = float('inf')
+        for value in instance.FEhistory:
+            error = abs(value - instance.OptimumValue)
+            if error < best_error:
+                best_error = error
+            convergence.append(best_error)
+
+
+        print(f"Best found objective value: {instance.BestFoundResult} at position {instance.BestFoundPosition}")
+        print(f"Error from the global optimum: {abs(instance.BestFoundResult - instance.OptimumValue)}")
+        print(f"Function evaluations to reach acceptance threshold: {instance.AcceptanceReachPoint if not np.isinf(instance.AcceptanceReachPoint) else 'Not reached'}")
+        print("FE usate:", instance.FE)
+        print("MaxEvals:", instance.MaxEvals)
+        # Plotting the convergence
+        plt.plot(range(1, len(convergence) + 1), convergence)
+        plt.xlabel('Function Evaluation Number (FE)')
+        plt.ylabel('Error')
+        plt.title('Convergence Plot')
+        plt.yscale('log')  # Set y-axis to logarithmic scale
+        plt.savefig(os.path.join(folder, f'convergence_{description}.png'))
+        plt.clf()  # Clear the figure for the next plot
+        with open(os.path.join(folder, f'results_{description}.csv'), 'w') as f:
+            f.write('FunctionEvaluation,Error\n')
+            for fe, err in enumerate(convergence):
+                f.write(f"{fe},{err}\n")
 
     algorithms: List[AlgorithmStructure] = [{
         'algorithm': ParticleSwarmOptimization,
@@ -240,7 +240,13 @@ if __name__ == '__main__':
                 f.write(f"Arguments: {algorithm['args']}\n")
             for seed in SEEDS:
                 alg_args['seed'] = seed
-                execution(seed, problem, alg_class, alg_args, str(seed), alg_folder)
+                #n = int(os.environ.get('SLURM_CPUS_PER_TASK', '1'))
+                n = 4
+                if n > 1:
+                    with mp.Pool(processes=n) as pool:
+                        pool.apply(execution, args=(seed, problem, alg_class, alg_args, str(seed), alg_folder))
+                else:
+                    execution(seed, problem, alg_class, alg_args, str(seed), alg_folder)
             result_files = [f.path for f in os.scandir(alg_folder) if f.is_file() and f.name.endswith('.csv')]
             dfs = []
             for file in result_files:

@@ -1,3 +1,4 @@
+from multiprocessing.pool import AsyncResult
 import os
 from time import strftime
 import numpy as np
@@ -161,7 +162,7 @@ if __name__ == '__main__':
         instance = load_gnbg_instance(problemIndex=problem)
         lb = -BOUNDS_MULTIPLIER*np.ones(instance.Dimension)
         ub = BOUNDS_MULTIPLIER*np.ones(instance.Dimension)
-        alg_args['generations'] = instance.MaxEvals // alg_args['population']
+        alg_args['generations'] = 10#instance.MaxEvals // alg_args['population']
         problem_custom_instance = Problem(function=instance.fitness, n_var=instance.Dimension, lb=lb, ub=ub)
         print(f"\nEsecuzione dell'algoritmo {alg_class.__name__} sul problema f{problem} con seed {seed}")
         alg_instance = alg_class(problem_custom_instance, **alg_args)
@@ -226,25 +227,39 @@ if __name__ == '__main__':
     }]
 
 
+    processes: list[AsyncResult] = []
+    with mp.Pool(processes=PROCESS_COUNT) as pool:
+        for i, problem in enumerate(PROBLEMS):
+            problem_folder = os.path.join(results, f'f_{problem}')
+            os.makedirs(problem_folder, exist_ok=True)
+            for algorithm in algorithms:
+                alg_class = algorithm['algorithm']
+                alg_args = algorithm['args'].copy()
+                description = algorithm.get('name', '_'.join(map(str, alg_args.values())))
+                if not description:
+                    description = 'Algorithm_' + str(i+1)
+                alg_folder = os.path.join(problem_folder, description)
+                os.makedirs(alg_folder, exist_ok=True)
+                with open(os.path.join(alg_folder, 'config.txt'), 'w') as f:
+                    f.write(f"Algorithm: {algorithm['algorithm'].__name__}\n")
+                    f.write(f"Arguments: {algorithm['args']}\n")
+                for seed in SEEDS:
+                    alg_args['seed'] = seed
+                    processes.append(pool.apply_async(execution, args=(seed, problem, alg_class, alg_args.copy(), str(seed), alg_folder)))
+
+        # Attende il completamento di tutti i processi
+        for p in processes:
+            p.get()  
+
+
+    # Dopo che tutte le esecuzioni sono completate, genera i grafici di sintesi
     for i, problem in enumerate(PROBLEMS):
         problem_folder = os.path.join(results, f'f_{problem}')
-        os.makedirs(problem_folder, exist_ok=True)
         for algorithm in algorithms:
-            alg_class = algorithm['algorithm']
-            alg_args = algorithm['args']
-            description = algorithm.get('name', '_'.join(map(str, alg_args.values())))
+            description = algorithm.get('name', '_'.join(map(str, algorithm['args'].values())))
             if not description:
                 description = 'Algorithm_' + str(i+1)
             alg_folder = os.path.join(problem_folder, description)
-            os.makedirs(alg_folder, exist_ok=True)
-            with open(os.path.join(alg_folder, 'config.txt'), 'w') as f:
-                f.write(f"Algorithm: {algorithm['algorithm'].__name__}\n")
-                f.write(f"Arguments: {algorithm['args']}\n")
-            for seed in SEEDS:
-                alg_args['seed'] = seed
-                
-                with mp.Pool(processes=PROCESS_COUNT) as pool:
-                    pool.apply(execution, args=(seed, problem, alg_class, alg_args.copy(), str(seed), alg_folder))
             result_files = [f.path for f in os.scandir(alg_folder) if f.is_file() and f.name.endswith('.csv')]
             dfs = []
             for file in result_files:

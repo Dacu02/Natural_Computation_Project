@@ -3,6 +3,8 @@ from time import strftime
 import numpy as np
 from scipy import stats
 from scipy.io import loadmat
+import matplotlib
+matplotlib.use('Agg')   # compatibilità multiprocessing (non grafica su schermo)
 import matplotlib.pyplot as plt
 import multiprocessing as mp
 from pandas import DataFrame, read_csv
@@ -119,11 +121,10 @@ if __name__ == '__main__':
     folder_path = os.path.join(current_dir)
 
     SEEDS: list[int] = [1,2,3]
-    PROBLEMS: list[int] = [1]
-    np.random.seed()  # This uses a system-based source to seed the random number generator
-
+    PROBLEMS: list[int] = [1,2]
+    PROCESS_COUNT = int(os.environ.get('SLURM_CPUS_PER_TASK', mp.cpu_count())) # HPC Unisa, altrimenti locale
+    print(f"Using {PROCESS_COUNT} processes for parallel execution.")
     BOUNDS_MULTIPLIER = 100
-
     results = os.path.join(os.getcwd(), 'results', strftime('%d__%H_%M'))
     os.makedirs(results, exist_ok=True)
 
@@ -156,15 +157,16 @@ if __name__ == '__main__':
 
     
     def execution(seed:int, problem:int, alg_class:Type[Algorithm], alg_args:Dict[str, Any], description:str, folder:str):
+        np.random.seed(seed)  
+        instance = load_gnbg_instance(problemIndex=problem)
+        lb = -BOUNDS_MULTIPLIER*np.ones(instance.Dimension)
+        ub = BOUNDS_MULTIPLIER*np.ones(instance.Dimension)
+        alg_args['generations'] = 10#instance.MaxEvals // alg_args['population']
+        problem_custom_instance = Problem(function=instance.fitness, n_var=instance.Dimension, lb=lb, ub=ub)
+        print(f"\nEsecuzione dell'algoritmo {alg_class.__name__} sul problema f{problem} con seed {seed}")
+        alg_instance = alg_class(problem_custom_instance, **alg_args)
+        
         try:
-            np.random.seed(seed)  
-            instance = load_gnbg_instance(problemIndex=problem)
-            lb = -BOUNDS_MULTIPLIER*np.ones(instance.Dimension)
-            ub = BOUNDS_MULTIPLIER*np.ones(instance.Dimension)
-            alg_args['generations'] = instance.MaxEvals // alg_args['population']
-            problem_custom_instance = Problem(function=instance.fitness, n_var=instance.Dimension, lb=lb, ub=ub)
-            print(f"\nEsecuzione dell'algoritmo {alg_class.__name__} sul problema f{problem} con seed {seed}")
-            alg_instance = alg_class(problem_custom_instance, **alg_args)
             alg_instance.run()
 
         except EarlyStop as e:
@@ -240,13 +242,9 @@ if __name__ == '__main__':
                 f.write(f"Arguments: {algorithm['args']}\n")
             for seed in SEEDS:
                 alg_args['seed'] = seed
-                #n = int(os.environ.get('SLURM_CPUS_PER_TASK', '1'))
-                n = 4
-                if n > 1:
-                    with mp.Pool(processes=n) as pool:
-                        pool.apply(execution, args=(seed, problem, alg_class, alg_args, str(seed), alg_folder))
-                else:
-                    execution(seed, problem, alg_class, alg_args, str(seed), alg_folder)
+                
+                with mp.Pool(processes=PROCESS_COUNT) as pool:
+                    pool.apply(execution, args=(seed, problem, alg_class, alg_args.copy(), str(seed), alg_folder))
             result_files = [f.path for f in os.scandir(alg_folder) if f.is_file() and f.name.endswith('.csv')]
             dfs = []
             for file in result_files:

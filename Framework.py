@@ -1,6 +1,7 @@
 from multiprocessing.pool import AsyncResult
 import os
 from time import strftime
+from matplotlib import cm
 import numpy as np
 from scipy import stats
 from scipy.io import loadmat
@@ -95,7 +96,8 @@ class GNBG:
             error = abs(self.BestFoundResult - self.OptimumValue)
             if error < self.AcceptanceThreshold and np.isinf(self.AcceptanceReachPoint):
                 self.AcceptanceReachPoint = self.FE
-                raise EarlyStop("Raggiunta AcceptanceThreshold")
+                #raise EarlyStop("Raggiunta AcceptanceThreshold") 
+                # Sufficienti rirsorse per continuare l'esecuzione
 
         return result
 
@@ -112,7 +114,7 @@ class GNBG:
 class AlgorithmStructure(TypedDict):
     algorithm: Type[Algorithm]
     args: Dict[str, Any]
-    name: str|None
+    name: str
 
 if __name__ == '__main__':
     # Get the current script's directory
@@ -121,7 +123,7 @@ if __name__ == '__main__':
     # Define the path to the folder where you want to read/write files
     folder_path = os.path.join(current_dir)
 
-    SEEDS: list[int] = [1,2,3]
+    SEEDS: list[int] = [1,2,3,4,5,6]
     PROBLEMS: list[int] = [1,2]
     PROCESS_COUNT = int(os.environ.get('SLURM_CPUS_PER_TASK', mp.cpu_count())) # HPC Unisa, altrimenti locale
     print(f"Using {PROCESS_COUNT} processes for parallel execution.")
@@ -203,7 +205,7 @@ if __name__ == '__main__':
     algorithms: List[AlgorithmStructure] = [{
         'algorithm': ParticleSwarmOptimization,
         'args': {
-            'population': 100,
+            'population': 80,
             'topology': 'VonNeumann',
             'local_weight': 1.5,
             'global_weight': 1.5,
@@ -211,7 +213,7 @@ if __name__ == '__main__':
             'p': 1,
             'r': 1,
         },
-        'name': 'ParticleSwarmOptimization_VonNeumann'
+        'name': 'VonNeumann'
     }, {
         'algorithm': ParticleSwarmOptimization,
         'args': {
@@ -223,7 +225,7 @@ if __name__ == '__main__':
             'k': 3,
             'p': 2,
         },
-        'name': 'ParticleSwarmOptimization_Star'
+        'name': 'Star'
     }]
 
 
@@ -251,10 +253,12 @@ if __name__ == '__main__':
         for p in processes:
             p.get()  
 
-
-    # Dopo che tutte le esecuzioni sono completate, genera i grafici di sintesi
+    # Dopo la fine di tutte le esecuzioni, genera i summary
     for i, problem in enumerate(PROBLEMS):
         problem_folder = os.path.join(results, f'f_{problem}')
+        final_results_per_algorithm: dict[str, np.ndarray|None] = {algorithm['name']: None for algorithm in algorithms}
+        
+        # Gnerazione dei summary tra differenti run di uno stesso algoritmo
         for algorithm in algorithms:
             description = algorithm.get('name', '_'.join(map(str, algorithm['args'].values())))
             if not description:
@@ -271,7 +275,7 @@ if __name__ == '__main__':
                     raise ValueError("All result CSV files must have the same number of rows.")
                 
             arr = np.stack([df.iloc[:, 1].values for df in dfs])  # shape (n_runs, n_gens)
-            
+            final_results_per_algorithm[algorithm['name']] = (arr[:, -1])  # prendi l'ultimo valore di ogni run
             n_runs, n_gens = arr.shape
 
             mean_errors = arr.mean(axis=0)
@@ -283,22 +287,24 @@ if __name__ == '__main__':
 
             x = np.arange(1, n_gens + 1)
 
+            with open(os.path.join(alg_folder, f'results_summary.csv'), 'w') as f:
+                f.write('Generation,MeanError,StdError,MeanEstimatorSE,NRuns\n')
+                for gen in range(n_gens):
+                    f.write(f"{gen+1},{mean_errors[gen]},{std_errors[gen]},{sem[gen]},{n_runs}\n")
+
             plt.figure(figsize=(10, 5))
 
             # singole run 
             for run in arr:
                 plt.plot(x, run, color='lightblue', alpha=0.25, linewidth=0.8)
 
+            # CI al 95%
+            plt.fill_between(x, ci95_low, ci95_high, color='#a6c8ff', alpha=0.5, label='95% CI')
 
-            # banda CI 95% (precisione della media)
-            plt.fill_between(x, ci95_low, ci95_high,
-                            color='tab:pink', alpha=0.25, label='95% CI mean')
-
-            # banda SD (dispersione tra run)
-            plt.fill_between(x, mean_errors - std_errors, mean_errors + std_errors,
-                            color='tab:gray', alpha=0.4, label='±1 SD (spreading)')
+            # Deviazione standard
+            plt.fill_between(x, mean_errors - std_errors, mean_errors + std_errors, color='pink', alpha=0.35, label='Standard Deviation')
             
-            # media
+            # Media
             plt.plot(x, mean_errors, color='tab:blue', linewidth=2, label='Mean Error')
 
             # opzionale: marker con errorbar che mostra SD come barre verticali
@@ -307,18 +313,143 @@ if __name__ == '__main__':
 
             plt.xlabel('Generations')
             plt.ylabel('Error')
-            plt.title(alg_folder)
+            plt.title(f'Convergence Summary of {description} on f{problem}')
             plt.legend()
             plt.grid(alpha=0.3)
             plt.tight_layout()
             plt.savefig(os.path.join(alg_folder, f'convergence_summary.png'))
             plt.clf()
-            
 
-# If you use your own algorithm (not from a library), you can use result = gnbg.fitness(X) to calculate the fitness values of multiple solutions stored in a matrix X.
-# The function returns the fitness values of the solutions in the same order as they are stored in the matrix X.
+        # Plot di confronto delle convergence summary tra algoritmi
+        plt.figure(figsize=(10, 6))
+        for i, algorithm in enumerate(algorithms):
+            description = algorithm['name']
+            alg_folder = os.path.join(problem_folder, description)
+            summary_df = read_csv(os.path.join(alg_folder, 'results_summary.csv'))
+            generations = summary_df['Generation'].values
+            mean_errors = summary_df['MeanError'].values
+            mean_se = summary_df['MeanError'].values
+            ci95_high = mean_errors + (mean_se) * stats.t.ppf(0.975, df=len(SEEDS) - 1) # type: ignore
+            ci95_low = mean_errors - (mean_se) * stats.t.ppf(0.975, df=len(SEEDS) - 1) # type: ignore
+            plt.plot(generations, mean_errors, linewidth=2, label=description) # type: ignore
+            plt.fill_between(generations, ci95_low, ci95_high, alpha=0.2) # type: ignore
+        plt.xlabel('Generations')
+        plt.ylabel('Mean Error')
+        plt.title(f'Convergence Summary Comparison on f{problem}')
 
-# After running the algorithm, the best fitness value is stored in gnbg.BestFoundResult.
-# The best found position is stored in gnbg.BestFoundPosition.
-# The function evaluation number where the algorithm reached the acceptance threshold is stored in gnbg.AcceptanceReachPoint. If the algorithm did not reach the acceptance threshold, it is set to infinity.
-# For visualizing the convergence behavior, the history of the objective values is stored in gnbg.FEhistory, however it needs to be processed as follows:
+        # Generazione dei summary tra differenti algoritmi di ciascun problema
+        with open(os.path.join(problem_folder, f'final_results_summary.csv'), 'w') as f:
+            f.write('Algorithm,MeanFinalError,StdFinalError,MeanSE,ShapiroWilk,FinalResults\n')
+            for alg_name, results_array in final_results_per_algorithm.items():
+                if results_array is not None:
+                    mean_final_error = np.mean(results_array)
+                    std_final_error = np.std(results_array, ddof=1)
+                    sem_final_error = std_final_error / np.sqrt(len(results_array))
+                    results_str = ';'.join(map(str, results_array))
+                    shapiro_stat, shapiro_p = stats.shapiro(results_array)
+                    f.write(f"{alg_name},{mean_final_error},{std_final_error},{sem_final_error},{shapiro_p},{results_str}\n")
+                    if shapiro_p < 0.05:
+                        print(f"Warning: i risultati finali dell'algoritmo {alg_name} sul problema f{problem} sembrano non seguire una distribuzione normale (Shapiro-Wilk p={shapiro_p:.4f})")
+        for i in algorithms:
+            for j in algorithms:
+                    if i['name'] != j['name']:
+                        results_i = final_results_per_algorithm[i['name']]
+                        results_j = final_results_per_algorithm[j['name']]
+                        if results_i is not None and results_j is not None:
+                            stat, p_value = stats.ttest_ind(results_i, results_j)
+                
+        # Matrice di confronto t-test tra algoritmi
+        alg_names = [alg['name'] for alg in algorithms]
+        n_algs = len(alg_names)
+        comparison_matrix = np.zeros((n_algs, n_algs))
+
+        for i_idx, alg_i in enumerate(alg_names):
+            for j_idx, alg_j in enumerate(alg_names):
+                if i_idx != j_idx:
+                    results_i = final_results_per_algorithm[alg_i]
+                    results_j = final_results_per_algorithm[alg_j]
+                    if results_i is not None and results_j is not None:
+                        stat, p_value_two_tailed = stats.ttest_ind(results_i, results_j)
+                        p_value_one_tailed = p_value_two_tailed / 2 # type: ignore
+                        if np.mean(results_i) < np.mean(results_j):
+                            p_value_one_tailed = 1 - p_value_one_tailed
+                        comparison_matrix[i_idx, j_idx] = p_value_one_tailed
+
+        # Salva matrice come immagine
+        plt.figure(figsize=(8, 6))
+        plt.imshow(comparison_matrix, cmap='coolwarm', aspect='auto', vmin=0)
+        for (i, j), value in np.ndenumerate(comparison_matrix):
+            plt.text(j, i, f'{value:.2f}', ha='center', va='center', color='black', weight=1000)
+        plt.colorbar(label='p-value')
+        plt.xticks(range(n_algs), alg_names, ha='right')
+        plt.yticks(range(n_algs), alg_names)
+        plt.title('T-test p-values between algorithms ($H_0: \\mu_{row} > \\mu_{col}$)')
+        plt.tight_layout()
+        plt.savefig(os.path.join(problem_folder, 'algorithms_comparison_matrix.png'), dpi=150)
+        plt.clf()
+
+        # Plot delle distribuzioni finali degli errori come normali, per ogni algoritmo
+        for alg_name, results_array in final_results_per_algorithm.items():
+            if results_array is not None:
+                mean = np.mean(results_array)
+                std = np.std(results_array, ddof=1)
+                mean_se = std / np.sqrt(len(results_array))
+                x = np.linspace(mean - 4*std, mean + 4*std, 100)
+                y = stats.norm.pdf(x, mean, std)
+                
+                plt.figure(figsize=(10, 6))
+                # Normal distribution curve
+                plt.plot(x, y, 'r-', linewidth=2, label=f'$\\mathcal{{N}}({mean:.2f}, {std:.2f})$')
+                # Plot individual results
+                #plt.plot(results_array, stats.norm.pdf(results_array, mean, std), 'x', alpha=1, markersize=9, label='Results')
+                # Plot histogram
+                plt.hist(results_array, bins='auto', density=True, alpha=0.5, label='Histogram of Results')
+                plt.title(f'Final Errors Distribution for {alg_name} on f{problem}')
+                plt.xlabel('Final Error')
+                plt.ylabel('Density')
+                plt.legend()
+                plt.grid(alpha=0.3)
+                plt.tight_layout()
+                plt.savefig(os.path.join(problem_folder, alg_name, f'final_error_distribution_{alg_name}.png'))
+                plt.clf()
+
+        # Plot delle distribuzioni finali degli errori come normali, per tutti gli algoritmi
+        plt.figure(figsize=(10, 6))
+        for i, (alg_name, results_array) in enumerate(final_results_per_algorithm.items()):
+            if results_array is not None:
+                mean = np.mean(results_array)
+                std = np.std(results_array, ddof=1)
+                mean_se = std / np.sqrt(len(results_array))
+                x = np.linspace(mean - 4*std, mean + 4*std, 100)
+                y = stats.norm.pdf(x, mean, std)
+                plt.plot(x, y, label=f'{alg_name} $\\mathcal{{N}}({mean:.2f}, {std:.2f})$') 
+        plt.title(f'Final Errors Distribution of all algorithms on f{problem}')
+        plt.xlabel('Final Error')
+        plt.ylabel('Density')
+        plt.legend()
+        plt.grid(alpha=0.3)
+        plt.tight_layout()
+        plt.savefig(os.path.join(problem_folder, f'final_error_distribution_all_algorithms.png'))
+        plt.clf()
+
+        # Plot sovrapposto delle convergence summary tra algoritmi
+        plt.figure(figsize=(10, 6))
+        for i, algorithm in enumerate(algorithms):
+            description = algorithm['name']
+            alg_folder = os.path.join(problem_folder, description)
+            summary_df = read_csv(os.path.join(alg_folder, 'results_summary.csv'))
+            generations = summary_df['Generation'].values
+            mean_errors = summary_df['MeanError'].values
+            mean_se = summary_df['MeanError'].values
+            #ci95_high = mean_errors + (mean_se) * stats.t.ppf(0.975, df=len(SEEDS) - 1)  # type: ignore
+            #ci95_low = mean_errors - (mean_se) * stats.t.ppf(0.975, df=len(SEEDS) - 1) # type: ignore
+            plt.plot(generations, mean_errors, linewidth=2, label=description) # type: ignore
+            #plt.fill_between(generations, ci95_low, ci95_high, alpha=0.2) # type: ignore
+            plt.xlabel('Generations')
+            plt.ylabel('Mean Error')
+        plt.title(f'Convergence Summary Comparison on f{problem}')
+        plt.legend()
+        plt.grid(alpha=0.3)
+        plt.tight_layout()
+        plt.savefig(os.path.join(problem_folder, f'convergence_summary_comparison.png'))
+        plt.clf()

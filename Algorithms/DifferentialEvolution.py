@@ -29,27 +29,6 @@ class CustomProblem(PymooProblem):
     def _evaluate(self, X, out, *args, **kwargs):
         out["F"] = self._function(X)
 
-def n_ary_tournament(pop, P, **kwargs):
-    # The P input defines the tournaments and competitors
-    n_tournaments, n_competitors = P.shape
-
-    if n_competitors > pop.size:
-        raise Exception("Max pressure greater than pop.size not allowed for tournament!")
-
-    S = np.full(n_tournaments, -1, dtype=int)
-
-    # now do all the tournaments
-    for i in range(n_tournaments):
-        selected = P[i]
-        winner = selected[0]
-        for j in range(n_competitors):
-            # if the first individiual is better, choose it
-            if pop[winner].F > pop[selected[j]].F:
-                winner = selected[j]
-        S[i] = winner
-    return S
-
-
 class DifferentialEvolution(Algorithm):
     """
         Classe per rappresentare l'algoritmo di Differential Evolution (DE).

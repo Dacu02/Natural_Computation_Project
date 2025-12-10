@@ -1,3 +1,5 @@
+from copy import deepcopy
+from itertools import product
 from multiprocessing.pool import AsyncResult
 import os
 from time import strftime
@@ -123,7 +125,7 @@ if __name__ == '__main__':
     # Define the path to the folder where you want to read/write files
     folder_path = os.path.join(current_dir)
 
-    SEEDS: list[int] = [1,2,3,4,5,6]
+    SEEDS: list[int] = [1,2,3]
     PROBLEMS: list[int] = [1,2]
     PROCESS_COUNT = int(os.environ.get('SLURM_CPUS_PER_TASK', mp.cpu_count())) # HPC Unisa, altrimenti locale
     print(f"Using {PROCESS_COUNT} processes for parallel execution.")
@@ -164,7 +166,7 @@ if __name__ == '__main__':
         instance = load_gnbg_instance(problemIndex=problem)
         lb = -BOUNDS_MULTIPLIER*np.ones(instance.Dimension)
         ub = BOUNDS_MULTIPLIER*np.ones(instance.Dimension)
-        alg_args['generations'] = instance.MaxEvals // alg_args['population']
+        alg_args['generations'] = 10#instance.MaxEvals // alg_args['population']
         problem_custom_instance = Problem(function=instance.fitness, n_var=instance.Dimension, lb=lb, ub=ub)
         print(f"\nEsecuzione dell'algoritmo {alg_class.__name__} sul problema f{problem} con seed {seed}")
         alg_instance = alg_class(problem_custom_instance, **alg_args)
@@ -202,18 +204,46 @@ if __name__ == '__main__':
             for fe, err in enumerate(convergence):
                 f.write(f"{fe},{err}\n")
 
-    algorithms: List[AlgorithmStructure] = [{
+    class Combine():
+        """
+            Classe di comodo per rappresentare combinazioni di parametri di algoritmi
+        """
+        def __init__(self, list:list):
+            """
+                Args:
+                    list (list): Parametri da combinare
+            """
+            self._list = list
+
+        def next_element(self):
+            for element in self._list:
+                yield element
+
+
+    list_algorithms: List[AlgorithmStructure] = [{
         'algorithm': ParticleSwarmOptimization,
         'args': {
             'population': 80,
             'topology': 'VonNeumann',
             'local_weight': 1.5,
+            'global_weight': Combine([1, 1.5]),
+            'inertia': 0.7,
+            'p': 1,
+            'r': 1,
+        },
+        'name': 'VonNeumannW1.5'
+    }, {
+        'algorithm': ParticleSwarmOptimization,
+        'args': {
+            'population': 80,
+            'topology': 'VonNeumann',
+            'local_weight': 2,
             'global_weight': 1.5,
             'inertia': 0.7,
             'p': 1,
             'r': 1,
         },
-        'name': 'VonNeumann'
+        'name': 'VonNeumannW2'
     }, {
         'algorithm': ParticleSwarmOptimization,
         'args': {
@@ -228,7 +258,48 @@ if __name__ == '__main__':
         'name': 'Star'
     }]
 
+    def expand_algorithms(list_algorithms:list[AlgorithmStructure]) -> list[AlgorithmStructure]:
+        """
+            Funzione di comodo per espandere tutte le possibili combinazioni specificate tra i parmaetri degli algoritmi
+            In particolare, cerca le istanze di Combine e genera tutte le combinazioni possibili.
+        """
+        expanded = []
 
+        for entry in list_algorithms:
+            args = entry["args"]
+
+            # Trova le chiavi che usano Combine
+            combine_keys = [k for k, v in args.items() if isinstance(v, Combine)]
+
+            if not combine_keys:
+                # Nessuna combinazione → mantieni così com’è
+                expanded.append(entry)
+                continue
+
+            # Recupera tutte le liste di combinazioni
+            combine_lists = [list(args[k].next_element()) for k in combine_keys]
+
+            # Prodotto cartesiano delle combinazioni
+            for combo in product(*combine_lists):
+                new_entry = deepcopy(entry)
+                new_args = new_entry["args"]
+
+                # Sostituisci i Combine con i valori specifici della combinazione
+                for k, v in zip(combine_keys, combo):
+                    new_args[k] = v
+
+                # Aggiorna il nome rendendolo unico
+                new_entry["name"] = new_entry["name"] + "_" + "_".join(
+                    f"{k}{v}" for k, v in zip(combine_keys, combo)
+                )
+
+                expanded.append(new_entry)
+
+        return expanded
+
+    algorithms: List[AlgorithmStructure] = expand_algorithms(list_algorithms)
+    print(algorithms)
+    exit(0)
     processes: list[AsyncResult] = []
     with mp.Pool(processes=PROCESS_COUNT) as pool:
         for i, problem in enumerate(PROBLEMS):
@@ -322,4 +393,4 @@ if __name__ == '__main__':
 
         
         # Generazione dei plot di confronto tra algoritmi
-        summary_plots(problem_folder, [algorithm['name'] for algorithm in algorithms], final_results_per_algorithm, problem, SEEDS)
+        summary_plots(problem_folder, [algorithm['name'] for algorithm in algorithms], final_results_per_algorithm, problem) # type: ignore

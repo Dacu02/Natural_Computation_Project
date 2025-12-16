@@ -4,7 +4,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import stats
 
-# Plot di confronto delle convergence summary tra algoritmi
 def summary_plots(problem_folder: str, algorithms: list[str], results_per_algorithm: dict[str, np.ndarray], problem: int, output_folder:str|None=None) -> None:
     """
         Genera immagini e csv per mostrare il risultato di esperimenti tra più algoritmi
@@ -17,6 +16,7 @@ def summary_plots(problem_folder: str, algorithms: list[str], results_per_algori
     else:
         os.makedirs(output_folder, exist_ok=True)
 
+    # Grafico di confronto delle convergence summary tra algoritmi
     plt.figure(figsize=(10, 6))
     for algorithm in algorithms:
         alg_folder = os.path.join(output_folder, algorithm)
@@ -47,36 +47,36 @@ def summary_plots(problem_folder: str, algorithms: list[str], results_per_algori
                 if shapiro_p < 0.05:
                     print(f"Warning: i risultati finali dell'algoritmo {alg_name} sul problema f{problem} sembrano non seguire una distribuzione normale (Shapiro-Wilk p={shapiro_p:.4f})")
     
-    # Matrice di confronto t-test tra algoritmi
-    n_algs = len(algorithms)
-    comparison_matrix = np.zeros((n_algs, n_algs))
+    # # Matrice di confronto t-test tra algoritmi
+    # n_algs = len(algorithms)
+    # comparison_matrix = np.zeros((n_algs, n_algs))
 
-    for i_idx, alg_i in enumerate(algorithms):
-        for j_idx, alg_j in enumerate(algorithms):
-            if i_idx != j_idx:
-                results_i = results_per_algorithm[alg_i]
-                results_j = results_per_algorithm[alg_j]
-                if results_i is not None and results_j is not None:
-                    stat, p_value_two_tailed = stats.ttest_ind(results_i, results_j)
-                    p_value_one_tailed = p_value_two_tailed / 2 # type: ignore
-                    if np.mean(results_i) < np.mean(results_j):
-                        p_value_one_tailed = 1 - p_value_one_tailed
-                    comparison_matrix[i_idx, j_idx] = p_value_one_tailed
-            else:
-                comparison_matrix[i_idx, j_idx] = 0.5  # diagonale
+    # for i_idx, alg_i in enumerate(algorithms):
+    #     for j_idx, alg_j in enumerate(algorithms):
+    #         if i_idx != j_idx:
+    #             results_i = results_per_algorithm[alg_i]
+    #             results_j = results_per_algorithm[alg_j]
+    #             if results_i is not None and results_j is not None:
+    #                 stat, p_value_two_tailed = stats.ttest_ind(results_i, results_j)
+    #                 p_value_one_tailed = p_value_two_tailed / 2 # type: ignore
+    #                 if np.mean(results_i) < np.mean(results_j):
+    #                     p_value_one_tailed = 1 - p_value_one_tailed
+    #                 comparison_matrix[i_idx, j_idx] = p_value_one_tailed
+    #         else:
+    #             comparison_matrix[i_idx, j_idx] = 0.5  # diagonale
 
-    # Salva matrice come immagine
-    plt.figure(figsize=(8, 6))
-    plt.imshow(comparison_matrix, cmap='coolwarm', aspect='auto', vmin=0, vmax=1)
-    for (i, j), value in np.ndenumerate(comparison_matrix):
-        plt.text(j, i, f'{value:.2f}', ha='center', va='center', color='black', weight=1000)
-    plt.colorbar(label='p-value')
-    plt.xticks(range(n_algs), algorithms, ha='right')
-    plt.yticks(range(n_algs), algorithms)
-    plt.title('T-test p-values between algorithms ($H_0: \\mu_{row} > \\mu_{col}$)')
-    plt.tight_layout()
-    plt.savefig(os.path.join(output_folder, 'algorithms_comparison_matrix.png'), dpi=150)
-    plt.clf()
+    # # Salva matrice come immagine
+    # plt.figure(figsize=(8, 6))
+    # plt.imshow(comparison_matrix, cmap='coolwarm', aspect='auto', vmin=0, vmax=1)
+    # for (i, j), value in np.ndenumerate(comparison_matrix):
+    #     plt.text(j, i, f'{value:.2f}', ha='center', va='center', color='black', weight=1000)
+    # plt.colorbar(label='p-value')
+    # plt.xticks(range(n_algs), algorithms, ha='right')
+    # plt.yticks(range(n_algs), algorithms)
+    # plt.title('T-test p-values between algorithms ($H_0: \\mu_{row} > \\mu_{col}$)')
+    # plt.tight_layout()
+    # plt.savefig(os.path.join(output_folder, 'algorithms_comparison_matrix.png'), dpi=150)
+    # plt.clf()
 
     # Plot delle distribuzioni finali degli errori come normali, per ogni algoritmo
     for alg_name, results_array in results_per_algorithm.items():

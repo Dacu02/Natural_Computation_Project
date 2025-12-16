@@ -35,6 +35,26 @@ TOPOLOGIES = Literal[
     "Random"
 ] # Tipi di topologie disponibili per il PSO
 
+
+from pyswarms.backend.topology.random import Random as PSRandom
+import numpy as np
+
+# Hard Fix della topologia Random per risolvere errore di compatibilità Numpy 
+def patched_compute_gbest(self, swarm, k, **kwargs):
+    # chiama la logica originale fino al punto di costruzione di neighbor_idx,
+    # oppure ricostruisci neighbor_idx e poi esegui il resto come nell'esempio precedente.
+    adj_matrix = self._Random__compute_neighbors(swarm, k)  # se disponibile
+    self.neighbor_idx = [adj_matrix[i].nonzero()[0] for i in range(swarm.n_particles)]
+    # poi replica il resto del comportamento originale (vedi esempio di subclass)
+    idx_min = np.array([swarm.pbest_cost[self.neighbor_idx[i]].argmin() for i in range(len(self.neighbor_idx))])
+    best_neighbor = np.array([self.neighbor_idx[i][idx_min[i]] for i in range(len(self.neighbor_idx))]).astype(int)
+    best_cost = np.min(swarm.pbest_cost[best_neighbor])
+    best_pos = swarm.pbest_pos[best_neighbor]
+    return (best_pos, best_cost)
+
+PSRandom.compute_gbest = patched_compute_gbest
+
+
 class ParticleSwarmOptimization(Algorithm):
     """
         Classe per rappresentare l'algoritmo di Particle Swarm Optimization (PSO).

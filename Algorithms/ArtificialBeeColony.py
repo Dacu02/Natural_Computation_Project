@@ -1,14 +1,7 @@
 from typing import Literal
 import numpy as np
 from beeoptimal.abc import ArtificialBeeColony as _ABC
-from beeoptimal.benchmarks import BenchmarkFunction
 from Algorithms import Problem, Algorithm
-class CustomFunction(BenchmarkFunction):
-    def __init__(self, function:callable, bounds):
-        super().__init__(fun=function, bounds=np.array(bounds), name="Custom GNBG Function")
-
-    def evaluate(self, x):
-        return self.fun(x)
     
 class ArtificialBeeColony(Algorithm):
     """Classe per l'algoritmo Artificial Bee Colony."""
@@ -60,7 +53,6 @@ class ArtificialBeeColony(Algorithm):
         )
     
     def _set_problem(self, problem: Problem):
-        #self._custom_function = CustomFunction(fun=problem.function, bounds=self._bounds)
         pass
 
     def run(self):

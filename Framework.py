@@ -125,8 +125,8 @@ if __name__ == '__main__':
     # Define the path to the folder where you want to read/write files
     folder_path = os.path.join(current_dir)
 
-    SEEDS: list[int] = [1,2,3,4]
-    PROBLEMS: list[int] = [1,2]
+    SEEDS: list[int] = [5751]#, 94862, 48425, 79431, 28465, 917654, 468742131, 745612, 1354987, 126879]
+    PROBLEMS: list[int] = [4]#, 12, 20]
     PROCESS_COUNT = int(os.environ.get('SLURM_CPUS_PER_TASK', mp.cpu_count())) # HPC Unisa, altrimenti locale
     print(f"Using {PROCESS_COUNT} processes for parallel execution.")
     BOUNDS_MULTIPLIER = 100
@@ -166,7 +166,7 @@ if __name__ == '__main__':
         instance = load_gnbg_instance(problemIndex=problem)
         lb = -BOUNDS_MULTIPLIER*np.ones(instance.Dimension)
         ub = BOUNDS_MULTIPLIER*np.ones(instance.Dimension)
-        alg_args['generations'] = instance.MaxEvals // alg_args['population']
+        alg_args['generations'] = 10#instance.MaxEvals // alg_args['population']
         problem_custom_instance = Problem(function=instance.fitness, n_var=instance.Dimension, lb=lb, ub=ub)
         print(f"\nEsecuzione dell'algoritmo {alg_class.__name__} sul problema f{problem} con seed {seed}")
         alg_instance = alg_class(problem_custom_instance, **alg_args)
@@ -223,38 +223,45 @@ if __name__ == '__main__':
     list_algorithms: List[AlgorithmStructure] = [{
         'algorithm': ParticleSwarmOptimization,
         'args': {
-            'population': 80,
+            'population': Combine([50, 100, 500, 1000, 2500, 5000, 7500, 10000]),
             'topology': 'Random',
-            'local_weight': 2,
-            'global_weight': 1.5,
-            'inertia': 0.7,
-            'k': 2,
+            'local_weight': Combine([1.25, 1.33, 1.5, 1.75]),
+            'global_weight': Combine([1.25, 1.33, 1.5, 1.75]),
+            'inertia': Combine([0, .5, 1, 1.5, 2]),
+            'k': Combine([1,2,3]),
         },
         'name': 'Random'
     }, {
         'algorithm': ParticleSwarmOptimization,
         'args': {
-            'population': 80,
+            'population': Combine([50, 100, 500, 1000, 2500, 5000, 7500, 10000]),
             'topology': 'VonNeumann',
-            'local_weight': 1.5,
-            'global_weight': 1,
-            'inertia': 0.7,
-            'p': 1,
-            'r': 1,
+            'local_weight': Combine([1.25, 1.33, 1.5, 1.75]),
+            'global_weight': Combine([1.25, 1.33, 1.5, 1.75]),
+            'inertia': Combine([0, .5, 1, 1.5, 2]),
+            'p': Combine([1, 2]),
+            'r': Combine([1,2,3]),
         },
         'name': 'VN'
     }, {
         'algorithm': ParticleSwarmOptimization,
         'args': {
-            'population': 100,
+            'population': Combine([50, 100, 500, 1000, 2500, 5000, 7500, 10000]),
             'topology': 'Star',
-            'local_weight': 1.5,
-            'global_weight': 1.5,
-            'inertia': 0.7,
-            'k': 3,
-            'p': 2,
+            'local_weight': Combine([1.25, 1.33, 1.5, 1.75]),
+            'global_weight': Combine([1.25, 1.33, 1.5, 1.75]),
+            'inertia': Combine([0, .5, 1, 1.5, 2]),
+            'k': Combine([1,2,3]),
+            'p': Combine([1, 2]),
         },
         'name': 'Star'
+    }, {
+        'algorithm': ArtificialBeeColony,
+        'args': {
+            'population': Combine([50, 100, 500, 1000, 2500, 5000, 7500, 10000]),
+            'max_scouts': Combine([10, 20, 50, 100])
+        },
+        'name': 'ABC'
     }]
 
     def expand_algorithms(list_algorithms:list[AlgorithmStructure]) -> list[AlgorithmStructure]:

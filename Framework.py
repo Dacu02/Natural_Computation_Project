@@ -125,7 +125,7 @@ if __name__ == '__main__':
     # Define the path to the folder where you want to read/write files
     folder_path = os.path.join(current_dir)
 
-    SEEDS: list[int] = [5751]#, 94862, 48425, 79431, 28465, 917654, 468742131, 745612, 1354987, 126879]
+    SEEDS: list[int] = [5751, 94862, 48425]#, 79431, 28465, 917654, 468742131, 745612, 1354987, 126879]
     PROBLEMS: list[int] = [4]#, 12, 20]
     PROCESS_COUNT = int(os.environ.get('SLURM_CPUS_PER_TASK', mp.cpu_count())) # HPC Unisa, altrimenti locale
     print(f"Using {PROCESS_COUNT} processes for parallel execution.")
@@ -223,22 +223,22 @@ if __name__ == '__main__':
     list_algorithms: List[AlgorithmStructure] = [{
         'algorithm': ParticleSwarmOptimization,
         'args': {
-            'population': Combine([50, 100, 500, 1000, 2500, 5000, 7500, 10000]),
+            'population': Combine([50, 100, 1000, 5000, 10000]),
             'topology': 'Random',
-            'local_weight': Combine([1.25, 1.33, 1.5, 1.75]),
-            'global_weight': Combine([1.25, 1.33, 1.5, 1.75]),
-            'inertia': Combine([0, .5, 1, 1.5, 2]),
+            'local_weight': Combine([1.25, 1.5, 1.75]),
+            'global_weight': Combine([1.25, 1.5, 1.75]),
+            'inertia': Combine([0, .25, .5, .75]),
             'k': Combine([1,2,3]),
         },
         'name': 'Random'
     }, {
         'algorithm': ParticleSwarmOptimization,
         'args': {
-            'population': Combine([50, 100, 500, 1000, 2500, 5000, 7500, 10000]),
+            'population': Combine([50, 100, 1000, 5000, 10000]),
             'topology': 'VonNeumann',
-            'local_weight': Combine([1.25, 1.33, 1.5, 1.75]),
-            'global_weight': Combine([1.25, 1.33, 1.5, 1.75]),
-            'inertia': Combine([0, .5, 1, 1.5, 2]),
+            'local_weight': Combine([1.25, 1.5, 1.75]),
+            'global_weight': Combine([1.25, 1.5, 1.75]),
+            'inertia': Combine([0, .25, .5, .75]),
             'p': Combine([1, 2]),
             'r': Combine([1,2,3]),
         },
@@ -246,11 +246,11 @@ if __name__ == '__main__':
     }, {
         'algorithm': ParticleSwarmOptimization,
         'args': {
-            'population': Combine([50, 100, 500, 1000, 2500, 5000, 7500, 10000]),
+            'population': Combine([50, 100, 1000, 5000, 10000]),
             'topology': 'Star',
-            'local_weight': Combine([1.25, 1.33, 1.5, 1.75]),
-            'global_weight': Combine([1.25, 1.33, 1.5, 1.75]),
-            'inertia': Combine([0, .5, 1, 1.5, 2]),
+            'local_weight': Combine([1.25, 1.5, 1.75]),
+            'global_weight': Combine([1.25, 1.5, 1.75]),
+            'inertia': Combine([0, .25, .5, .75]),
             'k': Combine([1,2,3]),
             'p': Combine([1, 2]),
         },
@@ -258,7 +258,7 @@ if __name__ == '__main__':
     }, {
         'algorithm': ArtificialBeeColony,
         'args': {
-            'population': Combine([50, 100, 500, 1000, 2500, 5000, 7500, 10000]),
+            'population': Combine([50, 100, 1000, 5000, 10000]),
             'max_scouts': Combine([10, 20, 50, 100])
         },
         'name': 'ABC'
@@ -304,6 +304,7 @@ if __name__ == '__main__':
         return expanded
 
     algorithms: List[AlgorithmStructure] = expand_algorithms(list_algorithms)
+    print(f"{len(algorithms)} algorithms to execute, each for {len(SEEDS)} seeds for {len(PROBLEMS)} problems.")
     processes: list[AsyncResult] = []
     with mp.Pool(processes=PROCESS_COUNT) as pool:
         for i, problem in enumerate(PROBLEMS):
@@ -326,13 +327,18 @@ if __name__ == '__main__':
 
         # Attende il completamento di tutti i processi
         for p in processes:
-            p.get()  
+            try:
+                p.get()
+            except Exception as e:
+                print(f"Errore in un processo figlio: {e}")
 
     # Dopo la fine di tutte le esecuzioni, genera i summary
     for i, problem in enumerate(PROBLEMS):
         problem_folder = os.path.join(results, f'f_{problem}')
         final_results_per_algorithm: dict[str, np.ndarray|None] = {algorithm['name']: None for algorithm in algorithms}
         
+        algorithm_unrun = []
+
         # Gnerazione dei summary tra differenti run di uno stesso algoritmo
         for algorithm in algorithms:
             description = algorithm.get('name', '_'.join(map(str, algorithm['args'].values())))
@@ -343,12 +349,15 @@ if __name__ == '__main__':
             dfs = []
             for file in result_files:
                 dfs.append(read_csv(file))
-
-            length = len(dfs[0])
-            for df in dfs:
-                if len(df) != length:
-                    raise ValueError("All result CSV files must have the same number of rows.")
-                
+            try:
+                length = len(dfs[0])
+                for df in dfs:
+                    if len(df) != length:
+                        raise ValueError("All result CSV files must have the same number of rows.")
+            except IndexError:
+                algorithm_unrun.append(algorithm)
+                continue
+                    
             arr = np.stack([df.iloc[:, 1].values for df in dfs])  # shape (n_runs, n_gens)
             final_results_per_algorithm[algorithm['name']] = (arr[:, -1])  # prendi l'ultimo valore di ogni run
             n_runs, n_gens = arr.shape
@@ -397,4 +406,9 @@ if __name__ == '__main__':
 
         
         # Generazione dei plot di confronto tra algoritmi
+        for algorithm in algorithm_unrun:
+            final_results_per_algorithm.pop(algorithm['name'])
+            algorithms.pop(algorithms.index(algorithm))
+            print(f"Algorithm {algorithm['name']} was not run on problem f{problem} and will be excluded from the comparison plot.")
+
         summary_plots(problem_folder, [algorithm['name'] for algorithm in algorithms], final_results_per_algorithm, problem) # type: ignore

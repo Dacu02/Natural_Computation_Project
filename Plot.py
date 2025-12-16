@@ -15,11 +15,11 @@ def summary_plots(problem_folder: str, algorithms: list[str], results_per_algori
     if not output_folder:
         output_folder = problem_folder
     else:
-        os.makedirs(problem_folder, exist_ok=True)
+        os.makedirs(output_folder, exist_ok=True)
 
     plt.figure(figsize=(10, 6))
     for algorithm in algorithms:
-        alg_folder = os.path.join(problem_folder, algorithm)
+        alg_folder = os.path.join(output_folder, algorithm)
         summary_df = read_csv(os.path.join(alg_folder, 'results_summary.csv'))
         generations = summary_df['Generation'].values
         mean_errors = summary_df['MeanError'].values
@@ -100,7 +100,7 @@ def summary_plots(problem_folder: str, algorithms: list[str], results_per_algori
             plt.legend()
             plt.grid(alpha=0.3)
             plt.tight_layout()
-            plt.savefig(os.path.join(problem_folder, alg_name, f'final_error_distribution_{alg_name}.png'))
+            plt.savefig(os.path.join(output_folder, alg_name, f'final_error_distribution_{alg_name}.png'))
             plt.clf()
 
     # Plot delle distribuzioni finali degli errori come normali, per tutti gli algoritmi
@@ -125,7 +125,7 @@ def summary_plots(problem_folder: str, algorithms: list[str], results_per_algori
     # Plot sovrapposto delle convergence summary tra algoritmi
     plt.figure(figsize=(10, 6))
     for i, algorithm in enumerate(algorithms):
-        alg_folder = os.path.join(problem_folder, algorithm)
+        alg_folder = os.path.join(output_folder, algorithm)
         summary_df = read_csv(os.path.join(alg_folder, 'results_summary.csv'))
         generations = summary_df['Generation'].values
         mean_errors = summary_df['MeanError'].values

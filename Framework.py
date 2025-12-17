@@ -223,22 +223,22 @@ if __name__ == '__main__':
     list_algorithms: List[AlgorithmStructure] = [{
         'algorithm': ParticleSwarmOptimization,
         'args': {
-            'population': Combine([50, 100, 1000, 5000, 10000]),
+            'population': Combine([50, 100, 1000, 10000]),
             'topology': 'Random',
-            'local_weight': Combine([1.25, 1.5, 1.75]),
-            'global_weight': Combine([1.25, 1.5, 1.75]),
-            'inertia': Combine([0, .25, .5, .75]),
+            'local_weight': Combine([1.33, 1.66]),
+            'global_weight': Combine([1.33, 1.66]),
+            'inertia': Combine([.33, .66]),
             'k': Combine([1,2,3]),
         },
         'name': 'Random'
     }, {
         'algorithm': ParticleSwarmOptimization,
         'args': {
-            'population': Combine([50, 100, 1000, 5000, 10000]),
+            'population': Combine([50, 100, 1000, 10000]),
             'topology': 'VonNeumann',
-            'local_weight': Combine([1.25, 1.5, 1.75]),
-            'global_weight': Combine([1.25, 1.5, 1.75]),
-            'inertia': Combine([0, .25, .5, .75]),
+            'local_weight': Combine([1.33, 1.66]),
+            'global_weight': Combine([1.33, 1.66]),
+            'inertia': Combine([.33, .66]),
             'p': Combine([1, 2]),
             'r': Combine([1,2,3]),
         },
@@ -246,11 +246,11 @@ if __name__ == '__main__':
     }, {
         'algorithm': ParticleSwarmOptimization,
         'args': {
-            'population': Combine([50, 100, 1000, 5000, 10000]),
+            'population': Combine([50, 100, 1000, 10000]),
             'topology': 'Star',
-            'local_weight': Combine([1.25, 1.5, 1.75]),
-            'global_weight': Combine([1.25, 1.5, 1.75]),
-            'inertia': Combine([0, .25, .5, .75]),
+            'local_weight': Combine([1.33, 1.66]),
+            'global_weight': Combine([1.33, 1.66]),
+            'inertia': Combine([.33, .66]),
             'k': Combine([1,2,3]),
             'p': Combine([1, 2]),
         },
@@ -258,7 +258,7 @@ if __name__ == '__main__':
     }, {
         'algorithm': ArtificialBeeColony,
         'args': {
-            'population': Combine([50, 100, 1000, 5000, 10000]),
+            'population': Combine([50, 100, 1000, 10000]),
             'max_scouts': Combine([10, 20, 50, 100])
         },
         'name': 'ABC'

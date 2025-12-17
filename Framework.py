@@ -126,11 +126,12 @@ if __name__ == '__main__':
     # Define the path to the folder where you want to read/write files
     folder_path = os.path.join(current_dir)
 
-    SEEDS: list[int] = [5751, 94862, 48425, 79431, 28465, 917654, 468742131, 745612, 1354987, 126879]
+    SEEDS: list[int] = [5751, 94862, 48425]#, 79431, 28465, 917654, 468742131, 745612, 1354987, 126879]
     PROBLEMS: list[int] = [4, 12, 20]
     PROCESS_COUNT = int(os.environ.get('SLURM_CPUS_PER_TASK', mp.cpu_count())) # HPC Unisa, altrimenti locale
     print(f"Using {PROCESS_COUNT} processes for parallel execution.")
     BOUNDS_MULTIPLIER = 100
+    
 
     def load_gnbg_instance(problemIndex: int):
         if 1 <= problemIndex <= 24:
@@ -165,7 +166,7 @@ if __name__ == '__main__':
         instance = load_gnbg_instance(problemIndex=problem)
         lb = -BOUNDS_MULTIPLIER*np.ones(instance.Dimension)
         ub = BOUNDS_MULTIPLIER*np.ones(instance.Dimension)
-        alg_args['generations'] = instance.MaxEvals // alg_args['population']
+        alg_args['generations'] = 10#instance.MaxEvals // alg_args['population']
         problem_custom_instance = Problem(function=instance.fitness, n_var=instance.Dimension, lb=lb, ub=ub)
         print(f"\nEsecuzione dell'algoritmo {alg_class.__name__} sul problema f{problem} con seed {seed}")
         alg_instance = alg_class(problem_custom_instance, **alg_args)
@@ -263,9 +264,17 @@ if __name__ == '__main__':
         'name': 'ABC'
     }]
 
+    args = sys.argv
+    if args and len(args) > 1:
+        list_algorithms = [list_algorithms[int(args[1])]]
+    if args and len(args) > 2:
+        run_name = args[2]
+    else:
+        run_name = strftime('%d__%H_%M')
+
     results = os.path.join(os.getcwd(), 'results', run_name)
     os.makedirs(results, exist_ok=True)
-
+        
     def expand_algorithms(list_algorithms:list[AlgorithmStructure]) -> list[AlgorithmStructure]:
         """
             Funzione di comodo per espandere tutte le possibili combinazioni specificate tra i parmaetri degli algoritmi

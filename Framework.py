@@ -131,7 +131,7 @@ if __name__ == '__main__':
     PROCESS_COUNT = int(os.environ.get('SLURM_CPUS_PER_TASK', mp.cpu_count())) # HPC Unisa, altrimenti locale
     print(f"Using {PROCESS_COUNT} processes for parallel execution.")
     BOUNDS_MULTIPLIER = 100
-    
+    MINIMAL_FRAMEWORK = True  # Se true, disabilita stampe extra e dati non essenziali
 
     def load_gnbg_instance(problemIndex: int):
         if 1 <= problemIndex <= 24:
@@ -191,18 +191,25 @@ if __name__ == '__main__':
         print(f"Function evaluations to reach acceptance threshold: {instance.AcceptanceReachPoint if not np.isinf(instance.AcceptanceReachPoint) else 'Not reached'}")
         print("FE usate:", instance.FE)
         print("MaxEvals:", instance.MaxEvals)
-        # Plotting the convergence
-        plt.plot(range(1, len(convergence) + 1), convergence)
-        plt.xlabel('Function Evaluation Number (FE)')
-        plt.ylabel('Error')
-        plt.title('Convergence Plot')
-        plt.yscale('log')  # Set y-axis to logarithmic scale
-        plt.savefig(os.path.join(folder, f'convergence_{description}.png'))
-        plt.clf()  # Clear the figure for the next plot
-        with open(os.path.join(folder, f'results_{description}.csv'), 'w') as f:
-            f.write('FunctionEvaluation,Error\n')
-            for fe, err in enumerate(convergence):
-                f.write(f"{fe},{err}\n")
+
+        if not MINIMAL_FRAMEWORK:
+            # Plotting the convergence
+            plt.plot(range(1, len(convergence) + 1), convergence)
+            plt.xlabel('Function Evaluation Number (FE)')
+            plt.ylabel('Error')
+            plt.title('Convergence Plot')
+            plt.yscale('log')  # Set y-axis to logarithmic scale
+            plt.savefig(os.path.join(folder, f'convergence_{description}.png'))
+            plt.clf()  # Clear the figure for the next plot
+            with open(os.path.join(folder, f'results_{description}.csv'), 'w') as f:
+                f.write('FunctionEvaluation,Error\n')
+                for fe, err in enumerate(convergence):
+                    f.write(f"{fe},{err}\n")
+        else:
+            with open(os.path.join(folder, f'results_{description}.csv'), 'w') as f:
+                f.write('LastFunctionEvaluation,MinimumError\n')
+                f.write(f"{instance.FE},{convergence[-1]}\n")
+
 
     class Combine():
         """
@@ -344,82 +351,121 @@ if __name__ == '__main__':
                 print(f"Errore in un processo figlio: {e}")
 
     # Dopo la fine di tutte le esecuzioni, genera i summary
-    for i, problem in enumerate(PROBLEMS):
-        problem_folder = os.path.join(results, f'f_{problem}')
-        final_results_per_algorithm: dict[str, np.ndarray|None] = {algorithm['name']: None for algorithm in algorithms}
-        
-        algorithm_unrun = []
-
-        # Gnerazione dei summary tra differenti run di uno stesso algoritmo
-        for algorithm in algorithms:
-            description = algorithm.get('name', '_'.join(map(str, algorithm['args'].values())))
-            if not description:
-                description = 'Algorithm_' + str(i+1)
-            alg_folder = os.path.join(problem_folder, description)
-            result_files = [f.path for f in os.scandir(alg_folder) if f.is_file() and f.name.endswith('.csv')]
-            dfs = []
-            for file in result_files:
-                dfs.append(read_csv(file))
-            try:
-                length = len(dfs[0])
-                for df in dfs:
-                    if len(df) != length:
-                        raise ValueError("All result CSV files must have the same number of rows.")
-            except IndexError:
-                algorithm_unrun.append(algorithm)
-                continue
-                    
-            arr = np.stack([df.iloc[:, 1].values for df in dfs])  # shape (n_runs, n_gens)
-            final_results_per_algorithm[algorithm['name']] = (arr[:, -1])  # prendi l'ultimo valore di ogni run
-            n_runs, n_gens = arr.shape
-
-            mean_errors = arr.mean(axis=0)
-            std_errors  = arr.std(axis=0, ddof=1)            # std tra run
-            sem = std_errors / np.sqrt(n_runs)               # std della media
-            t = stats.t.ppf(0.975, df=n_runs - 1)            # 95% CI
-            ci95_low  = mean_errors - t * sem
-            ci95_high = mean_errors + t * sem
-
-            x = np.arange(1, n_gens + 1)
-
-            with open(os.path.join(alg_folder, f'results_summary.csv'), 'w') as f:
-                f.write('Generation,MeanError,StdError,MeanEstimatorSE,NRuns\n')
-                for gen in range(n_gens):
-                    f.write(f"{gen+1},{mean_errors[gen]},{std_errors[gen]},{sem[gen]},{n_runs}\n")
-
-            plt.figure(figsize=(10, 5))
-
-            # singole run 
-            for run in arr:
-                plt.plot(x, run, color='lightblue', alpha=0.25, linewidth=0.8)
-
-            # CI al 95%
-            plt.fill_between(x, ci95_low, ci95_high, color='#a6c8ff', alpha=0.5, label='95% CI')
-
-            # Deviazione standard
-            plt.fill_between(x, mean_errors - std_errors, mean_errors + std_errors, color='pink', alpha=0.35, label='Standard Deviation')
+    if not MINIMAL_FRAMEWORK:
+        for i, problem in enumerate(PROBLEMS):
+            problem_folder = os.path.join(results, f'f_{problem}')
+            final_results_per_algorithm: dict[str, np.ndarray|None] = {algorithm['name']: None for algorithm in algorithms}
             
-            # Media
-            plt.plot(x, mean_errors, color='tab:blue', linewidth=2, label='Mean Error')
+            algorithm_unrun = []
 
-            # opzionale: marker con errorbar che mostra SD come barre verticali
-            # plt.errorbar(x, mean_errors, yerr=std_errors, fmt='o', color='tab:blue',
-                        # ecolor='lightcoral', elinewidth=1, capsize=3, markersize=3, alpha=0.9)
+            # Gnerazione dei summary tra differenti run di uno stesso algoritmo
+            for algorithm in algorithms:
+                description = algorithm.get('name', '_'.join(map(str, algorithm['args'].values())))
+                if not description:
+                    description = 'Algorithm_' + str(i+1)
+                alg_folder = os.path.join(problem_folder, description)
+                result_files = [f.path for f in os.scandir(alg_folder) if f.is_file() and f.name.endswith('.csv')]
+                dfs = []
+                for file in result_files:
+                    dfs.append(read_csv(file))
+                try:
+                    length = len(dfs[0])
+                    for df in dfs:
+                        if len(df) != length:
+                            raise ValueError("All result CSV files must have the same number of rows.")
+                except IndexError:
+                    algorithm_unrun.append(algorithm)
+                    continue
+                        
+                arr = np.stack([df.iloc[:, 1].values for df in dfs])  # shape (n_runs, n_gens)
+                final_results_per_algorithm[algorithm['name']] = (arr[:, -1])  # prendi l'ultimo valore di ogni run
+                n_runs, n_gens = arr.shape
 
-            plt.xlabel('Generations')
-            plt.ylabel('Error')
-            plt.title(f'Convergence Summary of {description} on f{problem}')
-            plt.legend()
-            plt.grid(alpha=0.3)
-            plt.tight_layout()
-            plt.savefig(os.path.join(alg_folder, f'convergence_summary.png'))
-            plt.clf()
+                mean_errors = arr.mean(axis=0)
+                std_errors  = arr.std(axis=0, ddof=1)            # std tra run
+                sem = std_errors / np.sqrt(n_runs)               # std della media
+                t = stats.t.ppf(0.975, df=n_runs - 1)            # 95% CI
+                ci95_low  = mean_errors - t * sem
+                ci95_high = mean_errors + t * sem
 
-        
-        # Generazione dei plot di confronto tra algoritmi
-        for algorithm in algorithm_unrun:
-            final_results_per_algorithm.pop(algorithm['name'])
-            algorithms.pop(algorithms.index(algorithm))
-            print(f"Algorithm {algorithm['name']} was not run on problem f{problem} and will be excluded from the comparison plot.")
+                x = np.arange(1, n_gens + 1)
 
-        #summary_plots(problem_folder, [algorithm['name'] for algorithm in algorithms], final_results_per_algorithm, problem) # type: ignore
+                with open(os.path.join(alg_folder, f'results_summary.csv'), 'w') as f:
+                    f.write('Generation,MeanError,StdError,MeanEstimatorSE,NRuns\n')
+                    for gen in range(n_gens):
+                        f.write(f"{gen+1},{mean_errors[gen]},{std_errors[gen]},{sem[gen]},{n_runs}\n")
+
+
+                plt.figure(figsize=(10, 5))
+
+                # singole run 
+                for run in arr:
+                    plt.plot(x, run, color='lightblue', alpha=0.25, linewidth=0.8)
+
+                # CI al 95%
+                plt.fill_between(x, ci95_low, ci95_high, color='#a6c8ff', alpha=0.5, label='95% CI')
+
+                # Deviazione standard
+                plt.fill_between(x, mean_errors - std_errors, mean_errors + std_errors, color='pink', alpha=0.35, label='Standard Deviation')
+                
+                # Media
+                plt.plot(x, mean_errors, color='tab:blue', linewidth=2, label='Mean Error')
+
+                # opzionale: marker con errorbar che mostra SD come barre verticali
+                # plt.errorbar(x, mean_errors, yerr=std_errors, fmt='o', color='tab:blue',
+                            # ecolor='lightcoral', elinewidth=1, capsize=3, markersize=3, alpha=0.9)
+
+                plt.xlabel('Generations')
+                plt.ylabel('Error')
+                plt.title(f'Convergence Summary of {description} on f{problem}')
+                plt.legend()
+                plt.grid(alpha=0.3)
+                plt.tight_layout()
+                plt.savefig(os.path.join(alg_folder, f'convergence_summary.png'))
+                plt.clf()
+
+            for algorithm in algorithm_unrun:
+                final_results_per_algorithm.pop(algorithm['name'])
+                algorithms.pop(algorithms.index(algorithm))
+                print(f"Algorithm {algorithm['name']} was not run on problem f{problem} and will be excluded from the comparison plot.")
+    else:
+        for _, problem in enumerate(PROBLEMS):
+            algorithm_unrun = []
+            problem_folder = os.path.join(results, f'f_{problem}')
+            alg_errors = {}
+            
+            for algorithm in algorithms:
+                description = algorithm.get('name', '_'.join(map(str, algorithm['args'].values())))
+                alg_folder = os.path.join(problem_folder, description)
+                result_files = [f.path for f in os.scandir(alg_folder) if f.is_file() and f.name.endswith('.csv')]
+                alg_errors[description] = []
+
+                for file in result_files:
+                    df = read_csv(file)
+                    os.remove(file)
+                    alg_errors[description].append(df.iloc[-1, 1])  # ultimo valore
+
+                os.remove(os.path.join(alg_folder, 'config.txt'))
+                os.rmdir(alg_folder)
+                if not alg_errors[description]:
+                    algorithm_unrun.append(algorithm)
+
+            for algorithm in algorithm_unrun:
+                print(f"Algorithm {algorithm['name']} was not run on problem f{problem} and will be excluded from the comparison plot.")
+                alg_errors.pop(algorithm['name'])
+                algorithms.pop(algorithms.index(algorithm))
+
+                # Rimuovi anche le cartelle degli altri problemi
+                for pr in PROBLEMS:
+                    pr_folder = os.path.join(results, f'f_{pr}')
+                    pr_alg_folder = os.path.join(pr_folder, algorithm['name'])
+                    if os.path.exists(pr_alg_folder):
+                        for file in os.listdir(pr_alg_folder):
+                            os.remove(os.path.join(pr_alg_folder, file))
+                        os.rmdir(pr_alg_folder)
+
+            with open(os.path.join(results, f'{problem}_summary_errors.csv'), 'w') as f:
+                f.write(f'Run,{','.join([algorithm["name"] for algorithm in algorithms])}\n')
+                for run_index in range(len(SEEDS)):
+                    f.write(f"{run_index+1}," + ",".join(f"{alg_errors[algorithm['name']][run_index]}" for algorithm in algorithms) + "\n")
+            os.rmdir(os.path.join(results, f'f_{problem}'))

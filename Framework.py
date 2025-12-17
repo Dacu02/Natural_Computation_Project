@@ -14,6 +14,7 @@ import multiprocessing as mp
 from pandas import read_csv
 from Algorithms import Algorithm, Problem, DifferentialEvolution, ParticleSwarmOptimization, ArtificialBeeColony
 from typing import Any, Dict, List, Type, Type, TypedDict
+import sys
 class EarlyStop(Exception):
     """Eccezione per arrestare l'esecuzione anticipatamente."""
     pass
@@ -130,8 +131,6 @@ if __name__ == '__main__':
     PROCESS_COUNT = int(os.environ.get('SLURM_CPUS_PER_TASK', mp.cpu_count())) # HPC Unisa, altrimenti locale
     print(f"Using {PROCESS_COUNT} processes for parallel execution.")
     BOUNDS_MULTIPLIER = 100
-    results = os.path.join(os.getcwd(), 'results', strftime('%d__%H_%M'))
-    os.makedirs(results, exist_ok=True)
 
     def load_gnbg_instance(problemIndex: int):
         if 1 <= problemIndex <= 24:
@@ -263,6 +262,9 @@ if __name__ == '__main__':
         },
         'name': 'ABC'
     }]
+
+    results = os.path.join(os.getcwd(), 'results', run_name)
+    os.makedirs(results, exist_ok=True)
 
     def expand_algorithms(list_algorithms:list[AlgorithmStructure]) -> list[AlgorithmStructure]:
         """
@@ -411,4 +413,4 @@ if __name__ == '__main__':
             algorithms.pop(algorithms.index(algorithm))
             print(f"Algorithm {algorithm['name']} was not run on problem f{problem} and will be excluded from the comparison plot.")
 
-        summary_plots(problem_folder, [algorithm['name'] for algorithm in algorithms], final_results_per_algorithm, problem) # type: ignore
+        #summary_plots(problem_folder, [algorithm['name'] for algorithm in algorithms], final_results_per_algorithm, problem) # type: ignore

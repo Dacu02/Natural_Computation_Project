@@ -155,8 +155,8 @@ if __name__ == '__main__':
         else:
             raise ValueError('ProblemIndex must be between 1 and 24.')
 
-        print(f"Loaded GNBG problem instance f{problemIndex} with dimension {Dimension} and {CompNum} components.\n"
-            f"Global optimum value: {OptimumValue} AcceptanceThreshold: {AcceptanceThreshold}, MaxEvals: {MaxEvals}")
+        #print(f"Loaded GNBG problem instance f{problemIndex} with dimension {Dimension} and {CompNum} components.\n"
+         #   f"Global optimum value: {OptimumValue} AcceptanceThreshold: {AcceptanceThreshold}, MaxEvals: {MaxEvals}")
 
         return GNBG(MaxEvals, AcceptanceThreshold, Dimension, CompNum, MinCoordinate, MaxCoordinate, CompMinPos, CompSigma, CompH, Mu, Omega, Lambda, RotationMatrix, OptimumValue, OptimumPosition)
 
@@ -186,11 +186,11 @@ if __name__ == '__main__':
             convergence.append(best_error)
 
 
-        print(f"Best found objective value: {instance.BestFoundResult} at position {instance.BestFoundPosition}")
-        print(f"Error from the global optimum: {abs(instance.BestFoundResult - instance.OptimumValue)}")
-        print(f"Function evaluations to reach acceptance threshold: {instance.AcceptanceReachPoint if not np.isinf(instance.AcceptanceReachPoint) else 'Not reached'}")
-        print("FE usate:", instance.FE)
-        print("MaxEvals:", instance.MaxEvals)
+        #print(f"Best found objective value: {instance.BestFoundResult} at position {instance.BestFoundPosition}")
+        #print(f"Error from the global optimum: {abs(instance.BestFoundResult - instance.OptimumValue)}")
+        #print(f"Function evaluations to reach acceptance threshold: {instance.AcceptanceReachPoint if not np.isinf(instance.AcceptanceReachPoint) else 'Not reached'}")
+        #print("FE usate:", instance.FE)
+        #print("MaxEvals:", instance.MaxEvals)
 
         if not MINIMAL_FRAMEWORK:
             # Plotting the convergence
@@ -344,11 +344,14 @@ if __name__ == '__main__':
                     processes.append(pool.apply_async(execution, args=(seed, problem, alg_class, alg_args.copy(), str(seed), alg_folder)))
 
         # Attende il completamento di tutti i processi
+        count = 0
         for p in processes:
             try:
                 p.get()
             except Exception as e:
-                print(f"Errore in un processo figlio: {e}")
+                print(f"Error in a subprocess: {e}")
+            print(f"Completed {count + 1} out of {len(processes)} processes.")
+            count += 1
 
     # Dopo la fine di tutte le esecuzioni, genera i summary
     if not MINIMAL_FRAMEWORK:

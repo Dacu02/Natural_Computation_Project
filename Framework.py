@@ -226,11 +226,10 @@ if __name__ == '__main__':
             for element in self._list:
                 yield element
 
-
     list_algorithms: List[AlgorithmStructure] = [{
         'algorithm': ParticleSwarmOptimization,
         'args': {
-            'population': Combine([50, 100, 1000, 10000]),
+            'population': Combine([50, 100]),
             'topology': 'Random',
             'local_weight': Combine([1.33, 1.66]),
             'global_weight': Combine([1.33, 1.66]),
@@ -238,37 +237,17 @@ if __name__ == '__main__':
             'k': Combine([1,2,3]),
         },
         'name': 'Random'
-    }, {
+        }, {
         'algorithm': ParticleSwarmOptimization,
         'args': {
-            'population': Combine([50, 100, 1000, 10000]),
-            'topology': 'VonNeumann',
-            'local_weight': Combine([1.33, 1.66]),
-            'global_weight': Combine([1.33, 1.66]),
-            'inertia': Combine([.33, .66]),
-            'p': Combine([1, 2]),
-            'r': Combine([1,2,3]),
-        },
-        'name': 'VN'
-    }, {
-        'algorithm': ParticleSwarmOptimization,
-        'args': {
-            'population': Combine([50, 100, 1000, 10000]),
-            'topology': 'Star',
+            'population': Combine([1000, 10000]),
+            'topology': 'Random',
             'local_weight': Combine([1.33, 1.66]),
             'global_weight': Combine([1.33, 1.66]),
             'inertia': Combine([.33, .66]),
             'k': Combine([1,2,3]),
-            'p': Combine([1, 2]),
         },
-        'name': 'Star'
-    }, {
-        'algorithm': ArtificialBeeColony,
-        'args': {
-            'population': Combine([50, 100, 1000, 10000]),
-            'max_scouts': Combine([10, 20, 50, 100])
-        },
-        'name': 'ABC'
+        'name': 'Random'
     }]
 
     args = sys.argv

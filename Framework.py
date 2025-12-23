@@ -19,6 +19,10 @@ class EarlyStop(Exception):
     """Eccezione per arrestare l'esecuzione anticipatamente."""
     pass
 
+SEEDS: list[int] = [5751, 94862, 48425, 79431, 28465, 917654, 468742131, 745612, 1354987, 126879]
+PROBLEMS: list[int] = [4, 12, 20]
+BOUNDS_MULTIPLIER = 100
+FUNCTIONS_PATH = os.path.join(os.getcwd())
 # Define the GNBG class
 class GNBG:
     def __init__(self, MaxEvals, AcceptanceThreshold, Dimension, CompNum,
@@ -114,29 +118,10 @@ class GNBG:
         Y[tmp] = -np.exp(Y[tmp] + Alpha[1] * (np.sin(Beta[2] * Y[tmp]) + np.sin(Beta[3] * Y[tmp])))
         return Y
 
-class AlgorithmStructure(TypedDict):
-    algorithm: Type[Algorithm]
-    args: Dict[str, Any]
-    name: str
-
-if __name__ == '__main__':
-    # Get the current script's directory
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-
-    # Define the path to the folder where you want to read/write files
-    folder_path = os.path.join(current_dir)
-
-    SEEDS: list[int] = [5751, 94862, 48425, 79431, 28465, 917654, 468742131, 745612, 1354987, 126879]
-    PROBLEMS: list[int] = [4, 12, 20]
-    PROCESS_COUNT = int(os.environ.get('SLURM_CPUS_PER_TASK', mp.cpu_count())) # HPC Unisa, altrimenti locale
-    print(f"Using {PROCESS_COUNT} processes for parallel execution.")
-    BOUNDS_MULTIPLIER = 100
-    MINIMAL_FRAMEWORK = True  # Se true, disabilita stampe extra e dati non essenziali
-
-    def load_gnbg_instance(problemIndex: int):
+def load_gnbg_instance(problemIndex: int) -> GNBG:
         if 1 <= problemIndex <= 24:
             filename = os.path.join('functions', f'f{problemIndex}.mat')
-            GNBG_tmp = loadmat(os.path.join(folder_path, filename))['GNBG']
+            GNBG_tmp = loadmat(os.path.join(FUNCTIONS_PATH, filename))['GNBG']
             MaxEvals = np.array([item[0] for item in GNBG_tmp['MaxEvals'].flatten()])[0, 0]
             AcceptanceThreshold = np.array([item[0] for item in GNBG_tmp['AcceptanceThreshold'].flatten()])[0, 0]
             Dimension = np.array([item[0] for item in GNBG_tmp['Dimension'].flatten()])[0, 0]
@@ -159,6 +144,22 @@ if __name__ == '__main__':
          #   f"Global optimum value: {OptimumValue} AcceptanceThreshold: {AcceptanceThreshold}, MaxEvals: {MaxEvals}")
 
         return GNBG(MaxEvals, AcceptanceThreshold, Dimension, CompNum, MinCoordinate, MaxCoordinate, CompMinPos, CompSigma, CompH, Mu, Omega, Lambda, RotationMatrix, OptimumValue, OptimumPosition)
+
+
+class AlgorithmStructure(TypedDict):
+    algorithm: Type[Algorithm]
+    args: Dict[str, Any]
+    name: str
+
+if __name__ == '__main__':
+    # Get the current script's directory
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+
+    
+    PROCESS_COUNT = int(os.environ.get('SLURM_CPUS_PER_TASK', mp.cpu_count())) # HPC Unisa, altrimenti locale
+    print(f"Using {PROCESS_COUNT} processes for parallel execution.")
+    
+    MINIMAL_FRAMEWORK = True  # Se true, disabilita stampe extra e dati non essenziali
 
     
     def execution(seed:int, problem:int, alg_class:Type[Algorithm], alg_args:Dict[str, Any], description:str, folder:str):

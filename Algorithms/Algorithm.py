@@ -27,3 +27,40 @@ class Algorithm(ABC):
 
     def _set_problem(self, problem:Problem):
         raise NotImplementedError("Abstract method '_set_problem' must be implemented in subclasses.")
+    
+    @classmethod
+    def get_name(cls) -> str:
+        """
+            Restituisce il nome dell'algoritmo.
+            Returns:
+                str: Il nome dell'algoritmo.
+        """
+        match cls.__name__:
+            case "ParticleSwarmOptimization":
+                return "PSO"
+            case "ArtificialBeeColony": 
+                return "ABC"
+            case "DifferentialEvolution":
+                return "DE"
+            case _:
+                raise ValueError(f"Algoritmo '{cls.__name__}' non riconosciuto.")
+
+    @staticmethod
+    def read_name(name:str) -> type['Algorithm']:
+        """
+            Restituisce la classe dell'algoritmo.
+            Returns:
+                type[Algorithm]: La classe dell'algoritmo.
+        """
+        from Algorithms import ParticleSwarmOptimization, ArtificialBeeColony, DifferentialEvolution
+        
+        match name:
+            case "PSO":
+                return ParticleSwarmOptimization
+            case "ABC": 
+                return ArtificialBeeColony
+            case "DE":
+                return DifferentialEvolution
+            case _:
+                raise ValueError(f"Algoritmo '{name}' non riconosciuto.")
+        

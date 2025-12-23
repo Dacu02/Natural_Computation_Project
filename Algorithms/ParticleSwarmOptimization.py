@@ -61,13 +61,13 @@ class ParticleSwarmOptimization(Algorithm):
     """
     def __init__(self, 
                  problem:Problem, 
-                 population:int, 
+                 pop:int, 
                  generations:int, 
                  seed:int, 
-                 topology:TOPOLOGIES, 
-                 local_weight:float, 
-                 global_weight:float, 
-                 inertia:float, 
+                 graph:TOPOLOGIES, 
+                 lw:float, 
+                 gw:float, 
+                 w:float, 
                  verbose:bool=False,
                  k:int|None=None,
                  p:int|None=None,
@@ -100,17 +100,17 @@ class ParticleSwarmOptimization(Algorithm):
                 static (bool): Se True, le connessioni tra particelle rimangono le stesse durante l'esecuzione.
 
         """
-        super().__init__(problem, population, generations, seed, verbose)
+        super().__init__(problem, pop, generations, seed, verbose)
         self._options = {
-            'c1': local_weight,
-            'c2': global_weight,
-            'w': inertia
+            'c1': lw,
+            'c2': gw,
+            'w': w
         }
 
         if p and p not in [1, 2]:
             raise ValueError("Parameter 'p' must be either 1 or 2.")
 
-        match topology:
+        match graph:
             case "Pyramid":
                 self._topology = Pyramid(static=static)
             case "Star":

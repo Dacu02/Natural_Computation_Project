@@ -8,16 +8,16 @@ class ArtificialBeeColony(Algorithm):
     def __init__(
             self, 
             problem: Problem, 
-            population: int, 
-            generations: int, 
+            pop: int, 
+            gen: int, 
             seed: int, 
-            max_scouts:int, 
+            ms: int, 
             verbose: bool = False, 
-            limit: int|None = None,
-            selection_strategy: Literal['RouletteWheel', 'Tournament'] = 'RouletteWheel',
-            mutation_strategy: Literal['StandardABC', 'ModifiedABC', 'ABC/best/1', 'ABC/best/2'] = 'StandardABC',
-            initialization_strategy: Literal['random', 'cahotic'] = 'random',
-            tournament_size: int|None = None,
+            lim: int|None = None,
+            sel_str: Literal['RouletteWheel', 'Tournament'] = 'RouletteWheel',
+            mut_str: Literal['StandardABC', 'ModifiedABC', 'ABC/best/1', 'ABC/best/2'] = 'StandardABC',
+            init_str: Literal['random', 'cahotic'] = 'random',
+            tour_size: int|None = None,
         ):
         """
         Inizializza l'algoritmo ABC con i parametri specificati.
@@ -34,21 +34,21 @@ class ArtificialBeeColony(Algorithm):
             initialization_strategy (str): Strategia di inizializzazione ('random' o 'chaotic')
             tournament_size (int|None): Dimensione del torneo se si utilizza la selezione a torneo.
         """
-        super().__init__(problem, population, generations, seed, verbose)
-        self.max_scouts = max_scouts
+        super().__init__(problem, pop, gen, seed, verbose)
+        self._max_scouts = ms
         lower_bounds = problem.lb
         upper_bounds = problem.ub
         self._bounds = [(lower_bounds[i], upper_bounds[i]) for i in range(problem.n_var)]
-        self._limit = limit
-        self._selection_strategy = selection_strategy
-        self._mutation_strategy = mutation_strategy
-        self._initialization_strategy = initialization_strategy
-        self._tournament_size = tournament_size
+        self._limit = lim 
+        self._selection_strategy = sel_str
+        self._mutation_strategy = mut_str
+        self._initialization_strategy = init_str
+        self._tournament_size = tour_size
         self._abc = _ABC(
             colony_size=self._population,
             function=lambda x: problem.function(x).item(),
             bounds=np.array(self._bounds),
-            max_scouts=self.max_scouts
+            max_scouts=self._max_scouts
 
         )
     

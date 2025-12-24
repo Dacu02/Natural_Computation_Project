@@ -6,25 +6,41 @@ from pyswarms.backend.topology import Pyramid, Star, Ring, VonNeumann, Random
 from Algorithms import Algorithm, Problem
 
 SOLUTIONS_BOUNDARY_STRATEGIES = Literal[
-    "Nearest", # Reposition the particle to the nearest bound.
-    "Random", # Reposition the particle randomly in between the bounds.
-    "Shrink", # Shrink the velocity of the particle such that it lands on the bounds.
-    "Reflective", # Mirror the particle position from outside the bounds to inside the bounds
-    "Intermediate" # Reposition the particle to the midpoint between its current position on the bound surpassing axis and the bound itself. This only adjusts the axes that surpass the boundaries.
+    "Nearest",      # Reposition the particle to the nearest bound.
+
+    "Random",       # Reposition the particle randomly in between the bounds.
+
+    "Shrink",       # Shrink the velocity of the particle such that it lands on the bounds.
+
+    "Reflective",   # Mirror the particle position from outside the bounds to inside the bounds
+
+    "Intermediate",  # Reposition the particle to the midpoint between its current position on the bound surpassing axis and the bound itself. 
+                    # This only adjusts the axes that surpass the boundaries.
+
+    "Periodic"      # This method resets particles that exceed the bounds to an intermediate position between the boundary and their earlier position. Namely, it changes
+                    #the coordinate of the out-of-bounds axis to the middle value between the previous position and the boundary of the axis.
 ] # Strategie per la gestione delle particelle che superano i limiti, commenti dalla doc.
 
 SPEED_BOUNDARY_STRATEGIES = Literal[
     "Unmodified", # Returns the unmodified velocites.
+    
     "Adjust", # Returns the velocity that is adjusted to be the distance between the current and the previous position.
+    
     "Invert", # Inverts and shrinks the velocity by the factor -z.
+    
     "Zero", # Sets the velocity of out-of-bounds particles to zero.
+    
 ] # Strategie per la gestione delle velocità delle particelle che superano i limiti, commenti dalla doc.
 
 HYPER_PARAMETERS_STRATEGIES = Literal[
     "exp_decay", # Decreases the parameter exponentially between limits.
+
     "lin_variation", # Decreases/increases the parameter linearly between limits.
+
     "random", # takes a uniform random value between (0.5,1)
+
     "nonlin_mod", # Decreases/increases the parameter between limits according to a nonlinear modulation index.
+
 ] # Strategie per la gestione dei parametri a runtime, commenti dalla doc.
 
 TOPOLOGIES = Literal[
@@ -72,10 +88,10 @@ class ParticleSwarmOptimization(Algorithm):
                  k:int|None=None,
                  p:int|None=None,
                  r:int|None=None,
-                 solution_boundary_strategy:SOLUTIONS_BOUNDARY_STRATEGIES|None=None,
-                 speed_boundary_strategy:SPEED_BOUNDARY_STRATEGIES|None=None,
-                 hyper_parameters_strategy:HYPER_PARAMETERS_STRATEGIES|None=None,
-                 velocity_clamp:tuple[float, float]|None=None,
+                 solut_s:SOLUTIONS_BOUNDARY_STRATEGIES = "Periodic",
+                 speed_s:SPEED_BOUNDARY_STRATEGIES = 'Unmodified',
+                 hyper_s:dict[str, HYPER_PARAMETERS_STRATEGIES] = {},
+                 vel_clamp:tuple[float, float]|None=None,
                  static:bool=True
                  ):
         """
@@ -135,18 +151,18 @@ class ParticleSwarmOptimization(Algorithm):
             case _:
                 raise ValueError("Invalid topology type. Choose from 'Pyramid', 'Star', 'Ring', 'VonNeumann', 'Random'.")
         
-        if velocity_clamp is not None and speed_boundary_strategy is None:
+        if vel_clamp is not None and speed_s is None:
             raise ValueError("If 'velocity_clamp' is specified, 'speed_boundary_strategy' must also be provided.")
 
         kwargs = {}
-        if velocity_clamp is not None:
-            kwargs['velocity_clamp'] = velocity_clamp
-        if speed_boundary_strategy is not None:
-            kwargs['vh_strategy'] = speed_boundary_strategy
-        if solution_boundary_strategy is not None:
-            kwargs['bh_strategy'] = solution_boundary_strategy
-        if hyper_parameters_strategy is not None:
-            kwargs['oh_strategy'] = hyper_parameters_strategy
+        if vel_clamp is not None:
+            kwargs['velocity_clamp'] = vel_clamp
+        if speed_s is not None:
+            kwargs['vh_strategy'] = speed_s
+        if solut_s is not None:
+            kwargs['bh_strategy'] = solut_s
+        if hyper_s is not None:
+            kwargs['oh_strategy'] = hyper_s
 
         self._pso = GeneralOptimizerPSO(
             n_particles=self._population,
@@ -154,8 +170,11 @@ class ParticleSwarmOptimization(Algorithm):
             options=self._options,
             bounds=self._bounds,
             topology=self._topology,
-            oh_strategy=solution_boundary_strategy,
-            **kwargs
+            oh_strategy=kwargs,
+            velocity_clamp=vel_clamp,
+            bh_strategy=solut_s,
+            vh_strategy=speed_s,
+
         )
 
     def run(self):

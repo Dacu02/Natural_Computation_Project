@@ -6,29 +6,29 @@ from pyswarms.backend.topology import Pyramid, Star, Ring, VonNeumann, Random
 from Algorithms import Algorithm, Problem
 
 SOLUTIONS_BOUNDARY_STRATEGIES = Literal[
-    "Nearest",      # Reposition the particle to the nearest bound.
+    "nearest",      # Reposition the particle to the nearest bound.
 
-    "Random",       # Reposition the particle randomly in between the bounds.
+    "random",       # Reposition the particle randomly in between the bounds.
 
-    "Shrink",       # Shrink the velocity of the particle such that it lands on the bounds.
+    "shrink",       # Shrink the velocity of the particle such that it lands on the bounds.
 
-    "Reflective",   # Mirror the particle position from outside the bounds to inside the bounds
+    "reflective",   # Mirror the particle position from outside the bounds to inside the bounds
 
-    "Intermediate",  # Reposition the particle to the midpoint between its current position on the bound surpassing axis and the bound itself. 
+    "intermediate",  # Reposition the particle to the midpoint between its current position on the bound surpassing axis and the bound itself. 
                     # This only adjusts the axes that surpass the boundaries.
 
-    "Periodic"      # This method resets particles that exceed the bounds to an intermediate position between the boundary and their earlier position. Namely, it changes
+    "periodic"      # This method resets particles that exceed the bounds to an intermediate position between the boundary and their earlier position. Namely, it changes
                     #the coordinate of the out-of-bounds axis to the middle value between the previous position and the boundary of the axis.
 ] # Strategie per la gestione delle particelle che superano i limiti, commenti dalla doc.
 
 SPEED_BOUNDARY_STRATEGIES = Literal[
-    "Unmodified", # Returns the unmodified velocites.
+    "unmodified", # Returns the unmodified velocites.
     
-    "Adjust", # Returns the velocity that is adjusted to be the distance between the current and the previous position.
+    "adjust", # Returns the velocity that is adjusted to be the distance between the current and the previous position.
     
-    "Invert", # Inverts and shrinks the velocity by the factor -z.
+    "invert", # Inverts and shrinks the velocity by the factor -z.
     
-    "Zero", # Sets the velocity of out-of-bounds particles to zero.
+    "zero", # Sets the velocity of out-of-bounds particles to zero.
     
 ] # Strategie per la gestione delle velocità delle particelle che superano i limiti, commenti dalla doc.
 
@@ -88,8 +88,8 @@ class ParticleSwarmOptimization(Algorithm):
                  k:int|None=None,
                  p:int|None=None,
                  r:int|None=None,
-                 solut_s:SOLUTIONS_BOUNDARY_STRATEGIES = "Periodic",
-                 speed_s:SPEED_BOUNDARY_STRATEGIES = 'Unmodified',
+                 solut_s:SOLUTIONS_BOUNDARY_STRATEGIES = "shrink",
+                 speed_s:SPEED_BOUNDARY_STRATEGIES = 'unmodified',
                  hyper_s:dict[str, HYPER_PARAMETERS_STRATEGIES] = {},
                  vel_clamp:tuple[float, float]|None=None,
                  static:bool=True

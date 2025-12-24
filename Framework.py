@@ -14,6 +14,7 @@ import multiprocessing as mp
 from pandas import read_csv
 from Algorithms import Algorithm, Problem, DifferentialEvolution, ParticleSwarmOptimization, ArtificialBeeColony
 from typing import Any, Dict, List, Type, Type, TypedDict
+from experiments import AlgorithmStructure, EXPERIMENTS
 import sys
 class EarlyStop(Exception):
     """Eccezione per arrestare l'esecuzione anticipatamente."""
@@ -146,11 +147,6 @@ def load_gnbg_instance(problemIndex: int) -> GNBG:
         return GNBG(MaxEvals, AcceptanceThreshold, Dimension, CompNum, MinCoordinate, MaxCoordinate, CompMinPos, CompSigma, CompH, Mu, Omega, Lambda, RotationMatrix, OptimumValue, OptimumPosition)
 
 
-class AlgorithmStructure(TypedDict):
-    algorithm: Type[Algorithm]
-    args: Dict[str, Any]
-    name: str
-
 if __name__ == '__main__':
     # Get the current script's directory
     current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -212,48 +208,10 @@ if __name__ == '__main__':
                 f.write(f"{instance.FE},{convergence[-1]}\n")
 
 
-    class Combine():
-        """
-            Classe di comodo per rappresentare combinazioni di parametri di algoritmi
-        """
-        def __init__(self, list:list):
-            """
-                Args:
-                    list (list): Parametri da combinare
-            """
-            self._list = list
-
-        def next_element(self):
-            for element in self._list:
-                yield element
-
-    list_algorithms: List[AlgorithmStructure] = [{
-        'algorithm': ParticleSwarmOptimization,
-        'args': {
-            'population': Combine([50, 100]),
-            'topology': 'Random',
-            'local_weight': Combine([1.33, 1.66]),
-            'global_weight': Combine([1.33, 1.66]),
-            'inertia': Combine([.33, .66]),
-            'k': Combine([1,2,3]),
-        },
-        'name': 'Random'
-        }, {
-        'algorithm': ParticleSwarmOptimization,
-        'args': {
-            'population': Combine([1000, 10000]),
-            'topology': 'Random',
-            'local_weight': Combine([1.33, 1.66]),
-            'global_weight': Combine([1.33, 1.66]),
-            'inertia': Combine([.33, .66]),
-            'k': Combine([1,2,3]),
-        },
-        'name': 'Random'
-    }]
-
+    
     args = sys.argv
     if args and len(args) > 1:
-        list_algorithms = [list_algorithms[int(args[1])]]
+        algorithms = [EXPERIMENTS[int(args[1])]]
     if args and len(args) > 2:
         run_name = args[2]
     else:
@@ -262,46 +220,8 @@ if __name__ == '__main__':
     results = os.path.join(os.getcwd(), 'results', run_name)
     os.makedirs(results, exist_ok=True)
         
-    def expand_algorithms(list_algorithms:list[AlgorithmStructure]) -> list[AlgorithmStructure]:
-        """
-            Funzione di comodo per espandere tutte le possibili combinazioni specificate tra i parmaetri degli algoritmi
-            In particolare, cerca le istanze di Combine e genera tutte le combinazioni possibili.
-        """
-        expanded = []
-
-        for entry in list_algorithms:
-            args = entry["args"]
-
-            # Trova le chiavi che usano Combine
-            combine_keys = [k for k, v in args.items() if isinstance(v, Combine)]
-
-            if not combine_keys:
-                # Nessuna combinazione → mantieni così com’è
-                expanded.append(entry)
-                continue
-
-            # Recupera tutte le liste di combinazioni
-            combine_lists = [list(args[k].next_element()) for k in combine_keys]
-
-            # Prodotto cartesiano delle combinazioni
-            for combo in product(*combine_lists):
-                new_entry = deepcopy(entry)
-                new_args = new_entry["args"]
-
-                # Sostituisci i Combine con i valori specifici della combinazione
-                for k, v in zip(combine_keys, combo):
-                    new_args[k] = v
-
-                # Aggiorna il nome rendendolo unico
-                new_entry["name"] = new_entry["name"] + "_" + "_".join(
-                    f"{k}{v}" for k, v in zip(combine_keys, combo)
-                )
-
-                expanded.append(new_entry)
-
-        return expanded
-
-    algorithms: List[AlgorithmStructure] = expand_algorithms(list_algorithms)
+    
+    algorithms: List[AlgorithmStructure] = EXPERIMENTS
     print(f"{len(algorithms)} algorithms to execute, each for {len(SEEDS)} seeds for {len(PROBLEMS)} problems.")
     processes: list[AsyncResult] = []
     with mp.Pool(processes=PROCESS_COUNT) as pool:

@@ -35,6 +35,7 @@ class ArtificialBeeColony(Algorithm):
             tournament_size (int|None): Dimensione del torneo se si utilizza la selezione a torneo.
         """
         super().__init__(problem, pop, gen, seed, verbose)
+        self._gen = gen
         self._max_scouts = ms
         lower_bounds = problem.lb
         upper_bounds = problem.ub

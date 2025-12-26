@@ -36,7 +36,6 @@ def main():
     
     try:
         while True:
-            os.system('cls' if os.name == 'nt' else 'clear')
             
             pending_count = count_files(EXP_PATH, '.json')
             completed_count = count_files(RESULT_PATH, '.csv')

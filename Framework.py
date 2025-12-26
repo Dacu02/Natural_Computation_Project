@@ -208,12 +208,21 @@ if __name__ == '__main__':
                 f.write(f"{instance.FE},{convergence[-1]}\n")
 
 
+    algorithms: List[AlgorithmStructure] = EXPERIMENTS
     
     args = sys.argv
-    if args and len(args) > 1:
-        algorithms = [EXPERIMENTS[int(args[1])]]
     if args and len(args) > 2:
-        run_name = args[2]
+        min = args[1]
+        max = args[2]
+        if not min.isdigit() or not max.isdigit():
+            raise ValueError("Gli argomenti devono essere numeri interi.")
+        min_index = int(min)
+        max_index = int(max)
+        if min_index < 0 or max_index < min_index:
+            raise ValueError("Intervallo di indici non valido.")
+        algorithms = [alg for i, alg in enumerate(algorithms) if i % max_index == min_index]
+        run_name = f'partial_run_{min_index}_of_{max_index}__' + strftime('%d__%H_%M')
+    
     else:
         run_name = strftime('%d__%H_%M')
 
@@ -221,7 +230,6 @@ if __name__ == '__main__':
     os.makedirs(results, exist_ok=True)
         
     
-    algorithms: List[AlgorithmStructure] = EXPERIMENTS
     print(f"{len(algorithms)} algorithms to execute, each for {len(SEEDS)} seeds for {len(PROBLEMS)} problems.")
     processes: list[AsyncResult] = []
     with mp.Pool(processes=PROCESS_COUNT) as pool:

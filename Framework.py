@@ -258,8 +258,9 @@ if __name__ == '__main__':
                 p.get()
             except Exception as e:
                 print(f"Error in a subprocess: {e}")
-                with open(os.path.join(results, 'errors.log'), 'a') as f:
-                    f.write(f"ERROR: {e.__traceback__}\n")
+                with open(os.path.join(os.getcwd(), 'errors.log'), 'a') as f:
+                    f.write(f"ERROR: {str(e)}\n")
+                    f.write(traceback.format_exc())
             print(f"Completed {count + 1} out of {len(processes)} processes.")
             count += 1
 

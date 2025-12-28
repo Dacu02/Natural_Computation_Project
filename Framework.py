@@ -16,6 +16,7 @@ from Algorithms import Algorithm, Problem, DifferentialEvolution, ParticleSwarmO
 from typing import Any, Dict, List, Type, Type, TypedDict
 from experiments import AlgorithmStructure, EXPERIMENTS
 import sys
+import traceback
 class EarlyStop(Exception):
     """Eccezione per arrestare l'esecuzione anticipatamente."""
     pass

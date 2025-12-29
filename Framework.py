@@ -164,7 +164,7 @@ if __name__ == '__main__':
         instance = load_gnbg_instance(problemIndex=problem)
         lb = -BOUNDS_MULTIPLIER*np.ones(instance.Dimension)
         ub = BOUNDS_MULTIPLIER*np.ones(instance.Dimension)
-        alg_args['generations'] = instance.MaxEvals // alg_args['pop']
+        alg_args['generations'] = 2#instance.MaxEvals // alg_args['pop']
         problem_custom_instance = Problem(function=instance.fitness, n_var=instance.Dimension, lb=lb, ub=ub)
         print(f"\nEsecuzione dell'algoritmo {alg_class.__name__} sul problema f{problem} con seed {seed}")
         alg_instance = alg_class(problem_custom_instance, **alg_args)

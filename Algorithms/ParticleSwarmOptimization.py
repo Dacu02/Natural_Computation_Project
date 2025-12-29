@@ -1,7 +1,7 @@
 import math
 from typing import Literal
 import pyswarms.backend
-from pyswarms.single.general_optimizer import GeneralOptimizerPSO # Graoh specifico
+from pyswarms.single.general_optimizer import GeneralOptimizerPSO
 from pyswarms.backend.topology import Pyramid, Star, Ring, VonNeumann, Random, Topology
 from Algorithms import Algorithm, Problem
 import pyswarms
@@ -49,7 +49,8 @@ TOPOLOGIES = Literal[
     "Star",
     "Ring",
     "VonNeumann",
-    "Random"
+    "Random",
+    "Torus"
 ] # Tipi di topologie disponibili per il PSO
 
 
@@ -99,11 +100,12 @@ class Torus(Topology):
         idx_self = grid_indices.flatten()
         self.neighbor_idx = np.column_stack((idx_self, idx_up, idx_down, idx_left, idx_right))
 
-    def compute_gbest(self, swarm):
+    def compute_gbest(self, swarm, **kwargs):
         all_costs = swarm.pbest_cost[self.neighbor_idx]
         local_best = np.argmin(all_costs, axis=1) # La riga è il vicinato
         best_neighbor_indices = self.neighbor_idx[np.arange(len(self.neighbor_idx)), local_best] 
-        return swarm.pbest_cost[best_neighbor_indices], swarm.pbest_pos[best_neighbor_indices]
+        best_pos = swarm.pbest_pos[best_neighbor_indices]
+        return best_pos, np.min(swarm.pbest_cost[best_neighbor_indices])
 
 
     def compute_position(self, swarm, bounds=None, bh=pyswarms.backend.handlers.BoundaryHandler(strategy="periodic")):
@@ -199,6 +201,8 @@ class ParticleSwarmOptimization(Algorithm):
                     raise ValueError("For 'Ring' topology, both 'k' and 'p' parameters must be specified and non-zero.")
                 self._options['k'] = k  # Numero di vicini per Ring
                 self._options['p'] = p  # Norma L1 o L2 per Ring
+            case "Torus":
+                self._topology = Torus(size=self._population)
             case "VonNeumann":
                 self._topology = VonNeumann(static=static)
                 if not p or not r:

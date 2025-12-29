@@ -1,9 +1,10 @@
-from re import M
+import math
 from typing import Literal
+import pyswarms.backend
 from pyswarms.single.general_optimizer import GeneralOptimizerPSO # Graoh specifico
-from pyswarms.backend.topology import Pyramid, Star, Ring, VonNeumann, Random
-
+from pyswarms.backend.topology import Pyramid, Star, Ring, VonNeumann, Random, Topology
 from Algorithms import Algorithm, Problem
+import pyswarms
 
 SOLUTIONS_BOUNDARY_STRATEGIES = Literal[
     "nearest",      # Reposition the particle to the nearest bound.
@@ -69,6 +70,67 @@ def patched_compute_gbest(self, swarm, k, **kwargs):
     return (best_pos, best_cost)
 
 PSRandom.compute_gbest = patched_compute_gbest
+
+class Torus(Topology):
+    """
+        Classe per rappresentare una topologia toroidale.
+    """
+    def __init__(self, size:int):
+        """
+            Inizializza la topologia toroidale. Questa topologia viene definia manualmente siccome pyswarms non include una reale topologia di Von Neumann, in particolare toroidale.
+            In una rete toroidale ciascun nodo ha esattamente quattro vicini:
+            1. Il nodo a sinistra (se esiste, altrimenti l'ultimo nodo della riga)
+            2. Il nodo a destra (se esiste, altrimenti il primo nodo della riga)
+            3. Il nodo sopra (se esiste, altrimenti l'ultimo nodo della colonna)
+            4. Il nodo sotto (se esiste, altrimenti il primo nodo della colonna)
+            Args:
+                static (bool): Se True, le connessioni tra particelle rimangono le stesse durante l'esecuzione.
+        """
+        super().__init__(static=False)
+        if size < 9:
+            raise ValueError("Size must be at least 9 to form a torus topology.")
+        n, m = self.best_rectangle(size)
+        grid_indices = np.arange(size).reshape((n, m))
+        # Roll effettua il wrap-around tipico 
+        idx_up = np.roll(grid_indices, 1, axis=0).flatten()
+        idx_down = np.roll(grid_indices, -1, axis=0).flatten()
+        idx_left = np.roll(grid_indices, 1, axis=1).flatten()
+        idx_right = np.roll(grid_indices, -1, axis=1).flatten()
+        idx_self = grid_indices.flatten()
+        self.neighbor_idx = np.column_stack((idx_self, idx_up, idx_down, idx_left, idx_right))
+
+    def compute_gbest(self, swarm):
+        all_costs = swarm.pbest_cost[self.neighbor_idx]
+        local_best = np.argmin(all_costs, axis=1) # La riga è il vicinato
+        best_neighbor_indices = self.neighbor_idx[np.arange(len(self.neighbor_idx)), local_best] 
+        return swarm.pbest_cost[best_neighbor_indices], swarm.pbest_pos[best_neighbor_indices]
+
+
+    def compute_position(self, swarm, bounds=None, bh=pyswarms.backend.handlers.BoundaryHandler(strategy="periodic")):
+        return pyswarms.backend.operators.compute_position(swarm, bounds, bh)
+    
+    def compute_velocity(self, swarm, clamp=None, vh=pyswarms.backend.handlers.VelocityHandler(strategy="unmodified"), bounds=None):
+        return pyswarms.backend.operators.compute_velocity(swarm, clamp, vh, bounds)
+    
+    @staticmethod
+    def best_rectangle(n: int) -> tuple[int, int]: # type: ignore
+        """
+            Metodo statico per calcolare le dimensioni del rettangolo più vicino al quadrato per un dato numero di particelle.
+            Args:
+                n (int): Numero di particelle.
+            Returns:
+                tuple: Una tupla contenente le dimensioni (larghezza, altezza) del rettangolo.
+            Raises:
+                ValueError: Se n non è un intero positivo.
+        """
+        if n <= 0:
+            raise ValueError("n deve essere un intero positivo")
+
+        root = int(math.isqrt(n))
+        for a in range(root, 0, -1):
+            if n % a == 0:
+                b = n // a
+                return a, b 
 
 
 class ParticleSwarmOptimization(Algorithm):

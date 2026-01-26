@@ -1,5 +1,4 @@
 from copy import deepcopy
-from itertools import product
 from multiprocessing.pool import AsyncResult
 import os
 from time import strftime
@@ -164,7 +163,7 @@ if __name__ == '__main__':
         instance = load_gnbg_instance(problemIndex=problem)
         lb = -BOUNDS_MULTIPLIER*np.ones(instance.Dimension)
         ub = BOUNDS_MULTIPLIER*np.ones(instance.Dimension)
-        alg_args['generations'] = instance.MaxEvals // alg_args['pop']
+        alg_args['generations'] = instance.MaxEvals // alg_args['population']
         problem_custom_instance = Problem(function=instance.fitness, n_var=instance.Dimension, lb=lb, ub=ub)
         print(f"\nEsecuzione dell'algoritmo {alg_class.__name__} sul problema f{problem} con seed {seed}")
         alg_instance = alg_class(problem_custom_instance, **alg_args)
@@ -205,8 +204,8 @@ if __name__ == '__main__':
                     f.write(f"{fe},{err}\n")
         else:
             with open(os.path.join(folder, f'results_{description}.csv'), 'w') as f:
-                f.write('LastFunctionEvaluation,MinimumError\n')
-                f.write(f"{instance.FE},{convergence[-1]}\n")
+                f.write('LastFunctionEvaluation,MinimumError,Seed\n')
+                f.write(f"{instance.FE},{convergence[-1]},{alg_args['seed']}\n")
 
 
     algorithms: List[AlgorithmStructure] = EXPERIMENTS
@@ -350,19 +349,20 @@ if __name__ == '__main__':
             alg_errors = {}
             
             for algorithm in algorithms:
-                description = algorithm.get('name', '_'.join(map(str, algorithm['args'].values())))
-                alg_folder = os.path.join(problem_folder, description)
+                alg_folder = os.path.join(problem_folder, algorithm['name'])
                 result_files = [f.path for f in os.scandir(alg_folder) if f.is_file() and f.name.endswith('.csv')]
-                alg_errors[description] = []
+                alg_errors[algorithm['name']] = {}
 
                 for file in result_files:
                     df = read_csv(file)
                     os.remove(file)
-                    alg_errors[description].append(df.iloc[-1, 1])  # ultimo valore
+                    result_seed = int(df.iloc[0]['Seed'])
+                    result_min_error = float(df.iloc[0]['MinimumError'])
+                    alg_errors[algorithm['name']][result_seed] = result_min_error
 
                 os.remove(os.path.join(alg_folder, 'config.txt'))
                 os.rmdir(alg_folder)
-                if not alg_errors[description]:
+                if not alg_errors[algorithm['name']]:
                     algorithm_unrun.append(algorithm)
 
             for algorithm in algorithm_unrun:
@@ -380,7 +380,7 @@ if __name__ == '__main__':
                         os.rmdir(pr_alg_folder)
 
             with open(os.path.join(results, f'{problem}_summary_errors.csv'), 'w') as f:
-                f.write(f'Run,{','.join([algorithm["name"] for algorithm in algorithms])}\n')
-                for run_index in range(len(SEEDS)):
-                    f.write(f"{run_index+1}," + ",".join(f"{alg_errors[algorithm['name']][run_index]}" for algorithm in algorithms) + "\n")
+                f.write(f'{",".join(map(str, SEEDS))},{",".join(sorted(algorithms[0]["args"].keys()))}\n')
+                for algorithm in algorithms:
+                    f.write(f"{','.join(f'{alg_errors[algorithm['name']][seed]}' for seed in SEEDS)},{",".join(str(algorithm['args'][key]).replace(',', ';').replace(' ','') for key in sorted(algorithms[0]['args'].keys()))}\n")
             os.rmdir(os.path.join(results, f'f_{problem}'))

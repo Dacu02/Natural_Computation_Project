@@ -26,7 +26,7 @@ def main():
         merged_df = pd.DataFrame()
         for file in files:
             df = pd.read_csv(os.path.join(results_path, file))
-            merged_df = pd.concat([merged_df, df], ignore_index=False, axis=1)
+            merged_df = pd.concat([merged_df, df], ignore_index=False, axis=0)
         merged_df.to_csv(os.path.join(output_path, f'{problem_id}_summary_results.csv'), index=False)
 
     os.makedirs(os.path.join(os.getcwd(), 'aggregated_results'), exist_ok=True)

@@ -139,25 +139,28 @@ class ParticleSwarmOptimization(Algorithm):
     """
         Classe per rappresentare l'algoritmo di Particle Swarm Optimization (PSO).
     """
-    def __init__(self, 
-                 problem:Problem, 
-                 pop:int, 
-                 generations:int, 
-                 seed:int, 
-                 graph:TOPOLOGIES, 
-                 lw:float, 
-                 gw:float, 
-                 w:float, 
-                 verbose:bool=False,
-                 k:int|None=None,
-                 p:int|None=None,
-                 r:int|None=None,
-                 solut_s:SOLUTIONS_BOUNDARY_STRATEGIES = "shrink",
-                 speed_s:SPEED_BOUNDARY_STRATEGIES = 'unmodified',
-                 hyper_s:dict[str, HYPER_PARAMETERS_STRATEGIES] = {},
-                 vel_clamp:tuple[float, float]|None=None,
-                 static:bool=True
-                 ):
+    def __init__(
+            self, 
+            problem:Problem, 
+            population:int, 
+            generations:int, 
+            seed:int, 
+            topology:TOPOLOGIES, 
+            local_weight:float, 
+            global_weight:float, 
+            inertia:float, 
+            verbose:bool=False,
+            k:int|None=5,
+            p:int|None=None,
+            r:int|None=None,
+            solution_boundary_strategy:SOLUTIONS_BOUNDARY_STRATEGIES = "shrink",
+            speed_strategy:SPEED_BOUNDARY_STRATEGIES = 'unmodified',
+            end_inertia:float|None=None,
+            end_local_weight:float|None=None,
+            end_global_weight:float|None=None,
+            velocity_clamp:tuple[float, float]|None=None,
+            static:bool=True
+            ):
         """
             Inizializza l'algoritmo del PSO con i parametri specificati.
             Args:
@@ -175,22 +178,24 @@ class ParticleSwarmOptimization(Algorithm):
                 r (int): Raggio per la topologia VonNeumann.
                 solution_boundary_strategy (str|None): Strategia per la gestione delle particelle che superano i limiti.
                 speed_boundary_strategy (str|None): Strategia per la gestione delle velocità che superano i limiti. Obbligatorio se velocity_clamp è specificato.
-                hyper_parameters_strategy (str|None): Strategia per la gestione dei parametri a runtime.
+                end_inertia (float|None): Valore finale per l'inerzia, se si vuole variare nel tempo.
+                end_local_weight (float|None): Valore finale per il peso locale, se si vuole variare nel tempo.
+                end_global_weight (float|None): Valore finale per il peso globale, se si vuole variare nel tempo.
                 velocity_clamp (tuple|None): Limiti per la velocità delle particelle.
                 static (bool): Se True, le connessioni tra particelle rimangono le stesse durante l'esecuzione.
 
         """
-        super().__init__(problem, pop, generations, seed, verbose)
+        super().__init__(problem, population, generations, seed, verbose)
         self._options = {
-            'c1': lw,
-            'c2': gw,
-            'w': w
+            'c1': local_weight,
+            'c2': global_weight,
+            'w': inertia
         }
 
         if p and p not in [1, 2]:
             raise ValueError("Parameter 'p' must be either 1 or 2.")
 
-        match graph:
+        match topology:
             case "Pyramid":
                 self._topology = Pyramid(static=static)
             case "Star":
@@ -217,18 +222,18 @@ class ParticleSwarmOptimization(Algorithm):
             case _:
                 raise ValueError("Invalid topology type. Choose from 'Pyramid', 'Star', 'Ring', 'VonNeumann', 'Random'.")
         
-        if vel_clamp is not None and speed_s is None:
+        if velocity_clamp is not None and speed_strategy is None:
             raise ValueError("If 'velocity_clamp' is specified, 'speed_boundary_strategy' must also be provided.")
 
         kwargs = {}
-        if vel_clamp is not None:
-            kwargs['velocity_clamp'] = vel_clamp
-        if speed_s is not None:
-            kwargs['vh_strategy'] = speed_s
-        if solut_s is not None:
-            kwargs['bh_strategy'] = solut_s
-        if hyper_s is not None:
-            kwargs['oh_strategy'] = hyper_s
+        kwargs['oh_strategy'] = {}
+
+        if end_inertia is not None:
+            kwargs['oh_strategy']['w'] = ('lin_variation', (inertia, end_inertia))
+        if end_local_weight is not None:
+            kwargs['oh_strategy']['c1'] = ('lin_variation', (local_weight, end_local_weight))
+        if end_global_weight is not None:
+            kwargs['oh_strategy']['c2'] = ('lin_variation', (global_weight, end_global_weight))
 
         self._pso = GeneralOptimizerPSO(
             n_particles=self._population,
@@ -237,9 +242,9 @@ class ParticleSwarmOptimization(Algorithm):
             bounds=self._bounds,
             topology=self._topology,
             oh_strategy=kwargs,
-            velocity_clamp=vel_clamp,
-            bh_strategy=solut_s,
-            vh_strategy=speed_s,
+            velocity_clamp=velocity_clamp,
+            bh_strategy=solution_boundary_strategy,
+            vh_strategy=speed_strategy,
 
         )
 

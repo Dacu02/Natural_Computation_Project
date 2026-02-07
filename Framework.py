@@ -21,7 +21,7 @@ class EarlyStop(Exception):
     pass
 
 SEEDS: list[int] = [5751, 94862, 48425, 79431, 28465, 917654, 468742131, 745612, 1354987, 126879]
-PROBLEMS: list[int] = [4, 12, 20]
+DEFAULT_PROBLEMS: list[int] = [4, 12, 20]
 BOUNDS_MULTIPLIER = 100
 FUNCTIONS_PATH = os.path.join(os.getcwd())
 # Define the GNBG class
@@ -207,24 +207,29 @@ if __name__ == '__main__':
                 f.write('LastFunctionEvaluation,MinimumError,Seed\n')
                 f.write(f"{instance.FE},{convergence[-1]},{alg_args['seed']}\n")
 
+    if len(sys.argv) < 4:
+        print("Usage: python Framework.py <start_index> <end_index> [<problem_number>] <file_name>")
+        sys.exit(1)
+    elif len(sys.argv) == 4:
+        min_index, max_index, file_name = sys.argv[1:4]
+        PROBLEMS = DEFAULT_PROBLEMS
+        algorithms: List[AlgorithmStructure] = EXPERIMENTS[-1]  # Usa tutte le combinazioni di algoritmi per default
 
-    algorithms: List[AlgorithmStructure] = EXPERIMENTS
+    elif len(sys.argv) == 5:
+        min_index, max_index, problem, file_name = sys.argv[1:5]
+        PROBLEMS: list[int] = [int(problem)]
+        algorithms: List[AlgorithmStructure] = EXPERIMENTS[int(problem)]
+
     
-    args = sys.argv
-    if args and len(args) > 2:
-        min = args[1]
-        max = args[2]
-        if not min.isdigit() or not max.isdigit():
-            raise ValueError("Gli argomenti devono essere numeri interi.")
-        min_index = int(min)
-        max_index = int(max)
-        if min_index < 0 or max_index < min_index:
-            raise ValueError("Intervallo di indici non valido.")
-        algorithms = [alg for i, alg in enumerate(algorithms) if i % max_index == min_index]
-        run_name = f'partial_run_{min_index}_of_{max_index}__' + strftime('%d__%H_%M')
+    if not min_index.isdigit() or not max_index.isdigit():
+        raise ValueError("Gli argomenti devono essere numeri interi.")
     
-    else:
-        run_name = strftime('%d__%H_%M')
+    min_index = int(min_index)
+    max_index = int(max_index)
+    if min_index < 0 or max_index < min_index:
+        raise ValueError("Intervallo di indici non valido.")
+    algorithms = [alg for i, alg in enumerate(algorithms) if i % max_index == min_index]
+    run_name = f'partial_run_{min_index}_of_{max_index}__' + file_name
 
     results = os.path.join(os.getcwd(), 'results', run_name)
     os.makedirs(results, exist_ok=True)

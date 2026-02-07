@@ -64,3 +64,14 @@ class Algorithm(ABC):
             case _:
                 raise ValueError(f"Algoritmo '{name}' non riconosciuto.")
         
+
+    @staticmethod
+    def parse_args(args:dict) -> dict:
+        """
+            Funzione di comodo per parsare gli argomenti da un dizionario, convertendo i tipi se necessario.
+            Args:
+                args (dict): Il dizionario degli argomenti da parsare.
+            Returns:
+                dict: Il dizionario degli argomenti parsati.
+        """
+        raise NotImplementedError("Abstract method 'parse_args' must be implemented in subclasses.")

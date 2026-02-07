@@ -177,7 +177,7 @@ class ParticleSwarmOptimization(Algorithm):
                 p (int): Norma L1 o L2 per le topologie che lo richiedono (Ring, VonNeumann).
                 r (int): Raggio per la topologia VonNeumann.
                 solution_boundary_strategy (str|None): Strategia per la gestione delle particelle che superano i limiti.
-                speed_boundary_strategy (str|None): Strategia per la gestione delle velocità che superano i limiti. Obbligatorio se velocity_clamp è specificato.
+                speed_strategy (str|None): Strategia per la gestione delle velocità che superano i limiti. Obbligatorio se velocity_clamp è specificato.
                 end_inertia (float|None): Valore finale per l'inerzia, se si vuole variare nel tempo.
                 end_local_weight (float|None): Valore finale per il peso locale, se si vuole variare nel tempo.
                 end_global_weight (float|None): Valore finale per il peso globale, se si vuole variare nel tempo.
@@ -263,3 +263,44 @@ class ParticleSwarmOptimization(Algorithm):
         self._bounds = (problem.lb, problem.ub)
         self._dimensions = problem.n_var
         self._function = problem.function
+
+    @staticmethod
+    def parse_args(args:dict) -> dict:
+        """
+            Metodo statico per convertire i parametri da stringa a tipi corretti, se necessario.
+            Args:
+                args (dict): Dizionario dei parametri da convertire.
+            Returns:
+                dict: Dizionario dei parametri con i tipi corretti.
+        """        
+        parsed_args = args.copy()
+        if 'population' in parsed_args:
+            parsed_args['population'] = int(parsed_args['population'])
+        if 'local_weight' in parsed_args:
+            parsed_args['local_weight'] = float(parsed_args['local_weight'])
+        if 'global_weight' in parsed_args:
+            parsed_args['global_weight'] = float(parsed_args['global_weight'])
+        if 'inertia' in parsed_args:
+            parsed_args['inertia'] = float(parsed_args['inertia'])
+        if 'k' in parsed_args:
+            parsed_args['k'] = int(parsed_args['k'])
+        if 'p' in parsed_args:
+            parsed_args['p'] = int(parsed_args['p'])
+        if 'r' in parsed_args:
+            parsed_args['r'] = int(parsed_args['r'])
+        if 'topology' in parsed_args:
+            parsed_args['topology'] = str(parsed_args['topology'])
+        if 'velocity_clamp' in parsed_args:
+            parsed_args['velocity_clamp'] = tuple(map(float, parsed_args['velocity_clamp'].strip('()').split(';'))) # "(0.1;0.2)" -> (0.1, 0.2)
+        if 'solution_boundary_strategy' in parsed_args:
+            parsed_args['solution_boundary_strategy'] = str(parsed_args['solution_boundary_strategy'])
+        if 'speed_strategy' in parsed_args:
+            parsed_args['speed_strategy'] = str(parsed_args['speed_strategy'])
+        if 'end_inertia' in parsed_args:
+            parsed_args['end_inertia'] = float(parsed_args['end_inertia'])
+        if 'end_local_weight' in parsed_args:
+            parsed_args['end_local_weight'] = float(parsed_args['end_local_weight'])
+        if 'end_global_weight' in parsed_args:
+            parsed_args['end_global_weight'] = float(parsed_args['end_global_weight'])
+        
+        return parsed_args

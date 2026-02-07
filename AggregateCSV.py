@@ -6,7 +6,7 @@ def main():
     to_merge = {}
     output_path = os.path.join(os.getcwd(), 'aggregated_results')
     os.makedirs(output_path, exist_ok=True)
-    output_path = os.path.join(output_path, f'aggregated_results{strftime("%d__%H_%M")}')
+    output_path = os.path.join(output_path, f'aggregated_results__{strftime("%d__%H_%M")}')
     os.makedirs(output_path, exist_ok=True)
 
     runned_once = False
@@ -30,5 +30,6 @@ def main():
         merged_df.to_csv(os.path.join(output_path, f'{problem_id}_summary_results.csv'), index=False)
 
     os.makedirs(os.path.join(os.getcwd(), 'aggregated_results'), exist_ok=True)
+    
 if __name__ == "__main__":
     main()

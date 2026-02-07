@@ -190,3 +190,9 @@ doc/Documentation.pdf
 doc/Documentation.aux
 doc/Documentation.synctex.gz
 doc/Documentation.toc
+doc/Documentation.blg
+doc/Documentation.fdb_latexmk
+doc/Documentation.fls
+doc/Documentation.run.xml
+doc/Documentation-blx.bib
+doc/Documentation.bbl

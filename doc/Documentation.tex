@@ -5,11 +5,11 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{graphicx}
-\usepackage{cite}
 \usepackage{hyperref}
 \usepackage{geometry}
 \usepackage{setspace}
-
+\usepackage[style=numeric, backend=bibtex]{biblatex}
+\addbibresource{Documentation.bib}
 \usepackage{xcolor}
 \pagecolor[rgb]{0.05,0.05,0.05}
 \color[rgb]{0.9,0.9,0.9}
@@ -33,6 +33,33 @@
 \section{Introduction}
 \subsection{Generalized Numerical Benchmark Generator}
 \subsection{Particle Swarm Optimization}
+The Particle Swarm Optimization (PSO) is a population-based optimization in which a swarm of particles (potential solutions) moves through the search space to find the optimal solution. Each particle adjusts its position based on its own experience and the experience of neighboring particles.
+\\[1em]
+The update rule for the velocity and position of the $i$-th particle on iteration $t$ is given by:
+\begin{align*}
+\overset{\rightarrow}{v_i}(t+1) &= w \cdot \overset{\rightarrow}{v_i}(t) + \mathcal U(0,c_1) \cdot (\overset{\rightarrow}{p_i} - \overset{\rightarrow}{x_i}(t)) + \mathcal U(0,c_2) \cdot (\overset{\rightarrow}{g_i} - \overset{\rightarrow}{x_i}(t)) \\
+\overset{\rightarrow}{x_i}(t+1) &= \overset{\rightarrow}{x_i}(t) + \overset{\rightarrow}{v_i}(t+1)
+\end{align*}
+In the subsequent sections, each term of the update rule will be explained in detail, along with the parameters involved and their influence on the algorithm's performance.
+\subsubsection{Population \& Topology}
+A higher population size allows for a more extensive exploration of the search space, but decreases the number of iterations, meanwhile a smaller population size allows for more iterations on fewer particles. The topology affects how particles share information: it oscillates between a global topology, where all particles are neighbors, and a local topology, where particles only interact with a subset of the swarm.
+\\[1em]
+The topologies considered in this project are:
+\begin{itemize}
+    \item \textbf{Random Topology}: particles are connected randomly to $k$ other particles, where $k$ is set to 5 in the experiments. 
+    \item \textbf{Star Topology}: all particles are connected to a central particle, which shares the best position to all other particles.
+    \item \textbf{Torus Topology}: this topology is a special case of the Von Neumann topology, in which particles are arranged in a 2D grid, and each particle is connected to its four immediate neighbors (up, down, left, right). The Torus topology wraps around, meaning that the particles on the edges are connected to those on the opposite edge, creating a toroidal structure.
+\end{itemize}
+Since a Torus topology is adopted, the chosen population sizes will be perfect squares, in order to create a square grid of particles. The population sizes considered in the experiments are $121$ and $169$. 
+\subsubsection{Position \& Velocity}
+The position of each particle represents a potential solution to the problem, while the velocity determines how the particle moves through the search space, with respect to the other parameters. Since the solution space is not $\mathbb R^d$, they must be limited to the range of the problem:
+\begin{itemize}
+    \item \textbf{Position}: the position of each particle is limited to the range of the problem, which is $[-100, 100]$ for all dimensions. If a particle is going to exceed a boundary, its velocity is shrunk by a factor such that the particle falls on the boundary.
+    \item \textbf{Velocity}: the velocity of each particle is limited to a certain range, if the velocity exceeds the maximum (or minimum) velocity, it is clamped to the maximum (or minimum) velocity. The range of the velocity is set to $\pm0.15$ times the difference between the maximum and minimum positions: $\left[-30, 30\right]$. It is important to note that the velocity is independently limited for each dimension. This customization was suggested in \cite{clamp} 
+\end{itemize}
+\subsubsection{Cognitive and Social Weights}
+\subsubsection{Inertia}
+
 \subsection{Artificial Bee Colony}
 
 \section{Methods}
@@ -60,7 +87,6 @@
 
 \section{Conclusion}
 
-\bibliographystyle{plain}
-\bibliography{references}
+\printbibliography
 
 \end{document}

@@ -185,3 +185,8 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 experiments.py
+doc/Documentation.pdf
+.gitignore
+doc/Documentation.aux
+doc/Documentation.synctex.gz
+doc/Documentation.toc

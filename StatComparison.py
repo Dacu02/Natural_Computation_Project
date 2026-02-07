@@ -137,7 +137,20 @@ def CompareAlgorithms(
                 has_topology = 'topology' in filtered_ranks.columns
                 has_population = 'population' in filtered_ranks.columns
 
-                if has_topology and has_population:
+                if not has_topology and has_population:
+                    ax.scatter(
+                        x=filtered_ranks['Rank'],
+                        y=filtered_ranks['population'],
+                        c='gray',
+                        s=100,
+                        alpha=0.8
+                    )
+                    ax.set_ylabel('population')
+                    ax.set_xlabel('Mean Rank')
+                    ax.set_title(f'Algorithm Ranking (Lower is better) - {csv}')
+                    ax.grid(True, linestyle='--', alpha=0.5)
+
+                elif has_topology and has_population:
                     # Raggruppa per topologia per assegnare colori e label
                     for topology_name, group in filtered_ranks.groupby('topology'):
                         color = topo_colors.get(topology_name, 'gray') # grigio se topologia non riconosciuta
@@ -160,39 +173,41 @@ def CompareAlgorithms(
                     # Invertiamo asse X se si vuole il rango 1 a sinistra (solitamente preferito)
                     # Se Rank 1 è il migliore, i valori bassi devono stare a sinistra/basso.
                     # Qui lasciamo standard: sinistra = rank basso (migliore), destra = rank alto (peggiore).
+                
+                else:
+                    raise ValueError(f"Required column 'population' is missing in the data for {csv}.")
                     
-                    
-                    # --- INIZIO BLOCCO CRITICAL DIFFERENCE ---
-                    # Calcoliamo i limiti attuali del grafico per posizionare la barra
-                    # Otteniamo i limiti attuali dopo aver plottato tutti i punti
-                    y_limits = ax.get_ylim()
-                    y_range = y_limits[1] - y_limits[0]
+                # --- INIZIO BLOCCO CRITICAL DIFFERENCE ---
+                # Calcoliamo i limiti attuali del grafico per posizionare la barra
+                # Otteniamo i limiti attuali dopo aver plottato tutti i punti
+                y_limits = ax.get_ylim()
+                y_range = y_limits[1] - y_limits[0]
 
-                    # POSIZIONE: 
-                    cd_x_start = 0
-                    cd_x_end = cd_x_start + critical_difference
-                    cd_y_pos = y_limits[0] + (y_range * 0.9)
+                # POSIZIONE: 
+                cd_x_start = 0
+                cd_x_end = cd_x_start + critical_difference
+                cd_y_pos = y_limits[0] + (y_range * 0.9)
 
-                    # 1. Disegna la linea orizzontale (il segmento CD)
-                    ax.plot([cd_x_start, cd_x_end], [cd_y_pos, cd_y_pos], 
-                            color='black', linewidth=1.5)
+                # 1. Disegna la linea orizzontale (il segmento CD)
+                ax.plot([cd_x_start, cd_x_end], [cd_y_pos, cd_y_pos], 
+                        color='black', linewidth=1.5)
 
-                    # 2. Disegna le stanghette verticali alle estremità (per sembrare un righello)
-                    tick_height = y_range * 0.05 # Altezza stanghetta proporzionale all'asse Y
-                    ax.plot([cd_x_start, cd_x_start], [cd_y_pos - tick_height, cd_y_pos + tick_height], 
-                            color='black', linewidth=1.5)
-                    ax.plot([cd_x_end, cd_x_end], [cd_y_pos - tick_height, cd_y_pos + tick_height], 
-                            color='black', linewidth=1.5)
+                # 2. Disegna le stanghette verticali alle estremità (per sembrare un righello)
+                tick_height = y_range * 0.05 # Altezza stanghetta proporzionale all'asse Y
+                ax.plot([cd_x_start, cd_x_start], [cd_y_pos - tick_height, cd_y_pos + tick_height], 
+                        color='black', linewidth=1.5)
+                ax.plot([cd_x_end, cd_x_end], [cd_y_pos - tick_height, cd_y_pos + tick_height], 
+                        color='black', linewidth=1.5)
 
-                    # 3. Aggiungi il testo sopra la barra
-                    ax.text((cd_x_start + cd_x_end) / 2, cd_y_pos - tick_height, 
-                            f'CD = {critical_difference:.2f}', 
-                            ha='center', va='bottom', fontsize=10, fontweight='bold')
-                    # --- FINE BLOCCO CRITICAL DIFFERENCE ---
+                # 3. Aggiungi il testo sopra la barra
+                ax.text((cd_x_start + cd_x_end) / 2, cd_y_pos - tick_height, 
+                        f'CD = {critical_difference:.2f}', 
+                        ha='center', va='bottom', fontsize=10, fontweight='bold')
+                # --- FINE BLOCCO CRITICAL DIFFERENCE ---
 
-                    plt.tight_layout()
-                    plt.savefig(os.path.join(data_path, 'data_analysis', f"{csv}_critical_difference.png"), dpi=300)
-                    plt.close()
+                plt.tight_layout()
+                plt.savefig(os.path.join(data_path, 'data_analysis', f"{csv}_critical_difference.png"), dpi=300)
+                plt.close()
 
 
         case _:

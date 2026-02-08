@@ -2,6 +2,7 @@ from copy import deepcopy
 from multiprocessing.pool import AsyncResult
 import os
 from time import strftime
+from Natural_Computation_Project.AggregateCSV import retrieve_class
 from Plot import summary_plots
 import numpy as np
 from scipy import stats
@@ -21,7 +22,7 @@ class EarlyStop(Exception):
     pass
 
 SEEDS: list[int] = [5751, 94862, 48425, 79431, 28465, 917654, 468742131, 745612, 1354987, 126879]
-DEFAULT_PROBLEMS: list[int] = [4, 12, 20]
+PROBLEMS: list[int] = [4, 8, 12, 16, 20, 24]
 BOUNDS_MULTIPLIER = 100
 FUNCTIONS_PATH = os.path.join(os.getcwd())
 # Define the GNBG class
@@ -207,20 +208,22 @@ if __name__ == '__main__':
                 f.write('LastFunctionEvaluation,MinimumError,Seed\n')
                 f.write(f"{instance.FE},{convergence[-1]},{alg_args['seed']}\n")
 
-    if len(sys.argv) < 4:
-        print("Usage: python Framework.py <start_index> <end_index> [<problem_number>] <file_name>")
-        sys.exit(1)
-    elif len(sys.argv) == 4:
+    if len(sys.argv) == 4:
         min_index, max_index, file_name = sys.argv[1:4]
-        PROBLEMS = DEFAULT_PROBLEMS
-        algorithms: List[AlgorithmStructure] = EXPERIMENTS[-1]  # Usa tutte le combinazioni di algoritmi per default
+        problem_class = retrieve_class(PROBLEMS[0])
+        different_classes = False
+        for problem in PROBLEMS:
+            if problem_class != retrieve_class(problem):
+                different_classes = True
 
-    elif len(sys.argv) == 5:
-        min_index, max_index, problem, file_name = sys.argv[1:5]
-        PROBLEMS: list[int] = [int(problem)]
-        algorithms: List[AlgorithmStructure] = EXPERIMENTS[int(problem)]
-
-    
+        if different_classes:
+            algorithms: List[AlgorithmStructure] = EXPERIMENTS[-1]
+        else:
+            algorithms: List[AlgorithmStructure] = EXPERIMENTS[retrieve_class(PROBLEMS[0])]
+    else:
+        print("Usage: python Framework.py <start_index> <end_index> <file_name>")
+        sys.exit(1)
+        
     if not min_index.isdigit() or not max_index.isdigit():
         raise ValueError("Gli argomenti devono essere numeri interi.")
     

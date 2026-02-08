@@ -297,10 +297,19 @@ class ParticleSwarmOptimization(Algorithm):
         if 'speed_strategy' in parsed_args:
             parsed_args['speed_strategy'] = str(parsed_args['speed_strategy'])
         if 'end_inertia' in parsed_args:
-            parsed_args['end_inertia'] = float(parsed_args['end_inertia'])
+            if parsed_args['end_inertia'] == 'nan':
+                parsed_args['end_inertia'] = None
+            else:
+                parsed_args['end_inertia'] = float(parsed_args['end_inertia'])
         if 'end_local_weight' in parsed_args:
-            parsed_args['end_local_weight'] = float(parsed_args['end_local_weight'])
+            if parsed_args['end_local_weight'] == 'nan':
+                parsed_args['end_local_weight'] = None
+            else:
+                parsed_args['end_local_weight'] = float(parsed_args['end_local_weight'])
         if 'end_global_weight' in parsed_args:
-            parsed_args['end_global_weight'] = float(parsed_args['end_global_weight'])
+            if parsed_args['end_global_weight'] == 'nan':
+                parsed_args['end_global_weight'] = None
+            else:
+                parsed_args['end_global_weight'] = float(parsed_args['end_global_weight'])
         
         return parsed_args

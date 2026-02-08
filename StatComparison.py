@@ -20,7 +20,7 @@ def CompareAlgorithms(
         
     if not os.path.exists(data_path):
         raise FileNotFoundError(f"The specified path '{data_path}' does not exist.")
-    
+    output_path = os.path.join(data_path, '..')
     if os.path.isdir(data_path):
         all_files = [f for f in os.listdir(data_path) if f.endswith('.csv')]
     else:
@@ -31,10 +31,10 @@ def CompareAlgorithms(
         csv_name = file.replace('.csv', '').split('_')[0]
         df = pd.read_csv(os.path.join(data_path, file))
         dataframes[csv_name] = df
-
+    
     algorithms, cols = dataframes[next(iter(dataframes))].shape
-    experiments = len([seed for seed in dataframes[next(iter(dataframes))].columns if seed.isdigit()])
-    param_cols = [col for col in dataframes[next(iter(dataframes))].columns if not col.isdigit()]
+    experiments = len([seed for seed in dataframes[next(iter(dataframes))].columns if str(seed).replace('_', '').isdigit()])
+    param_cols = [col for col in dataframes[next(iter(dataframes))].columns if not str(col).replace('_', '').isdigit()]
     for df in dataframes.values():
         if df.shape != (algorithms, cols):
             raise ValueError("All CSV files must have the same dimensions.")
@@ -64,7 +64,7 @@ def CompareAlgorithms(
         case 'Friedman':
             for csv, df in dataframes.items():
                 
-                seed_cols = [col for col in df.columns if str(col).strip().isdigit()]
+                seed_cols = [col for col in df.columns if str(col).replace('_', '').isdigit()]
                 df['Algorithm_ID'] = df[param_cols].astype(str).agg('_'.join, axis=1)
                 
                 df_long = df.melt(
@@ -109,8 +109,8 @@ def CompareAlgorithms(
                 
                 filtered_ranks = mean_ranks_df#[mean_ranks_df['thresholds'] >= minimum_threshold_count]
                 print(f"Mean ranks for {csv} (filtered):")
-                os.makedirs(os.path.join(data_path, 'data_analysis'), exist_ok=True)
-                with open(os.path.join(data_path, 'data_analysis', f"{csv}_mean_ranks.csv"), 'w') as f:
+                os.makedirs(os.path.join(output_path, 'data_analysis'), exist_ok=True)
+                with open(os.path.join(output_path, 'data_analysis', f"{csv}_mean_ranks.csv"), 'w') as f:
                     filtered_ranks.to_csv(f, index=False)
 
                 DOF = np.inf
@@ -206,7 +206,7 @@ def CompareAlgorithms(
                 # --- FINE BLOCCO CRITICAL DIFFERENCE ---
 
                 plt.tight_layout()
-                plt.savefig(os.path.join(data_path, 'data_analysis', f"{csv}_critical_difference.png"), dpi=300)
+                plt.savefig(os.path.join(output_path, 'data_analysis', f"{csv}_critical_difference.png"), dpi=300)
                 plt.close()
 
 

@@ -2,7 +2,6 @@ from copy import deepcopy
 from multiprocessing.pool import AsyncResult
 import os
 from time import strftime
-from Natural_Computation_Project.AggregateCSV import retrieve_class
 from Plot import summary_plots
 import numpy as np
 from scipy import stats
@@ -22,7 +21,7 @@ class EarlyStop(Exception):
     pass
 
 SEEDS: list[int] = [5751, 94862, 48425, 79431, 28465, 917654, 468742131, 745612, 1354987, 126879]
-PROBLEMS: list[int] = [4, 8, 12, 16, 20, 24]
+PROBLEMS: list[int] = [18,19,20]
 BOUNDS_MULTIPLIER = 100
 FUNCTIONS_PATH = os.path.join(os.getcwd())
 # Define the GNBG class
@@ -210,10 +209,10 @@ if __name__ == '__main__':
 
     if len(sys.argv) == 4:
         min_index, max_index, file_name = sys.argv[1:4]
-        problem_class = retrieve_class(PROBLEMS[0])
+        problem_class = (PROBLEMS[0] - 1) // 8 + 1
         different_classes = False
         for problem in PROBLEMS:
-            if problem_class != retrieve_class(problem):
+            if problem_class != (problem - 1) // 8 + 1:
                 different_classes = True
 
         if different_classes:

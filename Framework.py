@@ -22,7 +22,7 @@ class EarlyStop(Exception):
 
 SEEDS: list[int] = [
     5751, 94862, 48425, 79431, 28465, 917654, 468742131, 745612, 1354987, 126879,
-    468798, 46489465, 6184685421, 4894512135, 323546, 3354564645, 9685412, 288484, 32626984, 123165468897
+    # 468798, 46489465, 6184685421, 4894512135, 323546, 3354564645, 9685412, 288484, 32626984, 123165468897
 ]
 PROBLEMS: list[int] = [
     2, 4, 6, # C1
@@ -155,7 +155,7 @@ def load_gnbg_instance(problemIndex: int) -> GNBG:
 
 
 if __name__ == '__main__':
-    STARTING_TIME = time.time()
+    STARTING_TIME = time()
     # Get the current script's directory
     current_dir = os.path.dirname(os.path.abspath(__file__))
 

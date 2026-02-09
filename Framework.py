@@ -1,7 +1,7 @@
 from copy import deepcopy
 from multiprocessing.pool import AsyncResult
 import os
-from time import strftime
+from time import strftime, time
 from Plot import summary_plots
 import numpy as np
 from scipy import stats
@@ -20,8 +20,15 @@ class EarlyStop(Exception):
     """Eccezione per arrestare l'esecuzione anticipatamente."""
     pass
 
-SEEDS: list[int] = [5751, 94862, 48425, 79431, 28465, 917654, 468742131, 745612, 1354987, 126879]
-PROBLEMS: list[int] = [18,19,20]
+SEEDS: list[int] = [
+    5751, 94862, 48425, 79431, 28465, 917654, 468742131, 745612, 1354987, 126879,
+    468798, 46489465, 6184685421, 4894512135, 323546, 3354564645, 9685412, 288484, 32626984, 123165468897
+]
+PROBLEMS: list[int] = [
+    2, 4, 6, # C1
+    10, 12, 14, # C2
+    18, 20, 22, # C3
+]
 BOUNDS_MULTIPLIER = 100
 FUNCTIONS_PATH = os.path.join(os.getcwd())
 # Define the GNBG class
@@ -148,6 +155,7 @@ def load_gnbg_instance(problemIndex: int) -> GNBG:
 
 
 if __name__ == '__main__':
+    STARTING_TIME = time.time()
     # Get the current script's directory
     current_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -218,7 +226,7 @@ if __name__ == '__main__':
         if different_classes:
             algorithms: List[AlgorithmStructure] = EXPERIMENTS[-1]
         else:
-            algorithms: List[AlgorithmStructure] = EXPERIMENTS[retrieve_class(PROBLEMS[0])]
+            algorithms: List[AlgorithmStructure] = EXPERIMENTS[(PROBLEMS[0]-1) // 8 + 1]
     else:
         print("Usage: python Framework.py <start_index> <end_index> <file_name>")
         sys.exit(1)
@@ -391,3 +399,6 @@ if __name__ == '__main__':
                 for algorithm in algorithms:
                     f.write(f"{','.join(f'{alg_errors[algorithm['name']][seed]}' for seed in SEEDS)},{",".join(str(algorithm['args'][key]).replace(',', ';').replace(' ','') for key in sorted(algorithms[0]['args'].keys()))}\n")
             os.rmdir(os.path.join(results, f'f_{problem}'))
+
+
+    print("All processes completed. Summary files generated. Total time taken: {:.2f} seconds.".format(time() - STARTING_TIME))

@@ -52,38 +52,29 @@ def main():
             merged_df = pd.concat([merged_df, df], ignore_index=False, axis=0)
         merged_df.to_csv(os.path.join(output_path, 'by_problem', f'{problem_id}_summary_results.csv'), index=False)
 
-    problems = list(to_merge.keys())
-    problem_class = retrieve_class(problems[0])
-    different_classes = False
-    for problem_id in problems:
-        if retrieve_class(problem_id) != problem_class:
-            different_classes = True
-            break
+    os.makedirs(os.path.join(output_path, 'by_class'), exist_ok=True)
+    for class_id in [1, 2, 3]:
+        class_df = []
+        for summary_folder in os.listdir(os.path.join(output_path, 'by_problem')):
+            problem_id = int(summary_folder.split('_')[0])
+            if summary_folder.endswith('.csv') and retrieve_class(problem_id) == class_id:
+                df = pd.read_csv(os.path.join(output_path, 'by_problem', summary_folder))
+                rename_map = {col: f"{problem_id}_{col}" for col in seeds}
+                df = df.rename(columns=rename_map)
+                class_df.append(df)
+        
+        final_class_df = reduce(
+            lambda left, right: pd.merge(left, right, on=alg_parameters, how='outer'), # type: ignore
+            class_df
+        )
+                    
 
-    if different_classes:
-        os.makedirs(os.path.join(output_path, 'by_class'), exist_ok=True)
-        for class_id in [1, 2, 3]:
-            class_df = []
-            for summary_folder in os.listdir(os.path.join(output_path, 'by_problem')):
-                problem_id = int(summary_folder.split('_')[0])
-                if summary_folder.endswith('.csv') and retrieve_class(problem_id) == class_id:
-                    df = pd.read_csv(os.path.join(output_path, 'by_problem', summary_folder))
-                    rename_map = {col: f"{problem_id}_{col}" for col in seeds}
-                    df = df.rename(columns=rename_map)
-                    class_df.append(df)
-            
-            final_class_df = reduce(
-                lambda left, right: pd.merge(left, right, on=alg_parameters, how='outer'), # type: ignore
-                class_df
-            )
-                        
+        result_cols = [col for col in final_class_df.columns if col not in alg_parameters]
+        result_cols.sort() 
+        ordered_columns = alg_parameters + result_cols
 
-            result_cols = [col for col in final_class_df.columns if col not in alg_parameters]
-            result_cols.sort() 
-            ordered_columns = alg_parameters + result_cols
-
-            final_class_df = final_class_df[ordered_columns]
-            final_class_df.to_csv(os.path.join(output_path, 'by_class', f'{class_id}_class_summary_results.csv'), index=False) # type: ignore
+        final_class_df = final_class_df[ordered_columns]
+        final_class_df.to_csv(os.path.join(output_path, 'by_class', f'{class_id}_class_summary_results.csv'), index=False) # type: ignore
     
 if __name__ == "__main__":
     main()

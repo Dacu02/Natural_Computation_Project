@@ -63,11 +63,24 @@ The position of each particle represents a potential solution to the problem, wh
 \subsection{Artificial Bee Colony}
 
 \section{Methods}
+In order to compare the performance of the algorithms, statistical tests are performed on the results obtained from the experiments ran on a subset of the problem instances. Based on the type of comparison, i.e. whether many algorithms of the same family are compared among themselves, or whether one algorithm from each family is compared, different tests are performed.
+\\[1em]
+The methods used for the comparisons will be explained in detail in the following subsections, along with the reason behind their choice. In the next section then the implementation of the methods will be swiftly explained, and finally their planning and execution will be described. 
 \subsection{Multiple algorithms of one family comparison}
+This case considers the comparison of multiple algorithms of the same family: algorithms belonging to the same family (PSO or ABC) but differing in the parameters used. In this case it is assumed that the algorithms are more than two, and that the results obtained from the experiments are not normally distributed. For this reason, non-parametric tests are performed.
 \subsubsection{Friedman Test}
+The Friedman test is among the most widely used non-parametric tests for comparing multiple algorithms on multiple datasets, where in this case the dataset consists of the results obtained from the experiments. Its first step is to rank the algorithms on each problem, assigning the rank $1$ to the best performing algorithm, $2$ to the second best, and so on. If two or more algorithms have the same performance, they are assigned the average rank (e.g., if two algorithms are tied for first place, they would both receive a rank of $\dfrac{1+2}2=1.5$).
+\\[1em]
+After ranking the algorithms on each problem, the mean rank of each algorithm across the considered problems is calculated. This mean rank allows to determine an estimator of the performance of each algorithm which is not affected by the different scales of the results obtained from the different problems. In order to determine whether the observed differences in mean ranks are statistically significant, the Friedman test statistic is calculated: $$Q=\dfrac{12n}{k(k+1)}\sum_{j=1}^{k}\left(\bar r_j-\dfrac{k+1}{2}\right)^2,\qquad \bar r_j=\dfrac1n\sum_{i=1}^n r_{ij},\qquad Q\sim\chi_{(k-1)}^2$$
+In the formula, $n$ is the number of problems, $k$ is the number of algorithms, and $\bar r_j$ is the mean rank of the $j$-th algorithm. In order to understand the formula, it is important to explain the intuition behind it. First, the rank $r_{ij}$ itself is distributed accordingly to a discrete uniform distribution. Since under the null hypothesis, all algorithms are expected to perform equally, so they share the same mean rank: $$r_{ij}\sim\mathcal U\left\{1,\ldots,k\right\},\quad \mathbb E\left[r_{ij}\right]=\dfrac{k+1}{2}\overset{H_0}=\mathbb E\left[\bar r_j\right],\quad Var\left[r_{ij}\right]=\dfrac{k^2-1}{12}$$
+From which the variance of the mean ranks can be derived: $$Var\left[\bar r_j\right]=Var\left[\dfrac1n\sum_{i=1}^n r_{ij}\right]=\dfrac 1{n^2}\cdot n\dfrac{k^2-1}{12}=\dfrac{k^2-1}{12n}$$
+Now, the Friedman test purpose is to measure the deviation of the observed mean ranks from the expected mean rank under the null hypothesis: $$S=\sum_{j=1}^k\left(\bar r_j-\dfrac{k+1}2\right)^2$$
+This deviation must then be normalized by its own variance, in order to be comparable. The Friedman test statistic also introduces one degree of freedom correction because of the covariance between the ranks (by knowing $n-1$ ranks, the last one is determined since the sum of the ranks is constant). In the end, the formula takes the form of a chi-square distribution with $k-1$ degrees of freedom, as shown above. 
+\\[1em]
+The more the observed mean ranks deviate from the expected mean rank, the higher the value of $Q$, and the more likely it is to reject the null hypothesis. Also, $k$ and $n$ have an influence on the value of $Q$ too: as the number of algorithms $k$ increases, the statistics decreases, while if the number of experiments $n$ increases, the statistic increases. 
 \subsubsection{Nemenyi post-hoc}
 \subsection{One algorithm for each family comparison}
-\subsubsection{Wilcoxon}
+\subsubsection{Wilcoxon Test}
 \subsubsection{Comparison post-hoc}
 
 \section{Execution}

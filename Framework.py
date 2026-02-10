@@ -1,4 +1,5 @@
 from copy import deepcopy
+from curses.ascii import isdigit
 from multiprocessing.pool import AsyncResult
 import os
 from time import strftime, time
@@ -22,9 +23,11 @@ class EarlyStop(Exception):
 
 SEEDS: list[int] = [
     5751, 94862, 48425, 79431, 28465, 917654, 468742131, 745612, 1354987, 126879,
-    # 468798, 46489465, 6184685421, 4894512135, 323546, 3354564645, 9685412, 288484, 32626984, 123165468897
+    468798, 46489465, 61845421, 48512135, 323546, 3354564645, 9685412, 288484, 32626984, 15468897,
+    86735578, 24354843, 54768687, 656576335, 564754637, 68756436, 89775674, 356475, 634647976, 39528058,
+    385022085, 3590328, 395920, 654468, 455768432, 3216878, 763215897, 13549875, 1354687, 68465486
 ]
-PROBLEMS: list[int] = [
+DEFAULT_PROBLEMS: list[int] = [
     2, 4, 6, # C1
     10, 12, 14, # C2
     18, 20, 22, # C3
@@ -215,8 +218,18 @@ if __name__ == '__main__':
                 f.write('LastFunctionEvaluation,MinimumError,Seed\n')
                 f.write(f"{instance.FE},{convergence[-1]},{alg_args['seed']}\n")
 
-    if len(sys.argv) == 4:
+    if len(sys.argv) >= 4:
         min_index, max_index, file_name = sys.argv[1:4]
+        problems = []
+        if len(sys.argv) > 4:
+            args = sys.argv[4:]
+            for arg in args:
+                if arg.isdigit():
+                    problems.append(int(arg))
+        if problems:
+            PROBLEMS = problems
+        else:
+            PROBLEMS = DEFAULT_PROBLEMS
         problem_class = (PROBLEMS[0] - 1) // 8 + 1
         different_classes = False
         for problem in PROBLEMS:

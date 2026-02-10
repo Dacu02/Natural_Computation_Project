@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 from typing import Literal
 TEST_OPTIONS = Literal['Friedman', 'Wilcoxon', 'auto']
 AGGLOMERATION_METHOD = Literal['mean', 'median']
-ALPHA_VALUE = 0.05
+ALPHA_VALUE = 0.025
 
 
 def CompareAlgorithms(
@@ -105,6 +105,7 @@ def CompareAlgorithms(
                 mean_ranks_df = mean_ranks_df.drop(columns=['index'], errors='ignore')
                 mean_ranks_df = mean_ranks_df.reset_index(drop=True)
                 mean_ranks_df = mean_ranks_df.sort_values(by='Rank')
+                mean_ranks_df['Rank'] = mean_ranks_df['Rank'].round(1)
 
                 
                 filtered_ranks = mean_ranks_df#[mean_ranks_df['thresholds'] >= minimum_threshold_count]
@@ -151,23 +152,53 @@ def CompareAlgorithms(
                     ax.grid(True, linestyle='--', alpha=0.5)
 
                 elif has_topology and has_population:
+                    ax.grid(True, linestyle='--', alpha=0.5)
                     # Raggruppa per topologia per assegnare colori e label
                     for topology_name, group in filtered_ranks.groupby('topology'):
                         color = topo_colors.get(topology_name, 'gray') # grigio se topologia non riconosciuta
                         
-                        ax.scatter(
-                            x=group['Rank'],
-                            y=group['population'],
-                            c=color,
-                            label=topology_name,
-                            s=100,
-                            alpha=0.8
-                        )
+                        # Separa i dati in base al valore di end_intertia
+                        if 'end_intertia' in group.columns:
+                            nan_mask = group['end_intertia'].isna()
+                            valid_data = group[~nan_mask]
+                            nan_data = group[nan_mask]
+                            
+                            # Disegna i punti validi come cerchi
+                            if not valid_data.empty:
+                                ax.scatter(
+                                    x=valid_data['Rank'],
+                                    y=valid_data['population'],
+                                    c=color,
+                                    label=topology_name,
+                                    s=100,
+                                    alpha=0.8,
+                                    marker='o'
+                                )
+                            
+                            # Disegna i punti con end_intertia=nan come stelle
+                            if not nan_data.empty:
+                                ax.scatter(
+                                    x=nan_data['Rank'],
+                                    y=nan_data['population'],
+                                    c=color,
+                                    s=100,
+                                    alpha=0.8,
+                                    marker='*'
+                                )
+                        else:
+                            ax.scatter(
+                                x=group['Rank'],
+                                y=group['population'],
+                                c=color,
+                                label=topology_name,
+                                s=100,
+                                alpha=0.8
+                            )
                     
-                    ax.set_ylabel('population')
-                    ax.legend(title='topology', loc='upper right', bbox_to_anchor=(1, 0.85))
+                    ax.set_ylabel('Population')
+                    ax.legend(title='Topology', loc='upper right', bbox_to_anchor=(1, 0.85))
                     ax.set_xlabel('Mean Rank')
-                    ax.set_title(f'Algorithm Ranking (Lower is better) - {csv}')
+                    ax.set_title(f'Algorithm Ranking - {csv}')
                     ax.grid(True, linestyle='--', alpha=0.5)
                     
                     # Invertiamo asse X se si vuole il rango 1 a sinistra (solitamente preferito)
@@ -184,9 +215,9 @@ def CompareAlgorithms(
                 y_range = y_limits[1] - y_limits[0]
 
                 # POSIZIONE: 
-                cd_x_start = 0
-                cd_x_end = cd_x_start + critical_difference
-                cd_y_pos = y_limits[0] + (y_range * 0.9)
+                cd_x_start = min(filtered_ranks['Rank'])
+                cd_x_end = cd_x_start + critical_difference 
+                cd_y_pos = y_limits[0] + (y_range * 0.8)
 
                 # 1. Disegna la linea orizzontale (il segmento CD)
                 ax.plot([cd_x_start, cd_x_end], [cd_y_pos, cd_y_pos], 

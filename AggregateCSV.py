@@ -23,27 +23,29 @@ def main():
     alg_parameters = []
     seeds = []
     runned_once = False
-    for problem_folder in os.listdir(results_path):
-        if os.path.isdir(os.path.join(results_path, problem_folder)):
-            if problem_folder.endswith(name_file):
-                for file in os.listdir(os.path.join(results_path, problem_folder)):
-                    if file.endswith('.csv'):
-                        df = pd.read_csv(os.path.join(results_path, problem_folder, file))
-                        if not runned_once and not alg_parameters:
-                            alg_parameters = [col for col in df.columns if not col.strip().isdigit()]
-                            seeds = [col for col in df.columns if col.strip().isdigit()]
-                        else:
-                            current_parameters = [col for col in df.columns if not col.strip().isdigit()]
-                            current_seeds = [col for col in df.columns if col.strip().isdigit()]
-                            if set(current_parameters) != set(alg_parameters) or set(current_seeds) != set(seeds):
-                                raise ValueError("Inconsistent algorithm parameters or seeds across runs.")
-                        problem_id = int(file.split('_')[0])
-                        if not runned_once and problem_id not in to_merge.keys():
-                            to_merge[problem_id] = []
-                        elif runned_once and problem_id not in to_merge.keys():
-                            raise ValueError("Inconsistent problem IDs across runs.")
-                        to_merge[problem_id].append(os.path.join(results_path, problem_folder, file))
-            runned_once = True
+    folders_to_visit = [os.path.join(results_path, folder) 
+                        for folder in os.listdir(results_path) 
+                            if os.path.isdir(os.path.join(results_path, folder)) 
+                                and folder.endswith(name_file)]
+    for problem_folder in folders_to_visit:
+        for file in os.listdir(problem_folder):
+            if file.endswith('.csv'):
+                df = pd.read_csv(os.path.join(problem_folder, file))
+                if not runned_once and not alg_parameters:
+                    alg_parameters = [col for col in df.columns if not col.strip().isdigit()]
+                    seeds = [col for col in df.columns if col.strip().isdigit()]
+                else:
+                    current_parameters = [col for col in df.columns if not col.strip().isdigit()]
+                    current_seeds = [col for col in df.columns if col.strip().isdigit()]
+                    if set(current_parameters) != set(alg_parameters) or set(current_seeds) != set(seeds):
+                        raise ValueError("Inconsistent algorithm parameters or seeds across runs.")
+                problem_id = int(file.split('_')[0])
+                if not runned_once and problem_id not in to_merge.keys():
+                    to_merge[problem_id] = []
+                elif runned_once and problem_id not in to_merge.keys():
+                    raise ValueError("Inconsistent problem IDs across runs.")
+                to_merge[problem_id].append(os.path.join(results_path, problem_folder, file))
+        runned_once = True
 
     for problem_id, files in sorted(to_merge.items()):
         merged_df = pd.DataFrame()
@@ -63,11 +65,15 @@ def main():
                 df = df.rename(columns=rename_map)
                 class_df.append(df)
         
+        if len(class_df) == 0:
+            print(f"No data found for class {class_id}. Skipping.")
+            continue
+        
         final_class_df = reduce(
             lambda left, right: pd.merge(left, right, on=alg_parameters, how='outer'), # type: ignore
             class_df
         )
-                    
+                        
 
         result_cols = [col for col in final_class_df.columns if col not in alg_parameters]
         result_cols.sort() 

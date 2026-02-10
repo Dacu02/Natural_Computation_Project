@@ -1,8 +1,55 @@
 from typing import Literal
 import numpy as np
+import copy
 from beeoptimal.abc import ArtificialBeeColony as _ABC
+from beeoptimal.bee import Bee
 from Algorithms import Problem, Algorithm
+
+def get_iabc_donor(abc: _ABC, bee_idx: int , population: list) -> Bee: 
+    fit = np.array([bee.fitness for bee in population])
+    ts = np.quantile(fit, 0.25) #0.25 
+
+    memory = [b for i, b in enumerate(population) 
+              if fit[i] < ts and i != bee_idx]
     
+    if len(memory) == 0:
+        memory = [b for i, b in enumerate(population) if i != bee_idx]
+    return copy.deepcopy(np.random.choice(memory))
+def patch_iabc(abc: _ABC):
+   bee_opt_methos = abc.get_candidate_neighbor_
+
+   def ibac_get_candidate_neighbor(self, bee, bee_idx, population):
+       if self._mutation_strategy == 'iABC':
+           donor = get_iabc_donor(self, bee_idx, population)
+           candidate = copy.deepcopy(bee)
+
+           j = np.random.randint(0, self.dim)
+           phi = np.random.uniform(-self.sf, self.sf)
+           candidate.position[j] = [
+               bee.position[j] + 
+               phi * (bee.position[j] - donor.position[j])
+           ]
+
+           candidate.position = np.clip(candidate.position, self.bounds[:, 0], self.bounds[:, 1])
+           return candidate
+       if self._mutation_strategy == 'iABC-block':
+           donor = get_iabc_donor(self, bee_idx, population)
+           candidate = copy.deepcopy(bee)
+           block_size = max(2, int(0.1 * self.dim))  # Dimensione del blocco (10% delle dimensioni, minimo 2)
+           idx = np.random.choice(self.dim, block_size, replace=False)  # Indici del blocco da modificare
+           phi = np.random.uniform(-self.sf, self.sf, size=block_size)
+
+           candidate.position[idx] = [
+               bee.position[idx] +
+               phi * (bee.position[idx] - donor.position[idx])
+           ]
+           candidate.position = np.clip(candidate.position, self.bounds[:, 0], self.bounds[:, 1])
+           return candidate
+       return bee_opt_methos(bee, bee_idx, population)
+   abc.get_candidate_neighbor_ = ibac_get_candidate_neighbor        
+
+
+
 class ArtificialBeeColony(Algorithm):
     """Classe per l'algoritmo Artificial Bee Colony."""
     def __init__(
@@ -15,7 +62,12 @@ class ArtificialBeeColony(Algorithm):
             verbose: bool = False, 
             limit: int|None = None,
             selection_strategy: Literal['RouletteWheel', 'Tournament'] = 'RouletteWheel',
-            mutation_strategy: Literal['StandardABC', 'ModifiedABC', 'ABC/best/1', 'ABC/best/2'] = 'StandardABC',
+            mutation_strategy: Literal[
+                'StandardABC', 
+                'ModifiedABC', 
+                'ABC/best/1', 
+                'ABC/best/2'
+                ] = 'StandardABC',
             initialization_strategy: Literal['random', 'chaotic'] = 'random',
             tournament_size: int|None = None,
         ):
@@ -53,6 +105,7 @@ class ArtificialBeeColony(Algorithm):
             max_scouts=self.max_scouts
 
         )
+        patch_iabc(self._abc)
     
     def _set_problem(self, problem: Problem):
         pass
@@ -93,6 +146,11 @@ def parse_args(args: dict) -> dict:
         'tournament_size': int(args['tournament_size']) if 'tournament_size' in args and args['tournament_size'] != 'nan' else None,
     }
     return parsed_args
+
+
+        
+        
+         
 
 
 

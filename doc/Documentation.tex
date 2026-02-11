@@ -32,17 +32,32 @@
 \newpage
 \section{Introduction}
 \subsection{Generalized Numerical Benchmark Generator}
+The Generalized Numerical Benchmark Generator (GNBG) is a set of benchmark functions used for evaluating the performance of optimization algorithms. These 24 functions are grouped into three categories of 8 problems each:
+\begin{itemize}
+    \item \textbf{Unimodal functions}: these functions have a single global minimum, often having a landscape smoother than the other categories and sometimes even convex
+    \begin{itemize}
+        \item This class evalues how well the algorithm obtains information from the landscape, and how well it exploits this information to converge to the global minimum, since in this case there are not local minima to deceive the algorithm.
+    \end{itemize}
+    \item \textbf{Single component Multimodal functions}: these functions have multiple local minima, making them more challenging for optimization algorithms since their ability to deceive the algorithms
+    \begin{itemize}
+        \item This class evaluates how well the algorithm can escape from local minima, and how well it can explore the search space to find the global minimum.
+    \end{itemize}
+    \item \textbf{Multi component Multimodal functions}: these functions have multiple local minima, but they are more complex than the single component multimodal functions, since they are composed of multiple components, which make the landscape unpredictable and more difficult to navigate
+    \begin{itemize}
+        \item This class evaluates how well the algorithm can navigate through a complex landscape, and how well it can balance exploration and exploitation to find the global minimum.
+    \end{itemize}
+    \end{itemize}
 \subsection{Particle Swarm Optimization}
 The Particle Swarm Optimization (PSO) is a population-based optimization in which a swarm of particles (potential solutions) moves through the search space to find the optimal solution. Each particle adjusts its position based on its own experience and the experience of neighboring particles.
 \\[1em]
-The update rule for the velocity and position of the $i$-th particle on iteration $t$ is given by:
+The update rule for the velocity and position of the $i$-th particle on iteration $t$ in PSO with inertia weight \cite{pso} is given by:
 \begin{align*}
 \overset{\rightarrow}{v_i}(t+1) &= w \cdot \overset{\rightarrow}{v_i}(t) + \mathcal U(0,c_1) \cdot (\overset{\rightarrow}{p_i} - \overset{\rightarrow}{x_i}(t)) + \mathcal U(0,c_2) \cdot (\overset{\rightarrow}{g_i} - \overset{\rightarrow}{x_i}(t)) \\
 \overset{\rightarrow}{x_i}(t+1) &= \overset{\rightarrow}{x_i}(t) + \overset{\rightarrow}{v_i}(t+1)
 \end{align*}
 In the subsequent sections, each term of the update rule will be explained in detail, along with the parameters involved and their influence on the algorithm's performance.
 \subsubsection{Population \& Topology}
-A higher population size allows for a more extensive exploration of the search space, but decreases the number of iterations, meanwhile a smaller population size allows for more iterations on fewer particles. The topology affects how particles share information: it oscillates between a global topology, where all particles are neighbors, and a local topology, where particles only interact with a subset of the swarm.
+A higher population size allows for a more extensive exploration of the search space, but decreases the number of iterations, meanwhile a smaller population size allows for more iterations on fewer particles. The topology affects how particles share information: it oscillates between a global topology, where all particles connected between each other, and a local topology, where particles only interact with few neighbors. 
 \\[1em]
 The topologies considered in this project are:
 \begin{itemize}
@@ -58,14 +73,15 @@ The position of each particle represents a potential solution to the problem, wh
     \item \textbf{Velocity}: the velocity of each particle is limited to a certain range, if the velocity exceeds the maximum (or minimum) velocity, it is clamped to the maximum (or minimum) velocity. The range of the velocity is set to $\pm0.15$ times the difference between the maximum and minimum positions: $\left[-30, 30\right]$. It is important to note that the velocity is independently limited for each dimension. This customization was suggested in \cite{clamp} 
 \end{itemize}
 \subsubsection{Cognitive and Social Weights}
+The cognitive and social weights influence respectively the particle's tendency to return to its own best position and the tendency to move towards the best position found by its neighbors. A higher cognitive weight encourages particles to explore the search space more independently, while a higher social weight encourages particles to converge towards the best solution found by the swarm. The values of the cognitive and social weights considered are all combinations of $c_1$ and $c_2$ in $\{0.75, 1.25\}$.
 \subsubsection{Inertia}
-
+The inertia weight controls the influence of the previous velocity on the current velocity. It is somewhat similar to the temperature of the particles. In this case other than the standard fixed inertia weight, a linearly decreasing inertia weight is also considered. The inertia weights start from $0.9$ or $0.7$ and eventually if enabled decreases to $0.4$ through the iterations.
 \subsection{Artificial Bee Colony}
 
 \section{Methods}
 In order to compare the performance of the algorithms, statistical tests are performed on the results obtained from the experiments ran on a subset of the problem instances. Based on the type of comparison, i.e. whether many algorithms of the same family are compared among themselves, or whether one algorithm from each family is compared, different tests are performed.
 \\[1em]
-The methods used for the comparisons will be explained in detail in the following subsections, along with the reason behind their choice. In the next section then the implementation of the methods will be swiftly explained, and finally their planning and execution will be described. 
+The methods used for the comparisons will be explained in detail in the following subsections, along with the reason behind their choice. In the next section then the implementation of the methods will be swiftly explained, and finally their planning and execution will be described. The notions are taken from \cite{demsar}.
 \subsection{Multiple algorithms of one family comparison}
 This case considers the comparison of multiple algorithms of the same family: algorithms belonging to the same family (PSO or ABC) but differing in the parameters used. In this case it is assumed that the algorithms are more than two, and that the results obtained from the experiments are not normally distributed. For this reason, non-parametric tests are performed.
 \subsubsection{Friedman Test}
@@ -95,10 +111,28 @@ This quantity is called the critical difference (CD), and it represents the mini
 \subsubsection{Comparison post-hoc}
 
 \section{Execution}
+In the following section, the execution procedure is thoroughly explained, along with the machines used for the experiments.
+\\[1em]
+Regarding the machines, the experiments were run on the High Performance Computing (HPC) cluster of the University of Salerno, which is composed of $16$ nodes executing Ubuntu Linux $6.8$ mounting each $72$ CPU cores, for a total of $1152$ cores. For this reason, the experiments were parallelized: for each node a process is executed, each one initializes $72$ threads, so that each thread runs an experiment on a different problem instance. In order to distribute the load among the nodes, the experiments are distributed with a job array. It allows to submit a single job to the cluster, which will then replicate itself on each node, but with a different index, so that each node will execute a different subset of the experiments. The results obtained from the experiments are then collected, aggregated, and then analyzed with the statistical tests.
+\\[1em]
+In order to take into account the maximum execution time of the experiments on the nodes allowed by the cluster policies, the mean time to execute an experiment is estimated to last less than 20 minutes. Since the number of cpus is $1152$, and the maximum time allowed for a job is $9$ hours, the maximum amount of experiments that can be executed in parallel is $1152\cdot\dfrac{9\cdot60}{20}=31104$. This number far exceeds the amount of experiments that will be executed, and in order to avoid overloading the cluster, the experiments are distributed through time on fewer nodes. 
 \subsection{Framework}
-\subsubsection{Algorithms}
-\subsubsection{Problems}
-\subsubsection{Tests}
+The framework of the project is implemented in Python, and it is composed of various modules that represent the different components of the algorithms, which were developed independently from each other, in order to split the execution part from the data retrieval and analysis part.
+\subsubsection{\texttt{Framework.py}}
+\subsubsection{\texttt{Algorithm.py}}
+Through this module, the abstract class that an algorithm must implement is defined. This way by managing the algorithms through a common interface, the execution of the experiments is simplified, and the results can be easily retrieved and analyzed by defining a common format for the results. This module also defines the common parameters of the algorithms, such as the population size, the verbosity level, the number of generations and the seed.
+\subsubsection{\texttt{ParticleSwarmOptimization.py}}
+The Particle Swarm Optimization (PSO) algorithm is implemented in this module through the Pyswarms library \cite{pyswarms} and the \texttt{Algorithm} abstract class. This library was chosen because it provided a flexible implementation of the PSO algorithm, which exposed the parameters needed for the experiments, the linear decay of the parameters, and the possibility to implement custom topologies. 
+\\[1em]
+The first part of the file contains literals describing:
+\begin{itemize}
+    \item The strategy to adopt when a particle is going to exceed the boundaries of the problem
+    \item The strategy to adopt when a particle is going to exceed the velocity limits
+    \item The strategy to vary the parameters of the algorithm through the iterations
+    \item A custom implementation of the Torus topology, which is not provided by the library
+\end{itemize}
+\subsubsection{\texttt{ArtificialBeeColony.py}}
+\subsubsection{\texttt{StatComparison.py}}
 \subsection{Experiments}
 \subsubsection{PSO}
 \subsubsection{ABC}

@@ -76,6 +76,7 @@ The position of each particle represents a potential solution to the problem, wh
 The cognitive and social weights influence respectively the particle's tendency to return to its own best position and the tendency to move towards the best position found by its neighbors. A higher cognitive weight encourages particles to explore the search space more independently, while a higher social weight encourages particles to converge towards the best solution found by the swarm. The values of the cognitive and social weights considered are all combinations of $c_1$ and $c_2$ in $\{0.75, 1.25\}$.
 \subsubsection{Inertia}
 The inertia weight controls the influence of the previous velocity on the current velocity. It is somewhat similar to the temperature of the particles. In this case other than the standard fixed inertia weight, a linearly decreasing inertia weight is also considered. The inertia weights start from $0.9$ or $0.7$ and eventually if enabled decreases to $0.4$ through the iterations.
+
 \subsection{Artificial Bee Colony}
 
 \section{Methods}
@@ -107,7 +108,31 @@ Where $k$ is the number of algorithms, $\nu$ is the degrees of freedom. Since th
 In the end, the performance of two algorithms $i$ and $j$ is significantly different if the absolute difference between their mean ranks is greater than the critical difference: $$|\bar r_i-\bar r_j|>q_\alpha\sqrt{Var\left[\bar r_i-\bar r_j\right]}=q_\alpha\sqrt{\dfrac{k(k+1)}{6n}}=CD$$
 This quantity is called the critical difference (CD), and it represents the minimum difference between the mean ranks of two algorithms for their performance to be considered significantly different. As the number of algorithms $k$ increases, the critical difference increases, so it is harder to find significant differences between the algorithms. On the other hand, as the number of problems $n$ increases, the critical difference decreases. The $\alpha$ level also has an influence on the critical difference: as $\alpha$ decreases, the critical value $q_\alpha$ increases.
 \subsection{One algorithm for each family comparison}
+This case considers the comparison of one algorithm from each family: one PSO and one ABC. In this case, it is assumed that the results obtained from the experiments are not normally distributed. For this reason, non-parametric tests are performed.
+\noindent \\
+In the next sections, the Wilcoxon test is performed to compare the performance of the two algorithms on each problem, and then a post-hoc comparison is performed to determine whether the observed differences are statistically significant. Its used as an alternative to the paired t-test when the normality assumption is not met.
 \subsubsection{Wilcoxon Test}
+The Wilcoxon signed-rank test is a non-parametric test used to compare two related samples, in this case the results obtained from the two algorithms on the same problem instances. The test is based on the differences between the paired observations, and it assesses whether the median of these differences is significantly different from zero. 
+\\
+Considering two algorithms $A$ and $B$, the first step is to calculate the differences between the paired observations: 
+$$d_i = A_i - B_i$$ 
+where $A_i$ and $B_i$ are the results obtained from the two algorithms on the $i$-th problem instance. Then, the absolute values of these differences are ranked, ignoring any differences that are equal to zero. If there are ties in the absolute differences, they are assigned the average rank(as Friedman ranking). Next, the ranks are assigned a positive or negative sign based on the original differences: if $d_i$ is positive, the rank is positive; if $d_i$ is negative, the rank is negative. 
+Under the null hypothesis that there is no difference between the two algorithms, the sum of the positive ranks and the sum of the negative ranks should be approximately equal. The test statistic is then calculated as the smaller of these two sums:
+$$W = \min\left(\sum_{d_i > 0} r_i + \dfrac{1}{2} \sum_{d_i = 0} r_i, \sum_{d_i < 0} r_i + \dfrac{1}{2} \sum_{d_i = 0} r_i\right)$$
+Where $r_i$ is the rank of the absolute difference $|d_i|$, note that ranks of $d_i = 0$ are split equally between the positive and negative sums. \\
+The p-value can be computed considering that under the null hypothesis, all the configuration are equally likely, with probability $\dfrac{1}{2^n}$, where $n$ is the number of non-zero differences. 
+In order to obtain the probability we consider all the configurations of signs for the ranks, and we count how many of them lead to a sum of positive ranks (or negative ranks) less than or equal to the observed test statistic $W$. The p-value is then calculated as:
+$$p = \dfrac{\text{number of configurations with } W' \leq W}{2^n}$$
+Where $W'$ is the test statistic calculated for each configuration of signs. If the p-value is less than the chosen significance level $\alpha$, we reject the null hypothesis, indicating that there is a statistically significant difference between the two algorithms. 
+For larger sample sizes its demonded that the distribution of the test statistic $W$ can be approximated by a normal distribution, allowing for the use of a z-test to calculate the p-value. In this case, the test statistic is standardized as follows:
+$$Z = \dfrac{W - E[W^+]}{\sqrt{Var(W^+)}}$$
+Where $E[W^+]$ and $Var(W^+)$ are the mean and variance of the test
+statistic $W$ under the null hypothesis, which can be calculated as:
+$$E[W^+] = \dfrac{n(n+1)}{4},\quad Var(W^+) = \dfrac{n(n+1)(2n+1)}{24}$$
+The p-value can then be calculated using the standard normal distribution.
+
+
+
 \subsubsection{Comparison post-hoc}
 
 \section{Execution}

@@ -1,5 +1,6 @@
 from typing import Literal
 import numpy as np
+import types
 import copy
 from beeoptimal.abc import ArtificialBeeColony as _ABC
 from beeoptimal.bee import Bee
@@ -7,46 +8,56 @@ from Algorithms import Problem, Algorithm
 
 def get_iabc_donor(abc: _ABC, bee_idx: int , population: list) -> Bee: 
     fit = np.array([bee.fitness for bee in population])
-    ts = np.quantile(fit, 0.25) #0.25 
+    avg_fit = np.mean(fit)
 
-    memory = [b for i, b in enumerate(population) 
-              if fit[i] < ts and i != bee_idx]
-    
-    if len(memory) == 0:
-        memory = [b for i, b in enumerate(population) if i != bee_idx]
-    return copy.deepcopy(np.random.choice(memory))
+    current_fit = fit[bee_idx]
+    if current_fit < avg_fit:
+        candidates = [b for i, b in enumerate(population) if i != bee_idx]
+    else:
+        candidates = [
+            population[i]
+            for i in range(len(population))
+            if i != bee_idx and fit[i] < current_fit
+        ]
+        if len(candidates) == 0:
+            candidates = [b for i, b in enumerate(population) if i != bee_idx]
+    return np.random.choice(candidates)
+
+
+
+   
 def patch_iabc(abc: _ABC):
-   bee_opt_methos = abc.get_candidate_neighbor_
+    bee_opt_methos = abc.get_candidate_neighbor_
 
-   def ibac_get_candidate_neighbor(self, bee, bee_idx, population):
-       if self._mutation_strategy == 'iABC':
-           donor = get_iabc_donor(self, bee_idx, population)
-           candidate = copy.deepcopy(bee)
+    def ibac_get_candidate_neighbor(self, bee, bee_idx, population):
+        if self._mutation_strategy == 'iABC':
+            donor = get_iabc_donor(self, bee_idx, population)
+            candidate = copy.deepcopy(bee)
 
-           j = np.random.randint(0, self.dim)
-           phi = np.random.uniform(-self.sf, self.sf)
-           candidate.position[j] = [
-               bee.position[j] + 
-               phi * (bee.position[j] - donor.position[j])
-           ]
+            mutation_mask = np.random.uniform(size = self.dim) < self.mr
+            phi = np.random.uniform(-self.sf, self.sf)
+            candidate.position[mutation_mask] = (bee.position[mutation_mask] + 
+                phi * (bee.position[mutation_mask] - 
+                donor.position[mutation_mask]))
 
-           candidate.position = np.clip(candidate.position, self.bounds[:, 0], self.bounds[:, 1])
-           return candidate
-       if self._mutation_strategy == 'iABC-block':
-           donor = get_iabc_donor(self, bee_idx, population)
-           candidate = copy.deepcopy(bee)
-           block_size = max(2, int(0.1 * self.dim))  # Dimensione del blocco (10% delle dimensioni, minimo 2)
-           idx = np.random.choice(self.dim, block_size, replace=False)  # Indici del blocco da modificare
-           phi = np.random.uniform(-self.sf, self.sf, size=block_size)
+            candidate.position = np.clip(candidate.position, self.bounds[:, 0], self.bounds[:, 1])
+            return candidate
+        if self._mutation_strategy == 'iABC-block':
+            donor = get_iabc_donor(self, bee_idx, population)
+            candidate = copy.deepcopy(bee)
+            block_size = max(3, int(0.2 * self.dim))
+            idx = np.random.choice(self.dim, block_size, replace=False)
+            phi = np.random.uniform(-self.sf, self.sf, size=block_size)
+            mutation_mask = np.random.uniform(size=block_size) < self.mr
 
-           candidate.position[idx] = [
-               bee.position[idx] +
-               phi * (bee.position[idx] - donor.position[idx])
-           ]
-           candidate.position = np.clip(candidate.position, self.bounds[:, 0], self.bounds[:, 1])
-           return candidate
-       return bee_opt_methos(bee, bee_idx, population)
-   abc.get_candidate_neighbor_ = ibac_get_candidate_neighbor        
+            candidate.position[idx[mutation_mask]] = (bee.position[idx[mutation_mask]] + 
+                phi[mutation_mask] * 
+                (bee.position[idx[mutation_mask]] - donor.position[idx[mutation_mask]]))
+            candidate.position = np.clip(candidate.position, self.bounds[:, 0], self.bounds[:, 1])
+            return candidate
+        return bee_opt_methos(bee, bee_idx, population)
+
+    abc.get_candidate_neighbor_ = types.MethodType(ibac_get_candidate_neighbor, abc)
 
 
 
@@ -66,7 +77,9 @@ class ArtificialBeeColony(Algorithm):
                 'StandardABC', 
                 'ModifiedABC', 
                 'ABC/best/1', 
-                'ABC/best/2'
+                'ABC/best/2',
+                'iABC', 
+                'iABC-block'
                 ] = 'StandardABC',
             initialization_strategy: Literal['random', 'chaotic'] = 'random',
             tournament_size: int|None = None,
@@ -105,17 +118,23 @@ class ArtificialBeeColony(Algorithm):
             max_scouts=self.max_scouts
 
         )
+        self._abc._mutation_strategy = mutation_strategy
         patch_iabc(self._abc)
     
     def _set_problem(self, problem: Problem):
         pass
 
     def run(self):
+        mutation_for_lib = (
+            'StandardABC'
+            if self._mutation_strategy in ['iABC', 'iABC-block']
+            else self._mutation_strategy
+        )
         self._abc.optimize(
             max_iters=int(self._generations),
             limit=self._limit if self._limit else 'default',
             selection=self._selection_strategy,
-            mutation=self._mutation_strategy,
+            mutation=mutation_for_lib,
             initialization=self._initialization_strategy,
             tournament_size=self._tournament_size if self._selection_strategy == 'Tournament' else None,
             verbose=self._verbose,

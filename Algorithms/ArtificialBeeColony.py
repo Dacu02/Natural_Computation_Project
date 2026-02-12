@@ -143,28 +143,25 @@ class ArtificialBeeColony(Algorithm):
         return self._abc.optimal_bee.position, self._abc.optimal_bee.value
     
 
-@staticmethod
-def parse_args(args: dict) -> dict:
-    """
-    Funzione di comodo per parsare i parametri da un dizionario (ad esempio estratto da un file CSV).
-    Args:
-        args (dict): Dizionario contenente i parametri da parsare.
-    Returns:
-        dict: Dizionario con i parametri parsati e convertiti nei tipi corretti.
-    """
-    parsed_args = {
-        'population': int(args['population']),
-        'generations': int(args['generations']),
-        'seed': int(args['seed']),
-        'max_scouts': int(args['max_scouts']),
-        'verbose': bool(int(args['verbose'])),
-        'limit': int(args['limit']), 
-        'selection_strategy': args['selection_strategy'],
-        'mutation_strategy': args['mutation_strategy'],
-        'initialization_strategy': args['initialization_strategy'],
-        'tournament_size': int(args['tournament_size']) if 'tournament_size' in args and args['tournament_size'] != 'nan' else None,
-    }
-    return parsed_args
+    @staticmethod
+    def parse_args(args: dict) -> dict:
+        """
+        Funzione di comodo per parsare i parametri da un dizionario (ad esempio estratto da un file CSV).
+        Args:
+            args (dict): Dizionario contenente i parametri da parsare.
+        Returns:
+            dict: Dizionario con i parametri parsati e convertiti nei tipi corretti.
+        """
+        parsed_args = {
+            'population': int(args['population']),
+            'max_scouts': int(args['max_scouts']),
+            'limit': int(args['limit']), 
+            'selection_strategy': args['selection_strategy'],
+            'mutation_strategy': args['mutation_strategy'],
+            'initialization_strategy': args['initialization_strategy'],
+            'tournament_size': int(args['tournament_size']) if 'tournament_size' in args and pd.notna(args['tournament_size']) else None,
+        }
+        return parsed_args
 
 
         

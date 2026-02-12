@@ -197,3 +197,6 @@ doc/Documentation.fls
 doc/Documentation.run.xml
 doc/Documentation-blx.bib
 doc/Documentation.bbl
+*.csv
+*.txt
+*.png

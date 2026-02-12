@@ -77,9 +77,9 @@ def CompareAlgorithms(
                 # dv: La variabile dipendente (Score)
                 # within: Il fattore che stiamo confrontando (gli Algoritmi, cioè le righe)
                 # subject: Il fattore di blocco (i Semi/Seeds, cioè le colonne originali)
-                res = friedman(data=df_long, dv='Score', within='Algorithm_ID', subject='Seed_Subject', method='f')
+                res = friedman(data=df_long, dv='Score', within='Algorithm_ID', subject='Seed_Subject')#, method='f')
                 
-                stat = res['F'].values[0]
+                stat = res['Q'].values[0]
                 p_value = res['p-unc'].values[0]
 
                 print(f"Friedman test for {csv}: statistic={stat}, p-value={p_value}")

@@ -37,48 +37,18 @@ def summary_plots(problem_folder: str, algorithms: list[str], results_per_algori
 
     # Generazione dei summary tra differenti algoritmi di ciascun problema
     with open(os.path.join(output_folder, f'final_results_summary.csv'), 'w') as f:
-        f.write('Algorithm,MeanFinalError,StdFinalError,MeanSE,ShapiroWilk,FinalResults\n')
+        f.write('Algorithm,MeanFinalError,StdFinalError,MeanSE,MedianSE,ShapiroWilk,FinalResults\n')
         for alg_name, results_array in results_per_algorithm.items():
             if results_array is not None:
                 mean_final_error = np.mean(results_array)
                 std_final_error = np.std(results_array, ddof=1)
                 sem_final_error = std_final_error / np.sqrt(len(results_array))
+                median_se = np.median(results_array)
                 results_str = ';'.join(map(str, results_array))
                 _, shapiro_p = stats.shapiro(results_array)
-                f.write(f"{alg_name},{mean_final_error},{std_final_error},{sem_final_error},{shapiro_p},{results_str}\n")
+                f.write(f"{alg_name},{mean_final_error},{std_final_error},{sem_final_error},{median_se},{shapiro_p},{results_str}\n")
                 if shapiro_p < 0.05:
                     print(f"Warning: i risultati finali dell'algoritmo {alg_name} sul problema f{problem} sembrano non seguire una distribuzione normale (Shapiro-Wilk p={shapiro_p:.4f})")
-    
-    # # Matrice di confronto t-test tra algoritmi
-    # n_algs = len(algorithms)
-    # comparison_matrix = np.zeros((n_algs, n_algs))
-
-    # for i_idx, alg_i in enumerate(algorithms):
-    #     for j_idx, alg_j in enumerate(algorithms):
-    #         if i_idx != j_idx:
-    #             results_i = results_per_algorithm[alg_i]
-    #             results_j = results_per_algorithm[alg_j]
-    #             if results_i is not None and results_j is not None:
-    #                 stat, p_value_two_tailed = stats.ttest_ind(results_i, results_j)
-    #                 p_value_one_tailed = p_value_two_tailed / 2 # type: ignore
-    #                 if np.mean(results_i) < np.mean(results_j):
-    #                     p_value_one_tailed = 1 - p_value_one_tailed
-    #                 comparison_matrix[i_idx, j_idx] = p_value_one_tailed
-    #         else:
-    #             comparison_matrix[i_idx, j_idx] = 0.5  # diagonale
-
-    # # Salva matrice come immagine
-    # plt.figure(figsize=(8, 6))
-    # plt.imshow(comparison_matrix, cmap='coolwarm', aspect='auto', vmin=0, vmax=1)
-    # for (i, j), value in np.ndenumerate(comparison_matrix):
-    #     plt.text(j, i, f'{value:.2f}', ha='center', va='center', color='black', weight=1000)
-    # plt.colorbar(label='p-value')
-    # plt.xticks(range(n_algs), algorithms, ha='right')
-    # plt.yticks(range(n_algs), algorithms)
-    # plt.title('T-test p-values between algorithms ($H_0: \\mu_{row} > \\mu_{col}$)')
-    # plt.tight_layout()
-    # plt.savefig(os.path.join(output_folder, 'algorithms_comparison_matrix.png'), dpi=150)
-    # plt.clf()
 
     # Plot delle distribuzioni finali degli errori come normali, per ogni algoritmo
     for alg_name, results_array in results_per_algorithm.items():
@@ -134,12 +104,14 @@ def summary_plots(problem_folder: str, algorithms: list[str], results_per_algori
         generations = summary_df['Generation'].values
         mean_errors = summary_df['MeanError'].values
         mean_se = summary_df['MeanError'].values
-        #ci95_high = mean_errors + (mean_se) * stats.t.ppf(0.975, df=seeds_count - 1)  # type: ignore
-        #ci95_low = mean_errors - (mean_se) * stats.t.ppf(0.975, df=seeds_count - 1) # type: ignore
+        ci95_high = mean_errors + (mean_se) * stats.t.ppf(0.975, df=seeds_count - 1)  # type: ignore
+        ci95_low = mean_errors - (mean_se) * stats.t.ppf(0.975, df=seeds_count - 1) # type: ignore
         plt.plot(generations, mean_errors, linewidth=2, label=algorithm) # type: ignore
-        #plt.fill_between(generations, ci95_low, ci95_high, alpha=0.2) # type: ignore
+        plt.fill_between(generations, ci95_low, ci95_high, alpha=0.2) # type: ignore
         plt.xlabel('Generations')
         plt.ylabel('Mean Error')
+        plt.ylim(bottom=0)
+        plt.xlim(left=0)
     plt.title(f'Convergence Summary Comparison on f{problem}')
     plt.legend()
     plt.grid(alpha=0.3)
@@ -177,13 +149,14 @@ def main():
         while True:
             alg_name = input("Inserisci il nome di un algoritmo da includere, oppure premi invio per terminare: ")
             
-            if alg_name not in chosen_algorithms:# and alg_name in [os.path.basename(f) for f in [sub_]]:
+            if alg_name == "":
+                break
+
+            elif alg_name not in chosen_algorithms:# and alg_name in [os.path.basename(f) for f in [sub_]]:
                 chosen_algorithms.append(alg_name) 
             else:
                 print("Algoritmo non riconosciuto o già inserito.")
 
-            if alg_name == "":
-                break
         if len(chosen_algorithms) == 0:
             raise ValueError("Devi inserire almeno un algoritmo da includere nei plot.")
 
@@ -193,6 +166,7 @@ def main():
         for algorithm in chosen_algorithms:
             problem_data_path = os.path.join(data_path, 'f_'+str(problem_index))
             alg_folder = os.path.join(problem_data_path, algorithm)
+            print(alg_folder)
             result_files = [f.path for f in os.scandir(alg_folder) if f.is_file() and f.name.endswith('.csv') and not 'summary' in f.name]
             dfs = []
             for file in result_files:

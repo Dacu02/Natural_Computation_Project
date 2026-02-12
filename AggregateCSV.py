@@ -73,8 +73,7 @@ def main():
             lambda left, right: pd.merge(left, right, on=alg_parameters, how='outer'), # type: ignore
             class_df
         )
-                        
-
+        
         result_cols = [col for col in final_class_df.columns if col not in alg_parameters]
         result_cols.sort() 
         ordered_columns = alg_parameters + result_cols
@@ -82,5 +81,35 @@ def main():
         final_class_df = final_class_df[ordered_columns]
         final_class_df.to_csv(os.path.join(output_path, 'by_class', f'{class_id}_class_summary_results.csv'), index=False) # type: ignore
     
+
+    os.makedirs(os.path.join(output_path, 'all'), exist_ok=True)
+    all_problems = []
+    for summary_folder in os.listdir(os.path.join(output_path, 'by_problem')):
+        problem_id = int(summary_folder.split('_')[0])
+        if summary_folder.endswith('.csv'):
+            df = pd.read_csv(os.path.join(output_path, 'by_problem', summary_folder))
+            columns = df.columns
+            seeds_df = [col for col in columns if col.strip().isdigit()]
+            params_df = [col for col in columns if not col.strip().isdigit()]
+            if not set(params_df) == set(alg_parameters) or not set(seeds_df) == set(seeds):
+                print(f"Warning: Inconsistent columns in file {summary_folder}. Skipping global aggregation")
+                break
+            rename_map = {col: f"{problem_id}_{col}" for col in seeds}
+            df = df.rename(columns=rename_map)
+            all_problems.append(df)
+
+    if len(all_problems) != 0:
+        all_problems_df = reduce(
+            lambda left, right: pd.merge(left, right, on=alg_parameters, how='outer'), # type: ignore
+            all_problems
+        )
+        all_result_cols = [col for col in all_problems_df.columns if col not in alg_parameters]
+        all_result_cols.sort()
+        ordered_columns = alg_parameters + all_result_cols
+        all_problems_df = all_problems_df[ordered_columns]
+        all_problems_df.to_csv(os.path.join(output_path, 'all', f'all_problems_summary_results.csv'), index=False)
+
+                        
+
 if __name__ == "__main__":
     main()

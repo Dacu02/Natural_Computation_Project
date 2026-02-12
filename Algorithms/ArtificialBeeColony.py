@@ -4,6 +4,7 @@ import types
 import copy
 from beeoptimal.abc import ArtificialBeeColony as _ABC
 from beeoptimal.bee import Bee
+import pandas as pd
 from Algorithms import Problem, Algorithm
 
 def get_iabc_donor(abc: _ABC, bee_idx: int , population: list) -> Bee: 

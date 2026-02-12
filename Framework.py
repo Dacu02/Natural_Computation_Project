@@ -21,11 +21,14 @@ class EarlyStop(Exception):
     """Eccezione per arrestare l'esecuzione anticipatamente."""
     pass
 
-SEEDS: list[int] = [
-    5751, 94862, 48425, 79431, 28465, 917654, 468742131, 745612, 1354987, 126879,
-    468798, 46489465, 61845421, 48512135, 323546, 3354564645, 9685412, 288484, 32626984, 15468897,
-    86735578, 24354843, 54768687, 656576335, 564754637, 68756436, 89775674, 356475, 634647976, 39528058,
-    385022085, 3590328, 395920, 654468, 455768432, 3216878, 763215897, 13549875, 1354687, 68465486
+DEFAULT_SEEDS: list[int] = [
+#   000000000, 111111111, 222222222, 333333333, 444444444, 555555555, 666666666, 777777777, 888888888, 999999999
+    24253325,  53567257,  53436736,  48397383,  375897583, 72465234,  546326235, 532532646, 734625466, 235464333,
+    46234664,  46334225,  352,       3252532,   32535233,  235252,    323523,    903325,    8465486,   76654654,
+    4984654,   8946549,   654,       5442,      3158468,   6546123,   8648200,   503210,    6498005,   6546,
+    6254,      865484,    654789,    5965,      6547812,   4568723,   64789,     128546,    3133252,   6482349,
+    7654,      96458,     1645,      4585446,   4578132,   15866415,  49756112,  50558657,  68462335,  841365444,
+    425643,    9083532,   72488574,  9520413,   90320213,  62390235,  360235,    3529032,   90232235,  92358003,
 ]
 DEFAULT_PROBLEMS: list[int] = [
     2, 4, 6, # C1
@@ -166,15 +169,67 @@ if __name__ == '__main__':
     PROCESS_COUNT = int(os.environ.get('SLURM_CPUS_PER_TASK', mp.cpu_count())) # HPC Unisa, altrimenti locale
     print(f"Using {PROCESS_COUNT} processes for parallel execution.")
     
-    MINIMAL_FRAMEWORK = True  # Se true, disabilita stampe extra e dati non essenziali
+    if len(sys.argv) >= 4:
+        MAX_SEED_VALUE = 2**32 - 1
+        min_index, max_index, file_name = sys.argv[1:4]
+        input_seeds = False
+        problems = []
+        seeds = []
+        if len(sys.argv) > 4:
+            args = sys.argv[4:]
+            for arg in args:
+                if arg.isdigit():
+                    if int(arg) > 24:
+                        input_seeds = True
+                    if input_seeds:
+                        if int(arg) > MAX_SEED_VALUE:
+                            raise ValueError(f"Seed value {arg} is too large. Must be less than {MAX_SEED_VALUE}.")
+                        seeds.append(int(arg))
+                    else:
+                        problems.append(int(arg))
+        if problems:
+            PROBLEMS = problems
+        else:
+            PROBLEMS = DEFAULT_PROBLEMS
+        if input_seeds:
+            SEEDS = seeds
+        else:
+            SEEDS = DEFAULT_SEEDS
+        problem_class = (PROBLEMS[0] - 1) // 8 + 1
+        different_classes = False
+        for problem in PROBLEMS:
+            if problem_class != (problem - 1) // 8 + 1:
+                different_classes = True
 
+        if different_classes:
+            algorithms: List[AlgorithmStructure] = EXPERIMENTS[-1]
+        else:
+            algorithms: List[AlgorithmStructure] = EXPERIMENTS[(PROBLEMS[0]-1) // 8 + 1]
+    else:
+        print("Usage: python Framework.py <start_index> <end_index> <file_name>")
+        sys.exit(1)
+        
+    if not min_index.isdigit() or not max_index.isdigit():
+        raise ValueError("Gli argomenti devono essere numeri interi.")
+    
+    min_index = int(min_index)
+    max_index = int(max_index)
+    if min_index < 0 or max_index < min_index:
+        raise ValueError("Intervallo di indici non valido.")
+    algorithms = [alg for i, alg in enumerate(algorithms) if i % max_index == min_index]
+    run_name = f'partial_run_{min_index}_of_{max_index}__' + file_name
+
+    results = os.path.join(os.getcwd(), 'results', run_name)
+    os.makedirs(results, exist_ok=True)
+
+    MINIMAL_FRAMEWORK = len(algorithms) > 2 # Se true, disabilita stampe extra e dati non essenziali
     
     def execution(seed:int, problem:int, alg_class:Type[Algorithm], alg_args:Dict[str, Any], description:str, folder:str):
         np.random.seed(seed)  
         instance = load_gnbg_instance(problemIndex=problem)
         lb = -BOUNDS_MULTIPLIER*np.ones(instance.Dimension)
         ub = BOUNDS_MULTIPLIER*np.ones(instance.Dimension)
-        alg_args['generations'] = instance.MaxEvals // alg_args['population']
+        alg_args['generations'] = 10#instance.MaxEvals // alg_args['population']
         problem_custom_instance = Problem(function=instance.fitness, n_var=instance.Dimension, lb=lb, ub=ub)
         print(f"\nEsecuzione dell'algoritmo {alg_class.__name__} sul problema f{problem} con seed {seed}")
         alg_instance = alg_class(problem_custom_instance, **alg_args)
@@ -217,45 +272,6 @@ if __name__ == '__main__':
             with open(os.path.join(folder, f'results_{description}.csv'), 'w') as f:
                 f.write('LastFunctionEvaluation,MinimumError,Seed\n')
                 f.write(f"{instance.FE},{convergence[-1]},{alg_args['seed']}\n")
-
-    if len(sys.argv) >= 4:
-        min_index, max_index, file_name = sys.argv[1:4]
-        problems = []
-        if len(sys.argv) > 4:
-            args = sys.argv[4:]
-            for arg in args:
-                if arg.isdigit():
-                    problems.append(int(arg))
-        if problems:
-            PROBLEMS = problems
-        else:
-            PROBLEMS = DEFAULT_PROBLEMS
-        problem_class = (PROBLEMS[0] - 1) // 8 + 1
-        different_classes = False
-        for problem in PROBLEMS:
-            if problem_class != (problem - 1) // 8 + 1:
-                different_classes = True
-
-        if different_classes:
-            algorithms: List[AlgorithmStructure] = EXPERIMENTS[-1]
-        else:
-            algorithms: List[AlgorithmStructure] = EXPERIMENTS[(PROBLEMS[0]-1) // 8 + 1]
-    else:
-        print("Usage: python Framework.py <start_index> <end_index> <file_name>")
-        sys.exit(1)
-        
-    if not min_index.isdigit() or not max_index.isdigit():
-        raise ValueError("Gli argomenti devono essere numeri interi.")
-    
-    min_index = int(min_index)
-    max_index = int(max_index)
-    if min_index < 0 or max_index < min_index:
-        raise ValueError("Intervallo di indici non valido.")
-    algorithms = [alg for i, alg in enumerate(algorithms) if i % max_index == min_index]
-    run_name = f'partial_run_{min_index}_of_{max_index}__' + file_name
-
-    results = os.path.join(os.getcwd(), 'results', run_name)
-    os.makedirs(results, exist_ok=True)
         
     
     print(f"{len(algorithms)} algorithms to execute, each for {len(SEEDS)} seeds for {len(PROBLEMS)} problems.")
@@ -272,9 +288,10 @@ if __name__ == '__main__':
                     description = 'Algorithm_' + str(i+1)
                 alg_folder = os.path.join(problem_folder, description)
                 os.makedirs(alg_folder, exist_ok=True)
-                with open(os.path.join(alg_folder, 'config.txt'), 'w') as f:
-                    f.write(f"Algorithm: {algorithm['algorithm'].__name__}\n")
-                    f.write(f"Arguments: {algorithm['args']}\n")
+                if not os.path.exists(os.path.join(alg_folder, 'config.txt')):
+                    with open(os.path.join(alg_folder, 'config.txt'), 'w') as f:
+                        f.write(f"Algorithm: {algorithm['algorithm'].__name__}\n")
+                        f.write(f"Arguments: {algorithm['args']}\n")
                 for seed in SEEDS:
                     alg_args['seed'] = seed
                     processes.append(pool.apply_async(execution, args=(seed, problem, alg_class, alg_args.copy(), str(seed), alg_folder)))

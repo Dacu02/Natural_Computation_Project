@@ -1,7 +1,8 @@
 import os
+from attr import has
 import pandas as pd
 import numpy as np
-from pingouin import friedman
+from pingouin import friedman, wilcoxon
 from scipy.stats import rankdata, chi2, studentized_range
 from matplotlib import pyplot as plt
 from typing import Literal
@@ -128,85 +129,46 @@ def CompareAlgorithms(
                 fig, ax = plt.subplots(figsize=(10, 6))
                 
                 # Mappatura colori richiesta
-                topo_colors = {
+                param_colors = {
                     'Torus': 'red', 
                     'Random': 'green', 
-                    'Star': 'blue'
+                    'Star': 'blue',
+                        ###
+                    'DirectedABC': 'red',
+                    'ModifiedABC': 'green',
+                    'StandardABC': 'black',
+                    'iABC': 'blue',
                 }
-                
+
                 # Verifica esistenza colonne necessarie
-                has_topology = 'topology' in filtered_ranks.columns
-                has_population = 'population' in filtered_ranks.columns
-
-                if not has_topology and has_population:
-                    ax.scatter(
-                        x=filtered_ranks['Rank'],
-                        y=filtered_ranks['population'],
-                        c='gray',
-                        s=100,
-                        alpha=0.8
-                    )
-                    ax.set_ylabel('population')
-                    ax.set_xlabel('Mean Rank')
-                    ax.set_title(f'Algorithm Ranking (Lower is better) - {csv}')
-                    ax.grid(True, linestyle='--', alpha=0.5)
-
-                elif has_topology and has_population:
-                    ax.grid(True, linestyle='--', alpha=0.5)
-                    # Raggruppa per topologia per assegnare colori e label
-                    for topology_name, group in filtered_ranks.groupby('topology'):
-                        color = topo_colors.get(topology_name, 'gray') # grigio se topologia non riconosciuta
-                        
-                        # Separa i dati in base al valore di end_intertia
-                        if 'end_intertia' in group.columns:
-                            nan_mask = group['end_intertia'].isna()
-                            valid_data = group[~nan_mask]
-                            nan_data = group[nan_mask]
-                            
-                            # Disegna i punti validi come cerchi
-                            if not valid_data.empty:
-                                ax.scatter(
-                                    x=valid_data['Rank'],
-                                    y=valid_data['population'],
-                                    c=color,
-                                    label=topology_name,
-                                    s=100,
-                                    alpha=0.8,
-                                    marker='o'
-                                )
-                            
-                            # Disegna i punti con end_intertia=nan come stelle
-                            if not nan_data.empty:
-                                ax.scatter(
-                                    x=nan_data['Rank'],
-                                    y=nan_data['population'],
-                                    c=color,
-                                    s=100,
-                                    alpha=0.8,
-                                    marker='*'
-                                )
-                        else:
-                            ax.scatter(
-                                x=group['Rank'],
-                                y=group['population'],
-                                c=color,
-                                label=topology_name,
-                                s=100,
-                                alpha=0.8
-                            )
-                    
-                    ax.set_ylabel('Population')
-                    ax.legend(title='Topology', loc='upper right', bbox_to_anchor=(1, 0.85))
-                    ax.set_xlabel('Mean Rank')
-                    ax.set_title(f'Algorithm Ranking - {csv}')
-                    ax.grid(True, linestyle='--', alpha=0.5)
-                    
-                    # Invertiamo asse X se si vuole il rango 1 a sinistra (solitamente preferito)
-                    # Se Rank 1 è il migliore, i valori bassi devono stare a sinistra/basso.
-                    # Qui lasciamo standard: sinistra = rank basso (migliore), destra = rank alto (peggiore).
-                
+                if 'topology' in filtered_ranks.columns:
+                    color_parameter = 'topology'
+                elif 'mutation_strategy' in filtered_ranks.columns:
+                    color_parameter = 'mutation_strategy'
                 else:
-                    raise ValueError(f"Required column 'population' is missing in the data for {csv}.")
+                    raise ValueError(f"Neither 'topology' nor 'mutation_strategy' column is present in the data for {csv}.")
+
+                count_parameter = 'tournament_size' if 'tournament_size' in filtered_ranks.columns else 'population'
+
+                ax.grid(True, linestyle='--', alpha=0.5)
+                # Raggruppa per assegnare colori e label
+                for param_name, group in filtered_ranks.groupby(color_parameter):
+                    color = param_colors.get(param_name, 'gray') # grigio se non riconosciuta
+                    ax.scatter(
+                        x=group['Rank'],
+                        y=group[count_parameter],
+                        c=color,
+                        label=param_name,
+                        s=100,
+                        alpha=0.8,
+                        marker='o'
+                    )
+                
+                ax.set_ylabel(count_parameter.capitalize().replace('_', ' '))
+                ax.legend(title=color_parameter.capitalize().replace('_', ' '), loc='upper right', bbox_to_anchor=(1, 0.85))
+                ax.set_xlabel('Mean Rank')
+                ax.set_title(f'Algorithm Ranking - {csv}')
+                ax.grid(True, linestyle='--', alpha=0.5)
                     
                 # --- INIZIO BLOCCO CRITICAL DIFFERENCE ---
                 # Calcoliamo i limiti attuali del grafico per posizionare la barra
@@ -240,6 +202,15 @@ def CompareAlgorithms(
                 plt.savefig(os.path.join(output_path, 'data_analysis', f"{csv}_critical_difference.png"), dpi=300)
                 plt.close()
 
+        case 'Wilcoxon':
+            if algorithms != 2:
+                raise ValueError("Wilcoxon test is only applicable for comparing two algorithms.")
+            alg_names = list(dataframes.keys())
+            df1 = dataframes[alg_names[0]]
+            df2 = dataframes[alg_names[1]]
+            seed_cols = [col for col in df1.columns if str(col).replace('_', '').isdigit()]
+            stat, p_value = wilcoxon(df1[seed_cols].values.flatten(), df2[seed_cols].values.flatten())
+            print(f"Wilcoxon test: statistic={stat}, p-value={p_value}")
 
         case _:
             raise ValueError("Invalid test_option provided.")

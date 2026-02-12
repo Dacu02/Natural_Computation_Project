@@ -116,15 +116,15 @@ The Wilcoxon signed-rank test is a non-parametric test used to compare two relat
 \\
 Considering two algorithms $A$ and $B$, the first step is to calculate the differences between the paired observations: 
 $$d_i = A_i - B_i$$ 
-where $A_i$ and $B_i$ are the results obtained from the two algorithms on the $i$-th problem instance. Then, the absolute values of these differences are ranked, ignoring any differences that are equal to zero. If there are ties in the absolute differences, they are assigned the average rank(as Friedman ranking). Next, the ranks are assigned a positive or negative sign based on the original differences: if $d_i$ is positive, the rank is positive; if $d_i$ is negative, the rank is negative. 
+where $A_i$ and $B_i$ are the results obtained from the two algorithms on the $i$-th problem instance. Then, the absolute values of these differences are ranked, ignoring any differences that are equal to zero. If there are ties in the absolute differences, they are assigned the average rank (as Friedman ranking). Next, the ranks are assigned a positive or negative sign based on the original differences: if $d_i$ is positive, the rank is positive; if $d_i$ is negative, the rank is negative. 
 Under the null hypothesis that there is no difference between the two algorithms, the sum of the positive ranks and the sum of the negative ranks should be approximately equal. The test statistic is then calculated as the smaller of these two sums:
 $$W = \min\left(\sum_{d_i > 0} r_i + \dfrac{1}{2} \sum_{d_i = 0} r_i, \sum_{d_i < 0} r_i + \dfrac{1}{2} \sum_{d_i = 0} r_i\right)$$
 Where $r_i$ is the rank of the absolute difference $|d_i|$, note that ranks of $d_i = 0$ are split equally between the positive and negative sums. \\
-The p-value can be computed considering that under the null hypothesis, all the configuration are equally likely, with probability $\dfrac{1}{2^n}$, where $n$ is the number of non-zero differences. 
-In order to obtain the probability we consider all the configurations of signs for the ranks, and we count how many of them lead to a sum of positive ranks (or negative ranks) less than or equal to the observed test statistic $W$. The p-value is then calculated as:
-$$p = \dfrac{\text{number of configurations with } W' \leq W}{2^n}$$
-Where $W'$ is the test statistic calculated for each configuration of signs. If the p-value is less than the chosen significance level $\alpha$, we reject the null hypothesis, indicating that there is a statistically significant difference between the two algorithms. 
-For larger sample sizes its demonded that the distribution of the test statistic $W$ can be approximated by a normal distribution, allowing for the use of a z-test to calculate the p-value. In this case, the test statistic is standardized as follows:
+The p-value can be computed considering that under the null hypothesis, all the configuration are equally likely, with probability ${2^{-n}}$, where $n$ is the number of non-zero differences. 
+In order to obtain the probability all the configurations of signs for the ranks are counted, and the number of them that lead to a sum of positive ranks (or negative ranks) less than or equal to the observed test statistic $W$ is determined. The p-value is then calculated as:
+$$p = \dfrac{\text{\#configurations with } W' \leq W}{2^n}$$
+Where $W'$ is the test statistic calculated for each configuration of signs. If the p-value is less than the chosen significance level $\alpha$, the null hypothesis is rejected, indicating that there is a statistically significant difference between the two algorithms. 
+For larger sample sizes it is assumed that the distribution of the test statistic $W$ can be approximated by a normal distribution, allowing for the use of a z-test to calculate the p-value. In this case, the test statistic is standardized as follows:
 $$Z = \dfrac{W - E[W^+]}{\sqrt{Var(W^+)}}$$
 Where $E[W^+]$ and $Var(W^+)$ are the mean and variance of the test
 statistic $W$ under the null hypothesis, which can be calculated as:
@@ -143,7 +143,6 @@ Regarding the machines, the experiments were run on the High Performance Computi
 In order to take into account the maximum execution time of the experiments on the nodes allowed by the cluster policies, the mean time to execute an experiment is estimated to last less than 20 minutes. Since the number of cpus is $1152$, and the maximum time allowed for a job is $9$ hours, the maximum amount of experiments that can be executed in parallel is $1152\cdot\dfrac{9\cdot60}{20}=31104$. This number far exceeds the amount of experiments that will be executed, and in order to avoid overloading the cluster, the experiments are distributed through time on fewer nodes. 
 \subsection{Framework}
 The framework of the project is implemented in Python, and it is composed of various modules that represent the different components of the algorithms, which were developed independently from each other, in order to split the execution part from the data retrieval and analysis part.
-\subsubsection{\texttt{Framework.py}}
 \subsubsection{\texttt{Algorithm.py}}
 Through this module, the abstract class that an algorithm must implement is defined. This way by managing the algorithms through a common interface, the execution of the experiments is simplified, and the results can be easily retrieved and analyzed by defining a common format for the results. This module also defines the common parameters of the algorithms, such as the population size, the verbosity level, the number of generations and the seed.
 \subsubsection{\texttt{ParticleSwarmOptimization.py}}
@@ -154,15 +153,43 @@ The first part of the file contains literals describing:
     \item The strategy to adopt when a particle is going to exceed the boundaries of the problem
     \item The strategy to adopt when a particle is going to exceed the velocity limits
     \item The strategy to vary the parameters of the algorithm through the iterations
-    \item A custom implementation of the Torus topology, which is not provided by the library
 \end{itemize}
+Then, the Torus topology is implemented since not available in the library, and finally the PSO algorithm is implemented, which constructor allows to set the parameters previously mentioned.
 \subsubsection{\texttt{ArtificialBeeColony.py}}
+\subsubsection{\texttt{Framework.py}}
+The \texttt{Framework} module is responsible for executing and saving the various experiments ran on the different problem instances with the different algorithms and seeds. It allows to execute the experiments in parallel, which results are then saved in a common CSV format, in order to be easily retrieved and analyzed by the other modules.
+\subsubsection{\texttt{AggregateCSV.py}}
+The following module is responsible for aggregating the results obtained from the various processes and saving them into CSV files: one for each problem, one for each problem class, and one for the overall results. Specifically, the files report results per experiment for individual problems, per experiment and problem within each class, and per experiment, problem, and class for the overall summary.
 \subsubsection{\texttt{StatComparison.py}}
 \subsection{Experiments}
 \subsubsection{PSO}
 \subsubsection{ABC}
 \subsection{Planning}
-
+Both the PSO and ABC algorithms undergo the same procedure, since they have almost the same amount of parameters combinations to be tested. The procedure is divided into five main steps. The first step consists in testing all the algorithms on some problems of each class in order to split the algorithms into three subsets: one for each class. The second and third steps consist in filtering, and are executed separately for each class. The continuous filtering helps to obtain more robust results without increasing the number of algorithms to be compared and experiments to be executed.
+\\[1em]
+In order to have a first type error of $\alpha=0.1$ on the global comparison of the algorithms on each family, for every step the significance level is set to $0.025$, since they will sum up across the steps. The last step is excluded by this procedure, since it is an independent final comparison, and for this reason the significance level is set to $0.05$.
+\subsubsection{All algorithms on each class}
+All the possible parameters combinations of the algorithms (which will be referred to as "algorithms" for simplicity) are tested on three problems for each class, and for each problem $10$ different seeds are used, in order to obtain $10$ different results (which will be referred as "experiments"). This procedure is applied to all the algorithms of the same family, for each family separately. The results obtained from these experiments are then aggregated by class, which allows to compare the performance of the algorithms with the Friedman ranking.
+\\[1em]
+For each algorithm the mean rank across the problems of the same class is calculated: $$\bar r_{jc}=\dfrac1{n\cdot m}\sum_{\substack{i=1,\ldots,n\\k=1,\ldots,m}}r_{ijkc}$$
+Where $r_{ijkc}$ is the rank of the $j$-th algorithm on the $i$-th problem for the $k$-th seed in the $c$-th class, $n=3$ is the number of problems in the class, and $m=10$ is the number of seeds. Thus, the mean ranks are calculated by averaging the ranks obtained from the different experiments of all the problems and seeds in one class, in order to obtain a more robust estimator of the performance of each algorithm on the class rather than on a single problem.
+\\[1em]
+Once the mean ranks are calculated, the Friedman test is performed to determine whether there are statistically significant differences among the algorithms. If the null hypothesis is rejected, the Nemenyi post-hoc test is then performed to determine which pairs of algorithms differ significantly in their performance by a critical difference. Otherwise, if the null hypothesis is not rejected, it can be concluded that there are no statistically significant differences among the algorithms on that class of problems, and each algorithm can be considered as good as the others on that class.
+\\[1em]
+Either way, the results obtained from this procedure allow determining which algorithms perform better and can be selected for the next step, which is the comparison between the remaining algorithms of each class.
+\subsubsection{First filtering}
+After the first step, a similar procedure is performed this time on the surviving algorithms of each class, and with $30$ seeds for problem, in order to obtain more robust results. The experiments are again aggregated by class and the Friedman test is performed with the Nemenyi post-hoc test, in order to determine a subset of algorithms which performances statistically differ from the others on each class, and that pass to the next step.
+\subsubsection{Second filtering}
+The very same procedure of the first filtering is performed again, but with $60$ seeds for $6$ problems for each class, in order to obtain even more robust results. The statistical tests are performed again, and the best algorithm is picked for the last selection step. The problems considered in this step are half new and half from the previous step, in order to test the algorithms on new problems while still maintaining some consistency with the previous step.
+\\[1em]
+In this case, the best algorithm is selected not only on the basis of the statistical tests, but also by considering the mean ranks obtained from the Friedman ranking. This is because statistical tests alone are not able to identify a single best algorithm without further increasing the number of experiments to an extent that cannot be determined a priori, as it depends on the observed differences in mean ranks among the algorithms.
+\\[1em]
+For this reason, the best algorithm is chosen as the one with the lowest mean rank, among those that are statistically significantly better than the others. It will be improperly referred as the "best algorithm" of the class, even though it is not statistically proven. The statistical tests only allow to determine the best subset of algorithms of that class (or the best algorithm if the subset contains only one algorithm).
+\subsubsection{Best algorithms on all classes}
+After the second filtering, the best algorithm of each class is selected, and then a final comparison is performed between these three algorithms on all the problems of all the classes, with $100$ seeds for each problem. This time, the mean ranks are not averaged by class, but they are calculated on the overall results obtained from all the problems and seeds, in order to obtain an estimation of the overall performance: $$\bar r_j=\dfrac1{n\cdot m\cdot c}\sum_{\substack{i=1,\ldots,n\\k=1,\ldots,m\\c=1,\ldots,C}}r_{ijkc}$$
+Where $C=3$ is the number of classes, and $n$, $m$, and $r_{ijkc}$ are defined as before. The Friedman test is performed again to determine whether there are statistically significant differences among the three algorithms, and if the null hypothesis is rejected, the Nemenyi post-hoc test is performed to determine which pairs of algorithms differ significantly in their performance by a critical difference. Otherwise, if the null hypothesis is not rejected, it can be concluded that there are no statistically significant differences among the three algorithms.
+\\[1em] In either case, the algorithm is chosen as the same way as before, which will be improperly referred as the "best algorithm" of the family.
+\subsubsection{Final comparison}
 \section{Results discussion}
 \subsection{PSO}
 \subsection{ABC}

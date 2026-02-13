@@ -8,6 +8,7 @@
 \usepackage{hyperref}
 \usepackage{geometry}
 \usepackage{setspace}
+\usepackage{longtable}
 \usepackage[style=numeric, backend=bibtex]{biblatex}
 \addbibresource{Documentation.bib}
 \usepackage{xcolor}
@@ -20,7 +21,21 @@
 \title{Natural Computation Project Documentation}
 \author{Noemi Biancamano \and Davide D'Acunto}
 \date{}
+\usepackage{listings}
+\usepackage{xcolor}
 
+\lstset{
+    language=Python,
+        basicstyle=\ttfamily\small,
+        keywordstyle=\color{blue},
+        commentstyle=\color{gray},
+        stringstyle=\color{red},
+        breaklines=true,
+        showstringspaces=false,
+        tabsize=4,
+        emph={Combine,ParticleSwarmOptimization,ArtificialBeeColony},
+        emphstyle=\color{purple}
+}
 \begin{document}
 
 \maketitle
@@ -161,8 +176,38 @@ The \texttt{Framework} module is responsible for executing and saving the variou
 \subsubsection{\texttt{AggregateCSV.py}}
 The following module is responsible for aggregating the results obtained from the various processes and saving them into CSV files: one for each problem, one for each problem class, and one for the overall results. Specifically, the files report results per experiment for individual problems, per experiment and problem within each class, and per experiment, problem, and class for the overall summary.
 \subsubsection{\texttt{StatComparison.py}}
-\subsection{Experiments}
+\subsection{Parameters combinations}
+All the combinations of parameters of the algorithms are written inside the configuration file \texttt{experiments.py}, which is in turn read by the \texttt{Framework} module to execute the experiments. The various parameters combinations are chosen accordingly to the reasoning explained in the previous sections. They make use of a custom class \texttt{Combine} which allows to easily generate all the combinations of the parameters specified in the configuration file. 
 \subsubsection{PSO}
+By the reasoning explained in the previous sections, the parameters combinations of the PSO algorithm are as follows:
+\begin{lstlisting}
+[{
+    'algorithm': ParticleSwarmOptimization,
+    'args': {
+        'population': Combine([11*11, 13*13]),
+        'topology': Combine(['Random', 'Star', 'Torus']),
+        'local_weight': Combine([.75, 1.25]),
+        'global_weight': Combine([.75, 1.25]),
+        'inertia': Combine([.7, .9]),
+        'velocity_clamp': (-.15 * RANGE, .15 * RANGE),
+        'end_inertia': Combine([.4, None])
+    },
+    'name': 'PSO',
+}]
+\end{lstlisting}
+Where \texttt{end\_inertia} is the last value of the inertia weight in case of a linearly decreasing inertia, and \texttt{velocity\_clamp} is the range of the velocity. The other parameters are self-explanatory. The parameters will be referred as such in the following sections.
+\\[1em]
+Since there are:
+\begin{itemize}
+    \item Two population sizes
+    \item Three topologies
+    \item Two local weights
+    \item Two global weights
+    \item Two inertia weights
+    \item Two end inertia weights (including the case of fixed inertia)
+    \item One velocity clamp
+\end{itemize}
+The total number of combinations of parameters for the PSO algorithm is $2\cdot3\cdot2\cdot2\cdot2\cdot2\cdot1=96$, meaning there are $96$ different algorithms to be compared for the PSO family.
 \subsubsection{ABC}
 \subsection{Planning}
 Both the PSO and ABC algorithms undergo the same procedure, since they have almost the same amount of parameters combinations to be tested. The procedure is divided into five main steps. The first step consists in testing all the algorithms on some problems of each class in order to split the algorithms into three subsets: one for each class. The second and third steps consist in filtering, and are executed separately for each class. The continuous filtering helps to obtain more robust results without increasing the number of algorithms to be compared and experiments to be executed.
@@ -192,6 +237,117 @@ Where $C=3$ is the number of classes, and $n$, $m$, and $r_{ijkc}$ are defined a
 \subsubsection{Final comparison}
 \section{Results discussion}
 \subsection{PSO}
+In the following subsection, the results obtained from the experiments on the PSO algorithms are discussed, along with the influence of the different parameters on the performance of the algorithms in the different classes of problems. The results are discussed separately for each step and each class.
+\subsubsection{All algorithms on each class}
+Each of the $96$ algorithms is tested on three problems for each class, thus obtaining $96$ mean ranks for each class. In the following tables the mean ranks of the algorithms are reported, for each class.
+\begin{longtable}{||cccccc||cc||cc||cc||}
+\caption{Risultati aggregati}
+\label{tab:results} \\
+\hline
+    \multicolumn{6}{||c||}{Algorithm parameters}  & \multicolumn{2}{c||}{Class 1} & \multicolumn{2}{c||}{Class 2} & \multicolumn{2}{c||}{Class 3} \\
+    \hline
+    \hline
+    {end\_inertia} & gw & inertia & lw & pop. & topology & Rank & \texttt{1e-8} & Rank & \texttt{1e-8} & Rank & \texttt{1e-8} \\
+    \hline
+None & 1.25 & 0.70 & 0.75 & 169 & Random & 13.30 & 10 & 15.80 & 0 & 12.50 & 0 \\
+0.40 & 1.25 & 0.70 & 0.75 & 169 & Random & 13.30 & 10 & 15.80 & 0 & 12.50 & 0 \\
+None & 1.25 & 0.70 & 1.25 & 169 & Random & 12.20 & 10 & 19.10 & 0 & 14.20 & 0 \\
+0.40 & 1.25 & 0.70 & 1.25 & 169 & Random & 12.20 & 10 & 19.10 & 0 & 14.20 & 0 \\
+0.40 & 1.25 & 0.70 & 0.75 & 121 & Random & 16.30 & 10 & 17.50 & 0 & 12.20 & 1 \\
+None & 1.25 & 0.70 & 0.75 & 121 & Random & 16.30 & 10 & 17.50 & 0 & 12.20 & 1 \\
+None & 1.25 & 0.70 & 1.25 & 121 & Random & 16.40 & 10 & 20.80 & 0 & 9.00 & 0 \\
+0.40 & 1.25 & 0.70 & 1.25 & 121 & Random & 16.40 & 10 & 20.80 & 0 & 9.00 & 0 \\
+None & 0.75 & 0.90 & 0.75 & 169 & Torus & 30.70 & 10 & 20.00 & 0 & 13.20 & 0 \\
+0.40 & 0.75 & 0.90 & 0.75 & 169 & Torus & 30.70 & 10 & 20.00 & 0 & 13.20 & 0 \\
+0.40 & 0.75 & 0.70 & 1.25 & 169 & Random & 16.80 & 10 & 23.00 & 0 & 26.90 & 0 \\
+None & 0.75 & 0.70 & 1.25 & 169 & Random & 16.80 & 10 & 23.00 & 0 & 26.90 & 0 \\
+None & 0.75 & 0.90 & 0.75 & 121 & Torus & 29.00 & 10 & 16.70 & 0 & 22.70 & 0 \\
+0.40 & 0.75 & 0.90 & 0.75 & 121 & Torus & 29.00 & 10 & 16.70 & 0 & 22.70 & 0 \\
+None & 0.75 & 0.90 & 0.75 & 121 & Random & 26.10 & 10 & 39.00 & 0 & 16.40 & 0 \\
+0.40 & 0.75 & 0.90 & 0.75 & 121 & Random & 26.10 & 10 & 39.00 & 0 & 16.40 & 0 \\
+None & 0.75 & 0.70 & 1.25 & 121 & Random & 18.10 & 10 & 29.90 & 0 & 33.80 & 0 \\
+0.40 & 0.75 & 0.70 & 1.25 & 121 & Random & 18.10 & 10 & 29.90 & 0 & 33.80 & 0 \\
+0.40 & 0.75 & 0.70 & 0.75 & 169 & Random & 15.90 & 10 & 30.60 & 0 & 39.60 & 0 \\
+None & 0.75 & 0.70 & 0.75 & 169 & Random & 15.90 & 10 & 30.60 & 0 & 39.60 & 0 \\
+None & 0.75 & 0.90 & 1.25 & 121 & Torus & 40.00 & 0 & 26.90 & 0 & 20.80 & 0 \\
+0.40 & 0.75 & 0.90 & 1.25 & 121 & Torus & 40.00 & 0 & 26.90 & 0 & 20.80 & 0 \\
+0.40 & 1.25 & 0.90 & 0.75 & 121 & Torus & 56.80 & 0 & 19.40 & 0 & 17.40 & 0 \\
+None & 1.25 & 0.90 & 0.75 & 121 & Torus & 56.80 & 0 & 19.40 & 0 & 17.40 & 0 \\
+None & 0.75 & 0.90 & 0.75 & 169 & Random & 35.80 & 10 & 42.60 & 0 & 16.40 & 0 \\
+0.40 & 0.75 & 0.90 & 0.75 & 169 & Random & 35.80 & 10 & 42.60 & 0 & 16.40 & 0 \\
+0.40 & 0.75 & 0.90 & 1.25 & 169 & Torus & 46.20 & 0 & 32.40 & 0 & 20.90 & 0 \\
+None & 0.75 & 0.90 & 1.25 & 169 & Torus & 46.20 & 0 & 32.40 & 0 & 20.90 & 0 \\
+0.40 & 1.25 & 0.90 & 0.75 & 169 & Torus & 60.80 & 0 & 22.20 & 0 & 18.50 & 0 \\
+None & 1.25 & 0.90 & 0.75 & 169 & Torus & 60.80 & 0 & 22.20 & 0 & 18.50 & 0 \\
+0.40 & 0.75 & 0.70 & 0.75 & 121 & Random & 20.60 & 10 & 36.50 & 0 & 47.80 & 0 \\
+None & 0.75 & 0.70 & 0.75 & 121 & Random & 20.60 & 10 & 36.50 & 0 & 47.80 & 0 \\
+0.40 & 1.25 & 0.70 & 1.25 & 169 & Torus & 26.00 & 10 & 48.00 & 0 & 51.20 & 0 \\
+None & 1.25 & 0.70 & 1.25 & 169 & Torus & 26.00 & 10 & 48.00 & 0 & 51.20 & 0 \\
+None & 1.25 & 0.70 & 1.25 & 121 & Torus & 23.80 & 10 & 48.50 & 0 & 55.20 & 0 \\
+0.40 & 1.25 & 0.70 & 1.25 & 121 & Torus & 23.80 & 10 & 48.50 & 0 & 55.20 & 0 \\
+None & 1.25 & 0.70 & 0.75 & 169 & Torus & 27.90 & 10 & 51.80 & 0 & 61.60 & 0 \\
+0.40 & 1.25 & 0.70 & 0.75 & 169 & Torus & 27.90 & 10 & 51.80 & 0 & 61.60 & 0 \\
+None & 0.75 & 0.90 & 1.25 & 169 & Random & 61.80 & 0 & 48.20 & 0 & 32.60 & 0 \\
+0.40 & 0.75 & 0.90 & 1.25 & 169 & Random & 61.80 & 0 & 48.20 & 0 & 32.60 & 0 \\
+0.40 & 1.25 & 0.70 & 0.75 & 121 & Torus & 24.00 & 10 & 57.10 & 0 & 61.70 & 0 \\
+None & 1.25 & 0.70 & 0.75 & 121 & Torus & 24.00 & 10 & 57.10 & 0 & 61.70 & 0 \\
+None & 0.75 & 0.90 & 1.25 & 121 & Random & 58.80 & 0 & 52.60 & 0 & 33.40 & 0 \\
+0.40 & 0.75 & 0.90 & 1.25 & 121 & Random & 58.80 & 0 & 52.60 & 0 & 33.40 & 0 \\
+None & 0.75 & 0.90 & 1.25 & 121 & Star & 48.60 & 1 & 53.20 & 0 & 49.10 & 0 \\
+0.40 & 0.75 & 0.90 & 1.25 & 121 & Star & 48.60 & 1 & 53.20 & 0 & 49.10 & 0 \\
+None & 0.75 & 0.90 & 1.25 & 169 & Star & 50.60 & 0 & 50.40 & 0 & 50.20 & 0 \\
+0.40 & 0.75 & 0.90 & 1.25 & 169 & Star & 50.60 & 0 & 50.40 & 0 & 50.20 & 0 \\
+None & 0.75 & 0.70 & 1.25 & 169 & Torus & 31.70 & 10 & 54.60 & 0 & 66.60 & 0 \\
+0.40 & 0.75 & 0.70 & 1.25 & 169 & Torus & 31.70 & 10 & 54.60 & 0 & 66.60 & 0 \\
+0.40 & 0.75 & 0.70 & 1.25 & 121 & Torus & 30.10 & 10 & 55.40 & 0 & 70.60 & 0 \\
+None & 0.75 & 0.70 & 1.25 & 121 & Torus & 30.10 & 10 & 55.40 & 0 & 70.60 & 0 \\
+0.40 & 1.25 & 0.90 & 1.25 & 121 & Torus & 77.50 & 0 & 44.70 & 0 & 35.10 & 0 \\
+None & 1.25 & 0.90 & 1.25 & 121 & Torus & 77.50 & 0 & 44.70 & 0 & 35.10 & 0 \\
+0.40 & 1.25 & 0.90 & 0.75 & 121 & Random & 73.40 & 0 & 46.80 & 0 & 42.00 & 0 \\
+None & 1.25 & 0.90 & 0.75 & 121 & Random & 73.40 & 0 & 46.80 & 0 & 42.00 & 0 \\
+None & 0.75 & 0.70 & 0.75 & 169 & Torus & 33.30 & 10 & 58.40 & 0 & 70.80 & 0 \\
+0.40 & 0.75 & 0.70 & 0.75 & 169 & Torus & 33.30 & 10 & 58.40 & 0 & 70.80 & 0 \\
+None & 1.25 & 0.90 & 1.25 & 169 & Torus & 78.20 & 0 & 50.10 & 0 & 35.60 & 0 \\
+0.40 & 1.25 & 0.90 & 1.25 & 169 & Torus & 78.20 & 0 & 50.10 & 0 & 35.60 & 0 \\
+0.40 & 1.25 & 0.90 & 0.75 & 169 & Random & 73.30 & 0 & 48.20 & 0 & 44.50 & 0 \\
+None & 1.25 & 0.90 & 0.75 & 169 & Random & 73.30 & 0 & 48.20 & 0 & 44.50 & 0 \\
+0.40 & 0.75 & 0.70 & 0.75 & 121 & Torus & 30.50 & 10 & 62.20 & 0 & 78.20 & 0 \\
+None & 0.75 & 0.70 & 0.75 & 121 & Torus & 30.50 & 10 & 62.20 & 0 & 78.20 & 0 \\
+None & 0.75 & 0.90 & 0.75 & 121 & Star & 38.30 & 1 & 64.50 & 0 & 71.60 & 0 \\
+0.40 & 0.75 & 0.90 & 0.75 & 121 & Star & 38.30 & 1 & 64.50 & 0 & 71.60 & 0 \\
+0.40 & 0.75 & 0.90 & 0.75 & 169 & Star & 37.70 & 1 & 66.40 & 0 & 71.80 & 0 \\
+None & 0.75 & 0.90 & 0.75 & 169 & Star & 37.70 & 1 & 66.40 & 0 & 71.80 & 0 \\
+0.40 & 1.25 & 0.90 & 1.25 & 169 & Random & 79.60 & 0 & 53.40 & 0 & 46.60 & 0 \\
+None & 1.25 & 0.90 & 1.25 & 169 & Random & 79.60 & 0 & 53.40 & 0 & 46.60 & 0 \\
+None & 1.25 & 0.90 & 1.25 & 121 & Random & 82.00 & 0 & 52.80 & 0 & 46.20 & 0 \\
+0.40 & 1.25 & 0.90 & 1.25 & 121 & Random & 82.00 & 0 & 52.80 & 0 & 46.20 & 0 \\
+None & 1.25 & 0.90 & 0.75 & 121 & Star & 64.80 & 0 & 67.60 & 0 & 55.20 & 0 \\
+0.40 & 1.25 & 0.90 & 0.75 & 121 & Star & 64.80 & 0 & 67.60 & 0 & 55.20 & 0 \\
+None & 1.25 & 0.90 & 0.75 & 169 & Star & 68.00 & 0 & 63.80 & 0 & 57.40 & 0 \\
+0.40 & 1.25 & 0.90 & 0.75 & 169 & Star & 68.00 & 0 & 63.80 & 0 & 57.40 & 0 \\
+None & 1.25 & 0.70 & 1.25 & 169 & Star & 56.80 & 0 & 63.70 & 0 & 83.80 & 0 \\
+0.40 & 1.25 & 0.70 & 1.25 & 169 & Star & 56.80 & 0 & 63.70 & 0 & 83.80 & 0 \\
+None & 1.25 & 0.90 & 1.25 & 169 & Star & 80.50 & 0 & 66.00 & 0 & 58.80 & 0 \\
+0.40 & 1.25 & 0.90 & 1.25 & 169 & Star & 80.50 & 0 & 66.00 & 0 & 58.80 & 0 \\
+None & 1.25 & 0.90 & 1.25 & 121 & Star & 81.40 & 0 & 71.40 & 0 & 57.60 & 0 \\
+0.40 & 1.25 & 0.90 & 1.25 & 121 & Star & 81.40 & 0 & 71.40 & 0 & 57.60 & 0 \\
+0.40 & 1.25 & 0.90 & 1.25 & 121 & Star & 81.40 & 0 & 71.40 & 0 & 57.60 & 0 \\
+None & 1.25 & 0.70 & 1.25 & 121 & Star & 60.80 & 0 & 70.70 & 0 & 82.20 & 0 \\
+0.40 & 1.25 & 0.70 & 1.25 & 121 & Star & 60.80 & 0 & 70.70 & 0 & 82.20 & 0 \\
+None & 1.25 & 0.70 & 0.75 & 169 & Star & 64.80 & 0 & 72.20 & 0 & 85.50 & 0 \\
+0.40 & 1.25 & 0.70 & 0.75 & 169 & Star & 64.80 & 0 & 72.20 & 0 & 85.50 & 0 \\
+None & 1.25 & 0.70 & 0.75 & 121 & Star & 70.70 & 0 & 75.20 & 0 & 86.80 & 0 \\
+0.40 & 1.25 & 0.70 & 0.75 & 121 & Star & 70.70 & 0 & 75.20 & 0 & 86.80 & 0 \\
+None & 0.75 & 0.70 & 1.25 & 169 & Star & 80.70 & 0 & 69.70 & 0 & 84.30 & 0 \\
+0.40 & 0.75 & 0.70 & 1.25 & 169 & Star & 80.70 & 0 & 69.70 & 0 & 84.30 & 0 \\
+None & 0.75 & 0.70 & 1.25 & 121 & Star & 85.40 & 0 & 68.80 & 0 & 82.40 & 0 \\
+0.40 & 0.75 & 0.70 & 1.25 & 121 & Star & 85.40 & 0 & 68.80 & 0 & 82.40 & 0 \\
+None & 0.75 & 0.70 & 0.75 & 169 & Star & 85.00 & 0 & 80.00 & 0 & 87.30 & 0 \\
+0.40 & 0.75 & 0.70 & 0.75 & 169 & Star & 85.00 & 0 & 80.00 & 0 & 87.30 & 0 \\
+0.40 & 0.75 & 0.70 & 0.75 & 121 & Star & 87.20 & 0 & 79.20 & 0 & 89.70 & 0 \\
+None & 0.75 & 0.70 & 0.75 & 121 & Star & 87.20 & 0 & 79.20 & 0 & 89.70 & 0 \\
+\hline
+\end{longtable}
 \subsection{ABC}
 \subsection{PSO vs ABC}
 

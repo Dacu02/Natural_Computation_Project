@@ -3,6 +3,7 @@ from attr import has
 import pandas as pd
 import numpy as np
 from pingouin import friedman, wilcoxon
+from polars import col
 from scipy.stats import rankdata, chi2, studentized_range
 from matplotlib import pyplot as plt
 from typing import Literal
@@ -26,7 +27,7 @@ def CompareAlgorithms(
         all_files = [f for f in os.listdir(data_path) if f.endswith('.csv')]
     else:
         all_files = [data_path.split('/')[-1]]
-    dataframes = {}
+    dataframes: dict[str, pd.DataFrame] = {}
 
     for file in all_files:
         csv_name = file.replace('.csv', '').split('_')[0]
@@ -205,12 +206,11 @@ def CompareAlgorithms(
         case 'Wilcoxon':
             if algorithms != 2:
                 raise ValueError("Wilcoxon test is only applicable for comparing two algorithms.")
-            alg_names = list(dataframes.keys())
-            df1 = dataframes[alg_names[0]]
-            df2 = dataframes[alg_names[1]]
-            seed_cols = [col for col in df1.columns if str(col).replace('_', '').isdigit()]
-            stat, p_value = wilcoxon(df1[seed_cols].values.flatten(), df2[seed_cols].values.flatten())
-            print(f"Wilcoxon test: statistic={stat}, p-value={p_value}")
+            for dataframe in dataframes.values():
+                seed_cols = [col for col in dataframe.columns if str(col).replace('_', '').isdigit()]
+                df_result = wilcoxon(dataframe[seed_cols].iloc[0].values, dataframe[seed_cols].iloc[1].values)
+                print(f"Wilcoxon test: statistic={df_result['W-val'].iloc[0]}, p-value={df_result['p-val'].iloc[0]}")
+
 
         case _:
             raise ValueError("Invalid test_option provided.")

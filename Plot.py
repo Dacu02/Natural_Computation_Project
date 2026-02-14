@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import stats
 import sys
+import pingouin
 
 def summary_plots(problem_folder: str, algorithms: list[str], results_per_algorithm: dict[str, np.ndarray], problem: int, output_folder:str|None=None) -> None:
     """
@@ -37,7 +38,7 @@ def summary_plots(problem_folder: str, algorithms: list[str], results_per_algori
 
     # Generazione dei summary tra differenti algoritmi di ciascun problema
     with open(os.path.join(output_folder, f'final_results_summary.csv'), 'w') as f:
-        f.write('Algorithm,MeanFinalError,StdFinalError,MeanSE,MedianSE,ShapiroWilk,FinalResults\n')
+        f.write('Algorithm,MeanFinalError,StdFinalError,MeanSE,MedianSE,FinalResults\n')
         for alg_name, results_array in results_per_algorithm.items():
             if results_array is not None:
                 mean_final_error = np.mean(results_array)
@@ -45,56 +46,7 @@ def summary_plots(problem_folder: str, algorithms: list[str], results_per_algori
                 sem_final_error = std_final_error / np.sqrt(len(results_array))
                 median_se = np.median(results_array)
                 results_str = ';'.join(map(str, results_array))
-                _, shapiro_p = stats.shapiro(results_array)
-                f.write(f"{alg_name},{mean_final_error},{std_final_error},{sem_final_error},{median_se},{shapiro_p},{results_str}\n")
-                if shapiro_p < 0.05:
-                    print(f"Warning: i risultati finali dell'algoritmo {alg_name} sul problema f{problem} sembrano non seguire una distribuzione normale (Shapiro-Wilk p={shapiro_p:.4f})")
-
-    # Plot delle distribuzioni finali degli errori come normali, per ogni algoritmo
-    for alg_name, results_array in results_per_algorithm.items():
-        if results_array is not None:
-            mean = np.mean(results_array)
-            std = np.std(results_array, ddof=1)
-            mean_se = std / np.sqrt(len(results_array))
-            x = np.linspace(mean - 4*std, mean + 4*std, 100)
-            y = stats.norm.pdf(x, mean, std)
-            
-            plt.figure(figsize=(10, 6))
-            # Normal distribution curve
-            plt.plot(x, y, 'r-', linewidth=2, label=f'$\\mathcal{{N}}({mean:.2f}, {std:.2f})$')
-            # Plot individual results
-            #plt.plot(results_array, stats.norm.pdf(results_array, mean, std), 'x', alpha=1, markersize=9, label='Results')
-            # Plot histogram
-            plt.hist(results_array, bins='auto', density=True, alpha=0.5, label='Histogram of Results')
-            plt.title(f'Final Errors Distribution for {alg_name} on f{problem}')
-            plt.xlabel('Final Error')
-            plt.ylabel('Density')
-            plt.legend()
-            plt.grid(alpha=0.3)
-            plt.tight_layout()
-            image_output_folder = os.path.join(output_folder, alg_name)
-            os.makedirs(image_output_folder, exist_ok=True)
-            plt.savefig(os.path.join(output_folder, alg_name, f'final_error_distribution_{alg_name}.png'))
-            plt.close()
-
-    # Plot delle distribuzioni finali degli errori come normali, per tutti gli algoritmi
-    plt.figure(figsize=(10, 6))
-    for i, (alg_name, results_array) in enumerate(results_per_algorithm.items()):
-        if results_array is not None:
-            mean = np.mean(results_array)
-            std = np.std(results_array, ddof=1)
-            mean_se = std / np.sqrt(len(results_array))
-            x = np.linspace(mean - 4*std, mean + 4*std, 100)
-            y = stats.norm.pdf(x, mean, std)
-            plt.plot(x, y, label=f'{alg_name} $\\mathcal{{N}}({mean:.2f}, {std:.2f})$') 
-    plt.title(f'Final Errors Distribution of all algorithms on f{problem}')
-    plt.xlabel('Final Error')
-    plt.ylabel('Density')
-    plt.legend()
-    plt.grid(alpha=0.3)
-    plt.tight_layout()
-    plt.savefig(os.path.join(output_folder, f'final_error_distribution_all_algorithms.png'))
-    plt.close()
+                f.write(f"{alg_name},{mean_final_error},{std_final_error},{sem_final_error},{median_se},{results_str}\n")
 
     # Plot sovrapposto delle convergence summary tra algoritmi
     plt.figure(figsize=(10, 6))
@@ -119,6 +71,30 @@ def summary_plots(problem_folder: str, algorithms: list[str], results_per_algori
     plt.savefig(os.path.join(output_folder, f'convergence_summary_comparison.png'))
     plt.close()
 
+    # Write csv with final results of all algorithms for the problem
+    with open(os.path.join(output_folder, f'final_results_comparison.csv'), 'w') as f:
+        # Wilcoxon test as first row of the csv, with p-values for one pair of algorithms if there are exactly 2 algorithms
+        if len(algorithms) == 2:
+            alg1, alg2 = algorithms
+            results1 = results_per_algorithm[alg1]
+            results2 = results_per_algorithm[alg2]
+            df = pingouin.wilcoxon(results1, results2)
+            f.write(f"# Wilcoxon p-value:{df['p-val'].iloc[0]}\n")
+            
+        f.write('Algorithm;FinalResults\n')
+        for alg_name, results_array in results_per_algorithm.items():
+            if results_array is not None:
+                results_str = ','.join(map(str, results_array))
+                f.write(f"{alg_name};{results_str}\n")
+
+    # Write csv with final results of all algorithms for the problem, one row per algorithm and one column per seed
+    with open(os.path.join(output_folder, '..', f'{problem}_summary_errors.csv'), 'w') as f:
+        f.write(','.join([str(i) for i in range(1, seeds_count+1)]) + ',Algorithm\n')
+        for alg_name, results_array in results_per_algorithm.items():
+            if results_array is not None:
+                results_str = ','.join(map(str, results_array))
+                f.write(f"{results_str},{alg_name}\n")
+                
 
 def main():
     args = sys.argv

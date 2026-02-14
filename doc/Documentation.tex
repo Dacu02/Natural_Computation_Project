@@ -12,8 +12,8 @@
 \usepackage[style=numeric, backend=bibtex]{biblatex}
 \addbibresource{Documentation.bib}
 \usepackage{xcolor}
-\pagecolor[rgb]{0.05,0.05,0.05}
-\color[rgb]{0.9,0.9,0.9}
+%\pagecolor[rgb]{0.05,0.05,0.05}
+%\color[rgb]{0.9,0.9,0.9}
 
 \geometry{margin=1in}
 \onehalfspacing
@@ -85,14 +85,82 @@ Since a Torus topology is adopted, the chosen population sizes will be perfect s
 The position of each particle represents a potential solution to the problem, while the velocity determines how the particle moves through the search space, with respect to the other parameters. Since the solution space is not $\mathbb R^d$, they must be limited to the range of the problem:
 \begin{itemize}
     \item \textbf{Position}: the position of each particle is limited to the range of the problem, which is $[-100, 100]$ for all dimensions. If a particle is going to exceed a boundary, its velocity is shrunk by a factor such that the particle falls on the boundary.
-    \item \textbf{Velocity}: the velocity of each particle is limited to a certain range, if the velocity exceeds the maximum (or minimum) velocity, it is clamped to the maximum (or minimum) velocity. The range of the velocity is set to $\pm0.15$ times the difference between the maximum and minimum positions: $\left[-30, 30\right]$. It is important to note that the velocity is independently limited for each dimension. This customization was suggested in \cite{clamp} 
+    \item \textbf{Velocity}: the velocity of each particle is limited to a certain range, if the velocity exceeds the maximum (or minimum) velocity, it is clamped to the maximum (or minimum) velocity. The range of the velocity is set to $\pm0.15$ times the difference between the maximum and minimum positions: $\left[-30, 30\right]$. It is important to note that the velocity is independently limited for each dimension. This customization was suggested in \cite{clamp}
 \end{itemize}
 \subsubsection{Cognitive and Social Weights}
 The cognitive and social weights influence respectively the particle's tendency to return to its own best position and the tendency to move towards the best position found by its neighbors. A higher cognitive weight encourages particles to explore the search space more independently, while a higher social weight encourages particles to converge towards the best solution found by the swarm. The values of the cognitive and social weights considered are all combinations of $c_1$ and $c_2$ in $\{0.75, 1.25\}$.
 \subsubsection{Inertia}
 The inertia weight controls the influence of the previous velocity on the current velocity. It is somewhat similar to the temperature of the particles. In this case other than the standard fixed inertia weight, a linearly decreasing inertia weight is also considered. The inertia weights start from $0.9$ or $0.7$ and eventually if enabled decreases to $0.4$ through the iterations.
-
+\newpage
 \subsection{Artificial Bee Colony}
+Artificial Bee Colony (ABC) is a swarm intelligence algorithm inspired by the foraging behavior of honey bees.  
+The algorithm reproduces how the bees search for food sources, and how they share information about the quality of the food sources with other bees and the process of collecting nectar from the food sources. The ABC algorithm is used for solving optimization problems, even with non linear, multimodal and high dimensional search spaces.
+
+\subsubsection{Bees Types}
+The analogy with the behavior of real bees is reflected in the algorithm through the division of the population into three types of bees: employed bees, onlooker bees, and scout bees. Each type of bee has a specific role in the search process:
+\begin{itemize}
+    \item \textbf{Employed Bees}: these bees are responsible for exploring the search space and exploiting the food sources they have found. Each employed bee is associated with a specific food source, and it shares information about the quality of that food source with the onlooker bees. The employed bees also perform a local search around their associated food source to find better solutions.
+    The food sources correspond to potential solutions to the optimization problem, and the quality of a food source is determined by the objective function value of the corresponding solution. 
+    \item \textbf{Onlooker Bees}: these bees are responsible for selecting food sources based on the information shared by the employed bees. They choose food sources with a probability proportional to their quality, and they also perform a local search around the selected food source to find better solutions.
+    \item \textbf{Scout Bees}: these bees are responsible for exploring the search space randomly to find new food sources. If a food source is abandoned by the employed bees (i.e., it has not been improved for a certain number of iterations), a scout bee is sent to search for a new food source randomly in the search space.
+\end{itemize}
+Sharing information among the bees occurs in a specific region, called dancing area or hive, where information about food sources are shared through a process called waggle dance. The dancing is proportional to the quality of the food source, so that better food sources are more likely to be selected by the onlooker bees. 
+At the beginning, a potential forager starts as unemployed, having no information about the food sources. Than we have to possible outcomes: can become a scout bee and start searching for food sources near the hive, or it can become a recruiter bee, and start following the waggle dance of the employed bees to find a food source. 
+After finding a food source, the bee becomes an employed bee, and it starts exploiting the food source, sharing information about its quality with the onlooker bees. After unloading the nectar collected from the food source, the employed bee becomes unemployed again, and it can start searching for new food sources as a scout bee, or it can start following the waggle dance of the employed bees to find a food source as a recruiter bee. 
+
+
+\subsubsection{Explanation of the analogy}
+Now that we know how the algorithm works, we can explain the analogy with the behavior of real bees in more detail. 
+In our analogy, the food sources correspond to potential solutions to the optimization problem, and the quality of a food source is determined by the objective function value of the corresponding solution. 
+
+The ABC algorithm can be synthesized as follows:
+
+\paragraph{Initialization:}
+
+a set of candidate solution(employed bees) is randomly generated in the search space, and their quality is evaluated by the objective function. The best solution found so far is stored as the current global best.
+So we generate a population of size $N$ of $\{ x_i \}_{i=1}^N$ as follows: 
+$$ x_{i,j} = x_{min,j} + rand(0,1) \cdot (x_{max,j} - x_{min,j}),\quad i=1,\ldots,N,\quad j=1,\ldots,D$$
+Where $D$ is the dimensionality of the problem, and $x_{min,j}$ and $x_{max,j}$ are the lower and upper bounds of the search space, respectively. 
+
+
+
+\paragraph{Employed Bee Phase:}
+during the search process, employed bees apply a perturbation to the current solution in order to explore the neighborhood of the current solution, and they evaluate the new solution. Each solution is evaluated by the objective function, and if the new solution is better than the current solution, the employed bee updates its position to the new solution and shares this information with the onlooker bees.(making the solution a global best)
+Startin from the current solution $x_i$, an employed bee generates a new solution $v_i$ in the neighborhood of $x_i$ as follows:
+$$ v_{i,j} = x_{i,j} + \phi_{i,j} \cdot (x_{i,j} - x_{k,j}),\quad k \neq i$$
+\indent where:
+\begin{itemize}
+    \item $x_K$ is a randomly selected solution from the population, different from $x_i$:
+    \item $\phi_{i,j}$ is a random number uniformly distributed in the range $[-1, 1]$;
+    \item $j$ is a randomly selected dimension index;
+\end{itemize}
+Than the new solution $v_i$ is evaluated by the objective function comparing it with the current solution $x_i$. For minimization problems the fiteness of a solution is calculated as follows:
+$$ fit_i = \begin{cases}\dfrac{1}{1 + f(x_i)}, & \text{if } f(x_i) \geq 0 \\[10pt]1 + |f(x_i)|, & \text{otherwise}\end{cases} $$
+Where $f(x_i)$ is the objective function value. 
+
+\paragraph{Onlooker Bee Phase:}
+onlooker bees select a food source based on the information shared by the employed bees, and they apply a perturbation to the selected solution in order to explore the neighborhood of the selected solution, and they evaluate the new solution. If the new solution is better than the selected solution, the onlooker bee updates its position to the new solution and shares this information with the employed bees. (taking the place of the employed bee that found the new solution)
+In these phase onlooker bees select a solution $x_i$ with a probability proportional to its fitness:
+$$ p_i = \dfrac{fit_i}{\sum_{j=1}^N fit_j} $$
+In the original implementation of the algorithm, onlooker bees select a solution by using a roulette wheel selection based on the probabilities $p_i$, probabilist selection can be performed also using ranked selection or tournamente selection.
+\paragraph{Scout Bee Phase:}
+if an employed bee has not improved its solution for a certain number of iterations, it becomes a scout bee and randomly searches for a new solution in the search space. 
+
+\subsubsection{Popoluation \& Bees Strategy}
+In the following sections, the parameters of the ABC algorithm will be explained in detail, along with their influence on the algorithm's performance, putting apart parameters depending on the choosen implementation of the algorithm. 
+\\[1em]
+The first parameter common in all the optimization algorithms is the population size, which in this case corresponds to the number of bees. A higher population size allows for a more extensive exploration of the search space, while a smaller population size may lead to premature convergence. The population size is typically set to a value that balances exploration and exploitation effectively.
+\noindent \\
+The number of employed bees is typically set to half of the total population size, while the number of onlooker bees is set to the other half. This allows for a balance between exploration and exploitation, as the employed bees focus on exploiting the current solutions, while the onlooker bees focus on exploring new solutions based on the information shared by the employed bees. The number of scout bees is typically set to a small value, to allow for some random exploration without overwhelming the search process.
+
+\subsubsection{Limit}
+
+The second parameter is the limit, which determines the number of iterations an employed bee can go without improving its solution before it becomes a scout bee. A smaller limit encourages more exploration, while a larger limit allows for more exploitation of the current solutions. The limit is typically set to a value that allows for sufficient exploration without causing excessive random search.
+
+
+
+
+
 
 \section{Methods}
 In order to compare the performance of the algorithms, statistical tests are performed on the results obtained from the experiments ran on a subset of the problem instances. Based on the type of comparison, i.e. whether many algorithms of the same family are compared among themselves, or whether one algorithm from each family is compared, different tests are performed.
@@ -148,7 +216,8 @@ The p-value can then be calculated using the standard normal distribution.
 
 
 
-\subsubsection{Comparison post-hoc}
+
+
 
 \section{Execution}
 In the following section, the execution procedure is thoroughly explained, along with the machines used for the experiments.
@@ -171,10 +240,12 @@ The first part of the file contains literals describing:
 \end{itemize}
 Then, the Torus topology is implemented since not available in the library, and finally the PSO algorithm is implemented, which constructor allows to set the parameters previously mentioned.
 \subsubsection{\texttt{ArtificialBeeColony.py}}
+The Artificial Bee Colony (ABC) algorithm is implemented in this module through the PyABC library \cite{beeoptimal} and the \texttt{Algorithm} abstract class. This library was chosen because it provided a flexible implementation of the ABC algorithm, which exposed the parameters needed for the experiments, and the possibility to implement custom strategies for the employed bees, onlooker bees, and scout bees.
 \subsubsection{\texttt{Framework.py}}
 The \texttt{Framework} module is responsible for executing and saving the various experiments ran on the different problem instances with the different algorithms and seeds. It allows to execute the experiments in parallel, which results are then saved in a common CSV format, in order to be easily retrieved and analyzed by the other modules.
 \subsubsection{\texttt{AggregateCSV.py}}
 The following module is responsible for aggregating the results obtained from the various processes and saving them into CSV files: one for each problem, one for each problem class, and one for the overall results. Specifically, the files report results per experiment for individual problems, per experiment and problem within each class, and per experiment, problem, and class for the overall summary.
+
 \subsubsection{\texttt{StatComparison.py}}
 \subsection{Parameters combinations}
 All the combinations of parameters of the algorithms are written inside the configuration file \texttt{experiments.py}, which is in turn read by the \texttt{Framework} module to execute the experiments. The various parameters combinations are chosen accordingly to the reasoning explained in the previous sections. They make use of a custom class \texttt{Combine} which allows to easily generate all the combinations of the parameters specified in the configuration file. 

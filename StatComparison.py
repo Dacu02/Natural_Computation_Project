@@ -206,10 +206,10 @@ def CompareAlgorithms(
         case 'Wilcoxon':
             if algorithms != 2:
                 raise ValueError("Wilcoxon test is only applicable for comparing two algorithms.")
-            for dataframe in dataframes.values():
+            for data_name, dataframe in dataframes.items():
                 seed_cols = [col for col in dataframe.columns if str(col).replace('_', '').isdigit()]
                 df_result = wilcoxon(dataframe[seed_cols].iloc[0].values, dataframe[seed_cols].iloc[1].values)
-                print(f"Wilcoxon test: statistic={df_result['W-val'].iloc[0]}, p-value={df_result['p-val'].iloc[0]}")
+                print(f"On dataframe {data_name} wilcoxon test: statistic={df_result['W-val'].iloc[0]}, p-value={df_result['p-val'].iloc[0]}")
 
 
         case _:

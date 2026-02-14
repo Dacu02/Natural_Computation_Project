@@ -70,7 +70,9 @@ final_df = final_df.sort_values(
 # ---------- RIORDINO COLONNE ----------
 rank_cols = [c for c in final_df if c.startswith("Rank_")]
 thr_cols  = [c for c in final_df if c.startswith("Threshold_")]
-
+final_df["Rank_mean"] = final_df["Rank_mean"].round(2)
+for col in thr_cols:
+    final_df[col] = final_df[col].astype('Int64')
 ordered = []
 for r, t in zip(rank_cols, thr_cols):
     ordered += [r, t]
@@ -86,13 +88,16 @@ final_df = final_df.reset_index(drop=True)
 
 # ---------- SALVA CSV ----------
 final_df.to_csv("aggregated_results.csv", index=False)
+# final_df = final_df[final_df["end_inertia"].notna()] if "end_inertia" in final_df.columns else final_df
 
+final_df.drop(columns=["end_inertia"], inplace=True, errors='ignore') if "end_inertia" in final_df.columns else None
+final_df = final_df.drop_duplicates().reset_index(drop=True)
 print("CSV finale creato: aggregated_results.csv")
 
 # ---------- LATEX ----------
 latex_table = final_df.to_latex(
     index=False,
-    float_format="%.2f",
+    float_format=lambda x: f"{x:.1f}" if any(col.startswith("Rank_") for col in final_df.columns if final_df[col].name == x) else str(x),
     na_rep="---",
     caption="Risultati aggregati",
     label="tab:results",

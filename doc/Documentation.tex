@@ -7,13 +7,14 @@
 \usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{geometry}
+\usepackage{float}
 \usepackage{setspace}
 \usepackage{longtable}
 \usepackage[style=numeric, backend=bibtex]{biblatex}
 \addbibresource{Documentation.bib}
 \usepackage{xcolor}
-%\pagecolor[rgb]{0.05,0.05,0.05}
-%\color[rgb]{0.9,0.9,0.9}
+\pagecolor[rgb]{0.05,0.05,0.05}
+\color[rgb]{0.9,0.9,0.9}
 
 \geometry{margin=1in}
 \onehalfspacing
@@ -23,6 +24,7 @@
 \date{}
 \usepackage{listings}
 \usepackage{xcolor}
+\usepackage{subcaption}
 
 \lstset{
     language=Python,
@@ -51,7 +53,7 @@ The Generalized Numerical Benchmark Generator (GNBG) is a set of benchmark funct
 \begin{itemize}
     \item \textbf{Unimodal functions}: these functions have a single global minimum, often having a landscape smoother than the other categories and sometimes even convex
     \begin{itemize}
-        \item This class evalues how well the algorithm obtains information from the landscape, and how well it exploits this information to converge to the global minimum, since in this case there are not local minima to deceive the algorithm.
+        \item This class evaluates how well the algorithm obtains information from the landscape, and how well it exploits this information to converge to the global minimum, since in this case there are not local minima to deceive the algorithm.
     \end{itemize}
     \item \textbf{Single component Multimodal functions}: these functions have multiple local minima, making them more challenging for optimization algorithms since their ability to deceive the algorithms
     \begin{itemize}
@@ -65,7 +67,7 @@ The Generalized Numerical Benchmark Generator (GNBG) is a set of benchmark funct
 \subsection{Particle Swarm Optimization}
 The Particle Swarm Optimization (PSO) is a population-based optimization in which a swarm of particles (potential solutions) moves through the search space to find the optimal solution. Each particle adjusts its position based on its own experience and the experience of neighboring particles.
 \\[1em]
-The update rule for the velocity and position of the $i$-th particle on iteration $t$ in PSO with inertia weight \cite{pso} is given by:
+The update rule for the velocity and position of the $i$-th particle on iteration $t$ in PSO with inertia \cite{pso} weight $w$ is given by:
 \begin{align*}
 \overset{\rightarrow}{v_i}(t+1) &= w \cdot \overset{\rightarrow}{v_i}(t) + \mathcal U(0,c_1) \cdot (\overset{\rightarrow}{p_i} - \overset{\rightarrow}{x_i}(t)) + \mathcal U(0,c_2) \cdot (\overset{\rightarrow}{g_i} - \overset{\rightarrow}{x_i}(t)) \\
 \overset{\rightarrow}{x_i}(t+1) &= \overset{\rightarrow}{x_i}(t) + \overset{\rightarrow}{v_i}(t+1)
@@ -238,7 +240,7 @@ The first part of the file contains literals describing:
     \item The strategy to adopt when a particle is going to exceed the velocity limits
     \item The strategy to vary the parameters of the algorithm through the iterations
 \end{itemize}
-Then, the Torus topology is implemented since not available in the library, and finally the PSO algorithm is implemented, which constructor allows to set the parameters previously mentioned.
+Then, the Torus topology is implemented since not available in the library, and finally the PSO algorithm class is implemented through the library, which constructor allows to set the parameters previously mentioned.
 \subsubsection{\texttt{ArtificialBeeColony.py}}
 The Artificial Bee Colony (ABC) algorithm is implemented in this module through the PyABC library \cite{beeoptimal} and the \texttt{Algorithm} abstract class. This library was chosen because it provided a flexible implementation of the ABC algorithm, which exposed the parameters needed for the experiments, and the possibility to implement custom strategies for the employed bees, onlooker bees, and scout bees.
 \subsubsection{\texttt{Framework.py}}
@@ -310,115 +312,240 @@ Where $C=3$ is the number of classes, and $n$, $m$, and $r_{ijkc}$ are defined a
 \subsection{PSO}
 In the following subsection, the results obtained from the experiments on the PSO algorithms are discussed, along with the influence of the different parameters on the performance of the algorithms in the different classes of problems. The results are discussed separately for each step and each class.
 \subsubsection{All algorithms on each class}
-Each of the $96$ algorithms is tested on three problems for each class, thus obtaining $96$ mean ranks for each class. In the following tables the mean ranks of the algorithms are reported, for each class.
-\begin{longtable}{||cccccc||cc||cc||cc||}
-\caption{Risultati aggregati}
-\label{tab:results} \\
+Each of the $96$ algorithms is tested on three problems for each class, thus obtaining $96$ mean ranks for each class. In the table \ref{tab:results_step1} the mean ranks of the algorithms are reported, along with the number of experiments that reached the threshold of $10^{-8}$ for the problems of that class. 
+\begin{longtable}{||ccccc||cc||cc||cc||}
+\caption{First step results for the PSO algorithms}
+\label{tab:results_step1} \\
 \hline
-    \multicolumn{6}{||c||}{Algorithm parameters}  & \multicolumn{2}{c||}{Class 1} & \multicolumn{2}{c||}{Class 2} & \multicolumn{2}{c||}{Class 3} \\
+    \multicolumn{5}{||c||}{Algorithm parameters}  & \multicolumn{2}{c||}{Class 1} & \multicolumn{2}{c||}{Class 2} & \multicolumn{2}{c||}{Class 3} \\
     \hline
     \hline
-    {end\_inertia} & gw & inertia & lw & pop. & topology & Rank & \texttt{1e-8} & Rank & \texttt{1e-8} & Rank & \texttt{1e-8} \\
+    gw & inertia & lw & pop. & topology & Rank & $10^{-8}$ & Rank & $10^{-8}$ & Rank & $10^{-8}$ \\
     \hline
-None & 1.25 & 0.70 & 0.75 & 169 & Random & 13.30 & 10 & 15.80 & 0 & 12.50 & 0 \\
-0.40 & 1.25 & 0.70 & 0.75 & 169 & Random & 13.30 & 10 & 15.80 & 0 & 12.50 & 0 \\
-None & 1.25 & 0.70 & 1.25 & 169 & Random & 12.20 & 10 & 19.10 & 0 & 14.20 & 0 \\
-0.40 & 1.25 & 0.70 & 1.25 & 169 & Random & 12.20 & 10 & 19.10 & 0 & 14.20 & 0 \\
-0.40 & 1.25 & 0.70 & 0.75 & 121 & Random & 16.30 & 10 & 17.50 & 0 & 12.20 & 1 \\
-None & 1.25 & 0.70 & 0.75 & 121 & Random & 16.30 & 10 & 17.50 & 0 & 12.20 & 1 \\
-None & 1.25 & 0.70 & 1.25 & 121 & Random & 16.40 & 10 & 20.80 & 0 & 9.00 & 0 \\
-0.40 & 1.25 & 0.70 & 1.25 & 121 & Random & 16.40 & 10 & 20.80 & 0 & 9.00 & 0 \\
-None & 0.75 & 0.90 & 0.75 & 169 & Torus & 30.70 & 10 & 20.00 & 0 & 13.20 & 0 \\
-0.40 & 0.75 & 0.90 & 0.75 & 169 & Torus & 30.70 & 10 & 20.00 & 0 & 13.20 & 0 \\
-0.40 & 0.75 & 0.70 & 1.25 & 169 & Random & 16.80 & 10 & 23.00 & 0 & 26.90 & 0 \\
-None & 0.75 & 0.70 & 1.25 & 169 & Random & 16.80 & 10 & 23.00 & 0 & 26.90 & 0 \\
-None & 0.75 & 0.90 & 0.75 & 121 & Torus & 29.00 & 10 & 16.70 & 0 & 22.70 & 0 \\
-0.40 & 0.75 & 0.90 & 0.75 & 121 & Torus & 29.00 & 10 & 16.70 & 0 & 22.70 & 0 \\
-None & 0.75 & 0.90 & 0.75 & 121 & Random & 26.10 & 10 & 39.00 & 0 & 16.40 & 0 \\
-0.40 & 0.75 & 0.90 & 0.75 & 121 & Random & 26.10 & 10 & 39.00 & 0 & 16.40 & 0 \\
-None & 0.75 & 0.70 & 1.25 & 121 & Random & 18.10 & 10 & 29.90 & 0 & 33.80 & 0 \\
-0.40 & 0.75 & 0.70 & 1.25 & 121 & Random & 18.10 & 10 & 29.90 & 0 & 33.80 & 0 \\
-0.40 & 0.75 & 0.70 & 0.75 & 169 & Random & 15.90 & 10 & 30.60 & 0 & 39.60 & 0 \\
-None & 0.75 & 0.70 & 0.75 & 169 & Random & 15.90 & 10 & 30.60 & 0 & 39.60 & 0 \\
-None & 0.75 & 0.90 & 1.25 & 121 & Torus & 40.00 & 0 & 26.90 & 0 & 20.80 & 0 \\
-0.40 & 0.75 & 0.90 & 1.25 & 121 & Torus & 40.00 & 0 & 26.90 & 0 & 20.80 & 0 \\
-0.40 & 1.25 & 0.90 & 0.75 & 121 & Torus & 56.80 & 0 & 19.40 & 0 & 17.40 & 0 \\
-None & 1.25 & 0.90 & 0.75 & 121 & Torus & 56.80 & 0 & 19.40 & 0 & 17.40 & 0 \\
-None & 0.75 & 0.90 & 0.75 & 169 & Random & 35.80 & 10 & 42.60 & 0 & 16.40 & 0 \\
-0.40 & 0.75 & 0.90 & 0.75 & 169 & Random & 35.80 & 10 & 42.60 & 0 & 16.40 & 0 \\
-0.40 & 0.75 & 0.90 & 1.25 & 169 & Torus & 46.20 & 0 & 32.40 & 0 & 20.90 & 0 \\
-None & 0.75 & 0.90 & 1.25 & 169 & Torus & 46.20 & 0 & 32.40 & 0 & 20.90 & 0 \\
-0.40 & 1.25 & 0.90 & 0.75 & 169 & Torus & 60.80 & 0 & 22.20 & 0 & 18.50 & 0 \\
-None & 1.25 & 0.90 & 0.75 & 169 & Torus & 60.80 & 0 & 22.20 & 0 & 18.50 & 0 \\
-0.40 & 0.75 & 0.70 & 0.75 & 121 & Random & 20.60 & 10 & 36.50 & 0 & 47.80 & 0 \\
-None & 0.75 & 0.70 & 0.75 & 121 & Random & 20.60 & 10 & 36.50 & 0 & 47.80 & 0 \\
-0.40 & 1.25 & 0.70 & 1.25 & 169 & Torus & 26.00 & 10 & 48.00 & 0 & 51.20 & 0 \\
-None & 1.25 & 0.70 & 1.25 & 169 & Torus & 26.00 & 10 & 48.00 & 0 & 51.20 & 0 \\
-None & 1.25 & 0.70 & 1.25 & 121 & Torus & 23.80 & 10 & 48.50 & 0 & 55.20 & 0 \\
-0.40 & 1.25 & 0.70 & 1.25 & 121 & Torus & 23.80 & 10 & 48.50 & 0 & 55.20 & 0 \\
-None & 1.25 & 0.70 & 0.75 & 169 & Torus & 27.90 & 10 & 51.80 & 0 & 61.60 & 0 \\
-0.40 & 1.25 & 0.70 & 0.75 & 169 & Torus & 27.90 & 10 & 51.80 & 0 & 61.60 & 0 \\
-None & 0.75 & 0.90 & 1.25 & 169 & Random & 61.80 & 0 & 48.20 & 0 & 32.60 & 0 \\
-0.40 & 0.75 & 0.90 & 1.25 & 169 & Random & 61.80 & 0 & 48.20 & 0 & 32.60 & 0 \\
-0.40 & 1.25 & 0.70 & 0.75 & 121 & Torus & 24.00 & 10 & 57.10 & 0 & 61.70 & 0 \\
-None & 1.25 & 0.70 & 0.75 & 121 & Torus & 24.00 & 10 & 57.10 & 0 & 61.70 & 0 \\
-None & 0.75 & 0.90 & 1.25 & 121 & Random & 58.80 & 0 & 52.60 & 0 & 33.40 & 0 \\
-0.40 & 0.75 & 0.90 & 1.25 & 121 & Random & 58.80 & 0 & 52.60 & 0 & 33.40 & 0 \\
-None & 0.75 & 0.90 & 1.25 & 121 & Star & 48.60 & 1 & 53.20 & 0 & 49.10 & 0 \\
-0.40 & 0.75 & 0.90 & 1.25 & 121 & Star & 48.60 & 1 & 53.20 & 0 & 49.10 & 0 \\
-None & 0.75 & 0.90 & 1.25 & 169 & Star & 50.60 & 0 & 50.40 & 0 & 50.20 & 0 \\
-0.40 & 0.75 & 0.90 & 1.25 & 169 & Star & 50.60 & 0 & 50.40 & 0 & 50.20 & 0 \\
-None & 0.75 & 0.70 & 1.25 & 169 & Torus & 31.70 & 10 & 54.60 & 0 & 66.60 & 0 \\
-0.40 & 0.75 & 0.70 & 1.25 & 169 & Torus & 31.70 & 10 & 54.60 & 0 & 66.60 & 0 \\
-0.40 & 0.75 & 0.70 & 1.25 & 121 & Torus & 30.10 & 10 & 55.40 & 0 & 70.60 & 0 \\
-None & 0.75 & 0.70 & 1.25 & 121 & Torus & 30.10 & 10 & 55.40 & 0 & 70.60 & 0 \\
-0.40 & 1.25 & 0.90 & 1.25 & 121 & Torus & 77.50 & 0 & 44.70 & 0 & 35.10 & 0 \\
-None & 1.25 & 0.90 & 1.25 & 121 & Torus & 77.50 & 0 & 44.70 & 0 & 35.10 & 0 \\
-0.40 & 1.25 & 0.90 & 0.75 & 121 & Random & 73.40 & 0 & 46.80 & 0 & 42.00 & 0 \\
-None & 1.25 & 0.90 & 0.75 & 121 & Random & 73.40 & 0 & 46.80 & 0 & 42.00 & 0 \\
-None & 0.75 & 0.70 & 0.75 & 169 & Torus & 33.30 & 10 & 58.40 & 0 & 70.80 & 0 \\
-0.40 & 0.75 & 0.70 & 0.75 & 169 & Torus & 33.30 & 10 & 58.40 & 0 & 70.80 & 0 \\
-None & 1.25 & 0.90 & 1.25 & 169 & Torus & 78.20 & 0 & 50.10 & 0 & 35.60 & 0 \\
-0.40 & 1.25 & 0.90 & 1.25 & 169 & Torus & 78.20 & 0 & 50.10 & 0 & 35.60 & 0 \\
-0.40 & 1.25 & 0.90 & 0.75 & 169 & Random & 73.30 & 0 & 48.20 & 0 & 44.50 & 0 \\
-None & 1.25 & 0.90 & 0.75 & 169 & Random & 73.30 & 0 & 48.20 & 0 & 44.50 & 0 \\
-0.40 & 0.75 & 0.70 & 0.75 & 121 & Torus & 30.50 & 10 & 62.20 & 0 & 78.20 & 0 \\
-None & 0.75 & 0.70 & 0.75 & 121 & Torus & 30.50 & 10 & 62.20 & 0 & 78.20 & 0 \\
-None & 0.75 & 0.90 & 0.75 & 121 & Star & 38.30 & 1 & 64.50 & 0 & 71.60 & 0 \\
-0.40 & 0.75 & 0.90 & 0.75 & 121 & Star & 38.30 & 1 & 64.50 & 0 & 71.60 & 0 \\
-0.40 & 0.75 & 0.90 & 0.75 & 169 & Star & 37.70 & 1 & 66.40 & 0 & 71.80 & 0 \\
-None & 0.75 & 0.90 & 0.75 & 169 & Star & 37.70 & 1 & 66.40 & 0 & 71.80 & 0 \\
-0.40 & 1.25 & 0.90 & 1.25 & 169 & Random & 79.60 & 0 & 53.40 & 0 & 46.60 & 0 \\
-None & 1.25 & 0.90 & 1.25 & 169 & Random & 79.60 & 0 & 53.40 & 0 & 46.60 & 0 \\
-None & 1.25 & 0.90 & 1.25 & 121 & Random & 82.00 & 0 & 52.80 & 0 & 46.20 & 0 \\
-0.40 & 1.25 & 0.90 & 1.25 & 121 & Random & 82.00 & 0 & 52.80 & 0 & 46.20 & 0 \\
-None & 1.25 & 0.90 & 0.75 & 121 & Star & 64.80 & 0 & 67.60 & 0 & 55.20 & 0 \\
-0.40 & 1.25 & 0.90 & 0.75 & 121 & Star & 64.80 & 0 & 67.60 & 0 & 55.20 & 0 \\
-None & 1.25 & 0.90 & 0.75 & 169 & Star & 68.00 & 0 & 63.80 & 0 & 57.40 & 0 \\
-0.40 & 1.25 & 0.90 & 0.75 & 169 & Star & 68.00 & 0 & 63.80 & 0 & 57.40 & 0 \\
-None & 1.25 & 0.70 & 1.25 & 169 & Star & 56.80 & 0 & 63.70 & 0 & 83.80 & 0 \\
-0.40 & 1.25 & 0.70 & 1.25 & 169 & Star & 56.80 & 0 & 63.70 & 0 & 83.80 & 0 \\
-None & 1.25 & 0.90 & 1.25 & 169 & Star & 80.50 & 0 & 66.00 & 0 & 58.80 & 0 \\
-0.40 & 1.25 & 0.90 & 1.25 & 169 & Star & 80.50 & 0 & 66.00 & 0 & 58.80 & 0 \\
-None & 1.25 & 0.90 & 1.25 & 121 & Star & 81.40 & 0 & 71.40 & 0 & 57.60 & 0 \\
-0.40 & 1.25 & 0.90 & 1.25 & 121 & Star & 81.40 & 0 & 71.40 & 0 & 57.60 & 0 \\
-0.40 & 1.25 & 0.90 & 1.25 & 121 & Star & 81.40 & 0 & 71.40 & 0 & 57.60 & 0 \\
-None & 1.25 & 0.70 & 1.25 & 121 & Star & 60.80 & 0 & 70.70 & 0 & 82.20 & 0 \\
-0.40 & 1.25 & 0.70 & 1.25 & 121 & Star & 60.80 & 0 & 70.70 & 0 & 82.20 & 0 \\
-None & 1.25 & 0.70 & 0.75 & 169 & Star & 64.80 & 0 & 72.20 & 0 & 85.50 & 0 \\
-0.40 & 1.25 & 0.70 & 0.75 & 169 & Star & 64.80 & 0 & 72.20 & 0 & 85.50 & 0 \\
-None & 1.25 & 0.70 & 0.75 & 121 & Star & 70.70 & 0 & 75.20 & 0 & 86.80 & 0 \\
-0.40 & 1.25 & 0.70 & 0.75 & 121 & Star & 70.70 & 0 & 75.20 & 0 & 86.80 & 0 \\
-None & 0.75 & 0.70 & 1.25 & 169 & Star & 80.70 & 0 & 69.70 & 0 & 84.30 & 0 \\
-0.40 & 0.75 & 0.70 & 1.25 & 169 & Star & 80.70 & 0 & 69.70 & 0 & 84.30 & 0 \\
-None & 0.75 & 0.70 & 1.25 & 121 & Star & 85.40 & 0 & 68.80 & 0 & 82.40 & 0 \\
-0.40 & 0.75 & 0.70 & 1.25 & 121 & Star & 85.40 & 0 & 68.80 & 0 & 82.40 & 0 \\
-None & 0.75 & 0.70 & 0.75 & 169 & Star & 85.00 & 0 & 80.00 & 0 & 87.30 & 0 \\
-0.40 & 0.75 & 0.70 & 0.75 & 169 & Star & 85.00 & 0 & 80.00 & 0 & 87.30 & 0 \\
-0.40 & 0.75 & 0.70 & 0.75 & 121 & Star & 87.20 & 0 & 79.20 & 0 & 89.70 & 0 \\
-None & 0.75 & 0.70 & 0.75 & 121 & Star & 87.20 & 0 & 79.20 & 0 & 89.70 & 0 \\
+1.25 & 0.7 & 0.75 & 169 & Random & 13.3 & 10 & 15.8 & 0 & 12.5 & 0 \\
+1.25 & 0.7 & 1.25 & 169 & Random & 12.2 & 10 & 19.1 & 0 & 14.2 & 0 \\
+1.25 & 0.7 & 0.75 & 121 & Random & 16.3 & 10 & 17.5 & 0 & 12.2 & 1 \\
+1.25 & 0.7 & 1.25 & 121 & Random & 16.4 & 10 & 20.8 & 0 & 9.0 & 0 \\
+0.75 & 0.9 & 0.75 & 169 & Torus & 30.7 & 10 & 20.0 & 0 & 13.2 & 0 \\
+0.75 & 0.7 & 1.25 & 169 & Random & 16.8 & 10 & 23.0 & 0 & 26.9 & 0 \\
+0.75 & 0.9 & 0.75 & 121 & Torus & 29.0 & 10 & 16.7 & 0 & 22.7 & 0 \\
+0.75 & 0.9 & 0.75 & 121 & Random & 26.1 & 10 & 39.0 & 0 & 16.4 & 0 \\
+0.75 & 0.7 & 1.25 & 121 & Random & 18.1 & 10 & 29.9 & 0 & 33.8 & 0 \\
+0.75 & 0.7 & 0.75 & 169 & Random & 15.9 & 10 & 30.6 & 0 & 39.6 & 0 \\
+0.75 & 0.9 & 1.25 & 121 & Torus & 40.0 & 0 & 26.9 & 0 & 20.8 & 0 \\
+1.25 & 0.9 & 0.75 & 121 & Torus & 56.8 & 0 & 19.4 & 0 & 17.4 & 0 \\
+0.75 & 0.9 & 0.75 & 169 & Random & 35.8 & 10 & 42.6 & 0 & 16.4 & 0 \\
+0.75 & 0.9 & 1.25 & 169 & Torus & 46.2 & 0 & 32.4 & 0 & 20.9 & 0 \\
+1.25 & 0.9 & 0.75 & 169 & Torus & 60.8 & 0 & 22.2 & 0 & 18.5 & 0 \\
+0.75 & 0.7 & 0.75 & 121 & Random & 20.6 & 10 & 36.5 & 0 & 47.8 & 0 \\
+1.25 & 0.7 & 1.25 & 169 & Torus & 26.0 & 10 & 48.0 & 0 & 51.2 & 0 \\
+1.25 & 0.7 & 1.25 & 121 & Torus & 23.8 & 10 & 48.5 & 0 & 55.2 & 0 \\
+1.25 & 0.7 & 0.75 & 169 & Torus & 27.9 & 10 & 51.8 & 0 & 61.6 & 0 \\
+0.75 & 0.9 & 1.25 & 169 & Random & 61.8 & 0 & 48.2 & 0 & 32.6 & 0 \\
+1.25 & 0.7 & 0.75 & 121 & Torus & 24.0 & 10 & 57.1 & 0 & 61.7 & 0 \\
+0.75 & 0.9 & 1.25 & 121 & Random & 58.8 & 0 & 52.6 & 0 & 33.4 & 0 \\
+0.75 & 0.9 & 1.25 & 121 & Star & 48.6 & 1 & 53.2 & 0 & 49.1 & 0 \\
+0.75 & 0.9 & 1.25 & 169 & Star & 50.6 & 0 & 50.4 & 0 & 50.2 & 0 \\
+0.75 & 0.7 & 1.25 & 169 & Torus & 31.7 & 10 & 54.6 & 0 & 66.6 & 0 \\
+0.75 & 0.7 & 1.25 & 121 & Torus & 30.1 & 10 & 55.4 & 0 & 70.6 & 0 \\
+1.25 & 0.9 & 1.25 & 121 & Torus & 77.5 & 0 & 44.7 & 0 & 35.1 & 0 \\
+1.25 & 0.9 & 0.75 & 121 & Random & 73.4 & 0 & 46.8 & 0 & 42.0 & 0 \\
+0.75 & 0.7 & 0.75 & 169 & Torus & 33.3 & 10 & 58.4 & 0 & 70.8 & 0 \\
+1.25 & 0.9 & 1.25 & 169 & Torus & 78.2 & 0 & 50.1 & 0 & 35.6 & 0 \\
+1.25 & 0.9 & 0.75 & 169 & Random & 73.3 & 0 & 48.2 & 0 & 44.5 & 0 \\
+0.75 & 0.7 & 0.75 & 121 & Torus & 30.5 & 10 & 62.2 & 0 & 78.2 & 0 \\
+0.75 & 0.9 & 0.75 & 121 & Star & 38.3 & 1 & 64.5 & 0 & 71.6 & 0 \\
+0.75 & 0.9 & 0.75 & 169 & Star & 37.7 & 1 & 66.4 & 0 & 71.8 & 0 \\
+1.25 & 0.9 & 1.25 & 169 & Random & 79.6 & 0 & 53.4 & 0 & 46.6 & 0 \\
+1.25 & 0.9 & 1.25 & 121 & Random & 82.0 & 0 & 52.8 & 0 & 46.2 & 0 \\
+1.25 & 0.9 & 0.75 & 121 & Star & 64.8 & 0 & 67.6 & 0 & 55.2 & 0 \\
+1.25 & 0.9 & 0.75 & 169 & Star & 68.0 & 0 & 63.8 & 0 & 57.4 & 0 \\
+1.25 & 0.7 & 1.25 & 169 & Star & 56.8 & 0 & 63.7 & 0 & 83.8 & 0 \\
+1.25 & 0.9 & 1.25 & 169 & Star & 80.5 & 0 & 66.0 & 0 & 58.8 & 0 \\
+1.25 & 0.9 & 1.25 & 121 & Star & 81.4 & 0 & 71.4 & 0 & 57.6 & 0 \\
+1.25 & 0.7 & 1.25 & 121 & Star & 60.8 & 0 & 70.7 & 0 & 82.2 & 0 \\
+1.25 & 0.7 & 0.75 & 169 & Star & 64.8 & 0 & 72.2 & 0 & 85.5 & 0 \\
+1.25 & 0.7 & 0.75 & 121 & Star & 70.7 & 0 & 75.2 & 0 & 86.8 & 0 \\
+0.75 & 0.7 & 1.25 & 169 & Star & 80.7 & 0 & 69.7 & 0 & 84.3 & 0 \\
+0.75 & 0.7 & 1.25 & 121 & Star & 85.4 & 0 & 68.8 & 0 & 82.4 & 0 \\
+0.75 & 0.7 & 0.75 & 169 & Star & 85.0 & 0 & 80.0 & 0 & 87.3 & 0 \\
+0.75 & 0.7 & 0.75 & 121 & Star & 87.2 & 0 & 79.2 & 0 & 89.7 & 0 \\
 \hline
 \end{longtable}
+\noindent In order to obtain a better visualization of the results, only one table is adopted for all the classes, since the algorithms are the same, and the results are reported in different columns. The algorithms are sorted by their mean rank on the three classes, which is not a meaningful metric, but it allows to have a better visualization of the results. In the first section of the table the algorithms are reported by their parameters. The next $3$ section report mean rank and number of experiments that reached the threshold, for each class. The \texttt{end\_inertia} parameter is not reported in the table since it does not seem to have an influence on the performance of the algorithms, since almost all the algorithms with the same parameters, with and without the linear decay.
+\\[1em] 
+What emerges from the results is the poor performance of the Star topology, since most of the algorithms with that topology are ranked in the last positions for all the classes. On the other hand, the Random and Torus topologies are more competitive, since they are ranked in the first positions.
+\\[1em]
+Regarding the other parameters, the population size does not seem to have a clear influence, neither does the local weight. Meanwhile, the inertia and global weights seem to be more influential, but they need further investigation. 
+\\[1em]
+In order to have a statistical confirmation of these observations, the Friedman test is performed on the results of each class, and the Nemenyi post-hoc test is performed if the null hypothesis is rejected. Since the Friedman rejects the null hypothesis for all the classes, the Nemenyi post-hoc test is performed, and the algorithm are plotted in the critical difference diagram in figure \ref{fig:cd1}.
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{\textwidth}
+        \centering
+        \caption{Class 1}
+        \includegraphics[width=0.66\textwidth]{imgs/pso/step1/1_critical_difference.png}
+    \end{subfigure}
+    \begin{subfigure}[b]{\textwidth}
+        \centering
+        \caption{Class 2}
+        \includegraphics[width=0.66\textwidth]{imgs/pso/step1/2_critical_difference.png}
+    \end{subfigure}
+    \begin{subfigure}[b]{\textwidth}
+        \centering
+        \caption{Class 3}
+        \includegraphics[width=0.66\textwidth]{imgs/pso/step1/3_critical_difference.png}
+    \end{subfigure}
+    \caption{Critical Difference diagrams for PSO algorithms}
+    \label{fig:cd1}
+\end{figure}
+\noindent These diagrams plot the algorithms on a line according to their mean rank, while the other axis reports the population size. Also, the topology of the algorithms is represented by the color of the dots, while the other parameters are not shown. The critical difference is represented by the horizontal black line, which contains the algorithms that are not statistically significantly different from each other, but are statistically significantly different from the algorithms that are not contained in it.
+\\[1em]
+From the diagrams, it can be observed that the Star topology is statistically significantly worse, especially for the second and third classes, where only a few algorithms with that topology are not statistically significantly worse than the others. On the other hand, in the first class the Star topology performs a bit better. This is somewhat expected, since the Star topology is a simple topology that easily halts on local minima, which are not present in the first class problems. On the other hand, the Random and Torus topologies are more competitive, since almost equally present in the statistical groups of the better performing algorithms. The population has very little influence on the performance of the algorithms, while in the first figure it seems to have a good influence, in the second it has no influence, while in the third it has a negative influence. 
+\\[1em]
+An interesting observation is that the Random topology is far more competitive than expected, since it is a simple topology that does not have any particular structure. Unfortunately, this aspect won't be further investigated in the next steps, since as the seeds change, also the topology structure changes, thus making it impossible to determine whether the good performance of the Random topology is due to the topology itself or to the seeds used in this step. One reason behind its good performance may be that the velocity clamping is set to a small value, which may help to avoid the divergence of the particles, thus making the algorithm more stable and competitive.
+\subsubsection{First filtering}
+In this step, the algorithms that are not statistically significantly worse than the others are selected for each class, and then they are compared again with $30$ seeds on the same problems, in order to obtain more robust results. Since in this case the tests are done independently for each class, the results are reported in a table where, for ease of visualization, the algorithms are first sorted by the number of classes they are tested on, and then by their mean rank on the classes. If an algorithm is not ranked in a class, its mean rank for that class is not reported, since non-existing. This way, the algorithms that are excluded from some classes are easily identifiable. The results are reported in table \ref{tab:results_step2}.
+\begin{longtable}{||ccccc||cc||cc||cc||}
+\caption{Second step results for the PSO algorithms}
+\label{tab:results_step2} \\
+\hline
+\multicolumn{5}{||c||}{Algorithm parameters}  & \multicolumn{2}{c||}{Class 1} & \multicolumn{2}{c||}{Class 2} & \multicolumn{2}{c||}{Class 3} \\
+\hline
+\hline
+gw & inertia & lw & pop. & topology & Rank & $10^{-8}$ & Rank & $10^{-8}$ & Rank & $10^{-8}$ \\
+\hline
+1.25 & 0.7 & 0.75 & 169 & Random & 12.4 & 40 & 13.4 & 0 & 9.7 & 0 \\
+1.25 & 0.7 & 1.25 & 169 & Random & 13.5 & 40 & 15.9 & 0 & 9.9 & 0 \\
+1.25 & 0.7 & 0.75 & 121 & Random & 15.3 & 40 & 16.6 & 0 & 10.3 & 1 \\
+1.25 & 0.7 & 1.25 & 121 & Random & 17.9 & 41 & 18.0 & 0 & 10.4 & 0 \\
+0.75 & 0.7 & 1.25 & 169 & Random & 13.7 & 40 & 22.0 & 0 & 23.0 & 0 \\
+0.75 & 0.9 & 0.75 & 169 & Torus & 32.0 & 40 & 17.8 & 0 & 12.7 & 0 \\
+0.75 & 0.9 & 0.75 & 121 & Torus & 29.3 & 40 & 18.6 & 0 & 17.4 & 0 \\
+0.75 & 0.7 & 1.25 & 121 & Random & 17.1 & 40 & 27.8 & 0 & 26.1 & 0 \\
+0.75 & 0.7 & 0.75 & 169 & Random & 14.8 & 40 & 28.2 & 0 & 31.4 & 0 \\
+0.75 & 0.9 & 1.25 & 121 & Torus & 38.5 & 0 & 24.0 & 0 & 14.9 & 0 \\
+0.75 & 0.9 & 0.75 & 121 & Random & 28.9 & 40 & 33.6 & 0 & 15.3 & 0 \\
+0.75 & 0.9 & 0.75 & 169 & Random & 32.9 & 40 & 32.8 & 0 & 14.3 & 0 \\
+1.25 & 0.9 & 0.75 & 121 & Torus & 51.8 & 0 & 17.8 & 0 & 12.6 & 0 \\
+0.75 & 0.7 & 0.75 & 121 & Random & 16.7 & 40 & 33.6 & 0 & 35.5 & 0 \\
+0.75 & 0.9 & 1.25 & 169 & Torus & 44.6 & 0 & 27.8 & 0 & 15.3 & 0 \\
+1.25 & 0.7 & 1.25 & 169 & Torus & 26.7 & 40 & 41.4 & 0 & 34.9 & 0 \\
+0.75 & 0.9 & 1.25 & 169 & Star & 45.0 & 1 & 45.6 & 0 & 34.2 & 0 \\
+0.75 & 0.9 & 1.25 & 121 & Star & 44.3 & 8 & 46.6 & 0 & 36.7 & 0 \\
+1.25 & 0.7 & 0.75 & 169 & Random & 12.4 & 40 & 13.4 & 0 & --- & --- \\
+1.25 & 0.7 & 0.75 & 121 & Random & 15.3 & 40 & 16.6 & 0 & --- & --- \\
+1.25 & 0.9 & 0.75 & 169 & Torus & --- & --- & 20.7 & 0 & 14.3 & 0 \\
+0.75 & 0.9 & 1.25 & 169 & Random & --- & --- & 40.2 & 0 & 23.8 & 0 \\
+1.25 & 0.7 & 1.25 & 121 & Torus & 22.7 & 40 & 41.8 & 0 & --- & --- \\
+1.25 & 0.9 & 1.25 & 121 & Torus & --- & --- & 39.0 & 0 & 26.7 & 0 \\
+0.75 & 0.9 & 1.25 & 121 & Random & --- & --- & 41.1 & 0 & 24.9 & 0 \\
+1.25 & 0.9 & 1.25 & 169 & Torus & --- & --- & 40.6 & 0 & 26.6 & 0 \\
+1.25 & 0.7 & 1.25 & 169 & Torus & 26.7 & 40 & 41.4 & 0 & --- & --- \\
+1.25 & 0.9 & 0.75 & 121 & Torus & 51.8 & 0 & 17.8 & 0 & --- & --- \\
+1.25 & 0.7 & 0.75 & 121 & Torus & 24.2 & 40 & 46.1 & 0 & --- & --- \\
+1.25 & 0.9 & 0.75 & 169 & Random & --- & --- & 39.3 & 0 & 31.1 & 0 \\
+1.25 & 0.7 & 0.75 & 169 & Torus & 25.2 & 40 & 46.1 & 0 & --- & --- \\
+1.25 & 0.9 & 0.75 & 121 & Random & --- & --- & 40.6 & 0 & 31.4 & 0 \\
+0.75 & 0.7 & 1.25 & 121 & Torus & 28.5 & 40 & 46.7 & 0 & --- & --- \\
+1.25 & 0.9 & 1.25 & 121 & Random & --- & --- & 43.0 & 0 & 32.6 & 0 \\
+1.25 & 0.9 & 1.25 & 169 & Random & --- & --- & 43.1 & 0 & 32.9 & 0 \\
+0.75 & 0.7 & 1.25 & 169 & Torus & 32.1 & 40 & 46.6 & 0 & --- & --- \\
+0.75 & 0.7 & 0.75 & 169 & Torus & 30.5 & 40 & 49.1 & 0 & --- & --- \\
+0.75 & 0.9 & 1.25 & 169 & Star & 45.0 & 1 & 45.6 & 0 & --- & --- \\
+1.25 & 0.9 & 0.75 & 169 & Torus & --- & --- & 20.7 & 0 & --- & --- \\
+0.75 & 0.7 & 0.75 & 121 & Torus & 29.8 & 40 & --- & --- & --- & --- \\
+0.75 & 0.9 & 0.75 & 169 & Star & 31.0 & 7 & --- & --- & --- & --- \\
+0.75 & 0.9 & 0.75 & 121 & Star & 32.6 & 2 & --- & --- & --- & --- \\
+1.25 & 0.9 & 0.75 & 169 & Random & --- & --- & 39.3 & 0 & --- & --- \\
+0.75 & 0.9 & 1.25 & 169 & Random & --- & --- & 40.2 & 0 & --- & --- \\
+1.25 & 0.9 & 0.75 & 121 & Random & --- & --- & 40.6 & 0 & --- & --- \\
+0.75 & 0.9 & 1.25 & 121 & Random & --- & --- & 41.1 & 0 & --- & --- \\
+1.25 & 0.7 & 1.25 & 169 & Star & 46.0 & 0 & --- & --- & --- & --- \\
+\hline
+\end{longtable}
+\noindent In the second step results table it is obvious that the algorithms with the Star topology won't make it past this step, since they are ranked in the last positions for all the classes, while the algorithms with the Random and Torus topologies are still competitive. The reasoning done previously still applies to the second step results. In order to statistically confirm these observations, the Friedman and Nemenyi tests are performed again, and the critical difference diagrams are plotted in figure \ref{fig:cd2}.
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{\textwidth}
+        \centering
+        \caption{Class 1}
+        \includegraphics[width=0.66\textwidth]{imgs/pso/step2/1_critical_difference.png}
+    \end{subfigure}
+    \begin{subfigure}[b]{\textwidth}
+        \centering
+        \caption{Class 2}
+        \includegraphics[width=0.66\textwidth]{imgs/pso/step2/2_critical_difference.png}
+    \end{subfigure}
+    \begin{subfigure}[b]{\textwidth}
+        \centering
+        \caption{Class 3}
+        \includegraphics[width=0.66\textwidth]{imgs/pso/step2/3_critical_difference.png}
+    \end{subfigure}
+    \caption{Critical Difference diagrams for PSO algorithms}
+    \label{fig:cd2}
+\end{figure}
+\noindent Indeed the Star topology is statistically significantly worse than the others, especially for the second and third classes, while the Random topology seems slightly better than the Torus topology, especially in the first class. The population now plays a little role in the performance of the algorithms. 
+\subsection{Second filtering}
+The remaining algorithms are tested once more with now $60$ seeds for $6$ problems for each class, the results are reported with the same format as before in table \ref{tab:results_step3}, and the critical difference diagrams are plotted in figure \ref{fig:cd3}.
+\begin{longtable}{||ccccc||cc||cc||cc||}
+\caption{Third step results for the PSO algorithms}
+\label{tab:results_step3} \\
+\hline
+\multicolumn{5}{||c||}{Algorithm parameters}  & \multicolumn{2}{c||}{Class 1} & \multicolumn{2}{c||}{Class 2} & \multicolumn{2}{c||}{Class 3} \\
+\hline
+\hline
+gw & inertia & lw & pop. & topology & Rank & $10^{-8}$ & Rank & $10^{-8}$ & Rank & $10^{-8}$ \\
+\hline
+\textbf{1.25} & \textbf{0.7} & \textbf{0.75} & \textbf{169} & \textbf{Random} & \textbf{9.0} & \textbf{181} & \textbf{7.4} & \textbf{60} & \textbf{6.4} & \textbf{54} \\
+1.25 & 0.7 & 0.75 & 121 & Random & \textbf{9.2} & 180 & \textbf{8.5} & 60 & \textbf{7.1} & 56 \\
+1.25 & 0.7 & 1.25 & 169 & Random & \textbf{9.9} & 180 & \textbf{8.9} & 60 & \textbf{6.8} & 59 \\
+1.25 & 0.7 & 1.25 & 121 & Random & \textbf{10.2} & 181 & \textbf{9.7} & 60 & \textbf{7.6} & 48 \\
+1.25 & 0.7 & 0.75 & 169 & Random & \textbf{9.0} & 181 & 7.4 & 60 & --- & --- \\
+1.25 & 0.7 & 0.75 & 121 & Random & \textbf{9.2} & 180 & 8.5 & 60 & --- & --- \\
+0.75 & 0.9 & 0.75 & 169 & Torus & --- & --- & 12.3 & 0 & 9.8 & 48 \\
+0.75 & 0.7 & 1.25 & 169 & Random & \textbf{8.8} & 180 & 13.6 & 60 & --- & --- \\
+0.75 & 0.9 & 0.75 & 121 & Torus & --- & --- & 12.7 & 0 & 10.5 & 59 \\
+0.75 & 0.7 & 0.75 & 169 & Random & \textbf{9.4} & 180 & 17.5 & 42 & --- & --- \\
+0.75 & 0.7 & 1.25 & 121 & Random & \textbf{10.0} & 180 & 16.9 & 24 & --- & --- \\
+1.25 & 0.9 & 0.75 & 121 & Torus & --- & --- & 15.8 & 0 & 12.0 & 0 \\
+1.25 & 0.9 & 0.75 & 169 & Torus & --- & --- & 16.3 & 0 & 12.8 & 0 \\
+0.75 & 0.9 & 1.25 & 121 & Torus & --- & --- & 17.5 & 0 & 13.5 & 0 \\
+0.75 & 0.9 & 1.25 & 169 & Torus & --- & --- & 18.3 & 0 & 13.2 & 0 \\
+0.75 & 0.7 & 0.75 & 121 & Random & \textbf{10.7} & 180 & --- & --- & --- & --- \\
+0.75 & 0.9 & 0.75 & 169 & Random & --- & --- & --- & --- & 11.8 & 0 \\
+0.75 & 0.9 & 0.75 & 121 & Random & --- & --- & --- & --- & 12.7 & 10 \\
+1.25 & 0.7 & 0.75 & 121 & Torus & 13.7 & 180 & --- & --- & --- & --- \\
+1.25 & 0.7 & 1.25 & 121 & Torus & 14.1 & 180 & --- & --- & --- & --- \\
+1.25 & 0.9 & 0.75 & 121 & Torus & --- & --- & 15.8 & 0 & --- & --- \\
+1.25 & 0.9 & 0.75 & 169 & Torus & --- & --- & 16.3 & 0 & --- & --- \\\hline
+\end{longtable}
+\noindent One particular observation is that now the algorithms hit more thresholds than before, it is now seldom to have algorithms that do not reach the threshold at all. This may be due to the fact that the algorithms are tested on easier problems.
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{\textwidth}
+        \centering
+        \caption{Class 1}
+        \includegraphics[width=0.66\textwidth]{imgs/pso/step3/1_critical_difference.png}
+    \end{subfigure}
+    \begin{subfigure}[b]{\textwidth}
+        \centering
+        \caption{Class 2}
+        \includegraphics[width=0.66\textwidth]{imgs/pso/step3/2_critical_difference.png}
+    \end{subfigure}
+    \begin{subfigure}[b]{\textwidth}
+        \centering
+        \caption{Class 3}
+        \includegraphics[width=0.66\textwidth]{imgs/pso/step3/3_critical_difference.png}
+    \end{subfigure}
+    \caption{Critical Difference diagrams for PSO algorithms}
+    \label{fig:cd3}
+\end{figure}
+\noindent From the critical difference diagrams, it can be observed that the algorithms with the Random topology made it to the best performing group for all the classes, while the algorithms with the Torus topology were left behind. Also in this case the linear decay of the inertia does not seem to have an influence on the performance of the algorithms. 
+\\[1em]
+The first algorithm shown in the table is also the first algorithm of each class, since it has the highest rank for all the classes, thus making it the "best algorithm" of the family. Albeit, it is important to note that it is not statistically significantly better than the other algorithms in the same group, making it not possible to declare it as the best algorithm of the family.
+\\[1em]
+The fact that the same algorithm is the best for all the classes means it is robust to the different types of problems. Since the next step supposes to compare the "best" of each class, it will be skipped.
 \subsection{ABC}
 \subsection{PSO vs ABC}
 

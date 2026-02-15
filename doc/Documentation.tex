@@ -298,8 +298,8 @@ The block-based approach promotes coordinated mutations of related variables, po
 The \texttt{Framework} module is responsible for executing and saving the various experiments ran on the different problem instances with the different algorithms and seeds. It allows to execute the experiments in parallel, which results are then saved in a common CSV format, in order to be easily retrieved and analyzed by the other modules.
 \subsubsection{\texttt{AggregateCSV.py}}
 The following module is responsible for aggregating the results obtained from the various processes and saving them into CSV files: one for each problem, one for each problem class, and one for the overall results. Specifically, the files report results per experiment for individual problems, per experiment and problem within each class, and per experiment, problem, and class for the overall summary.
-
 \subsubsection{\texttt{StatComparison.py}}
+This module is responsible for performing the statistical tests on the results obtained from the experiments, in the format saved by the \texttt{AggregateCSV} module. It implements the Friedman test, the Nemenyi post-hoc test, and the Wilcoxon test, which are used for the comparisons of multiple algorithms. 
 \subsection{Parameters combinations}
 All the combinations of parameters of the algorithms are written inside the configuration file \texttt{experiments.py}, which is in turn read by the \texttt{Framework} module to execute the experiments. The various parameters combinations are chosen accordingly to the reasoning explained in the previous sections. They make use of a custom class \texttt{Combine} which allows to easily generate all the combinations of the parameters specified in the configuration file. 
 \subsubsection{PSO}

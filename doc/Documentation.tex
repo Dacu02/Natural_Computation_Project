@@ -242,7 +242,58 @@ The first part of the file contains literals describing:
 \end{itemize}
 Then, the Torus topology is implemented since not available in the library, and finally the PSO algorithm class is implemented through the library, which constructor allows to set the parameters previously mentioned.
 \subsubsection{\texttt{ArtificialBeeColony.py}}
-The Artificial Bee Colony (ABC) algorithm is implemented in this module through the PyABC library \cite{beeoptimal} and the \texttt{Algorithm} abstract class. This library was chosen because it provided a flexible implementation of the ABC algorithm, which exposed the parameters needed for the experiments, and the possibility to implement custom strategies for the employed bees, onlooker bees, and scout bees.
+The Artificial Bee Colony (ABC) algorithm is implemented in this module through the beeoptmal library \cite{beeoptimal} and the \texttt{Algorithm} abstract class. This library was chosen because it provided a flexible implementation of the ABC algorithm, which exposed the parameters needed for the experiments, and the possibility to implement custom strategies for the employed bees, onlooker bees, and scout bees.
+
+The implementation of the ABC algorithm proposed by beeoptimal offers the possibility to customize the mutation strategy of the employed bees, the selection strategy of the onlooker bees: 
+
+The packages offers the possibility to customize the inizialitaion strategy of the employed bees, the mutation strategy of the employed bees, the selection strategy of the onlooker bees, and the strategy to determine when a food source is abandoned by the employed bees. 
+
+The inizialization strategy of the employed bees available in the library are:
+\begin{itemize}
+    \item \textbf{Random Initialization}: the employed bees are initialized randomly in the search space, as described in the previous sections.
+    \item \textbf{Cahotic Initialization}: the employed bees are initialized using a chaotic sequence. \cite{cahotic}
+\end{itemize}
+The mutation strategy of the employed bees available in the library are:
+\begin{itemize}
+    \item \textbf{Standard }: the employed bees generate new solutions by perturbing their current solution, as the standard ABC algorithm does.
+    \item \textbf{Best }: inspired by Differential Evolution, the employed bees generate new solutions by perturbing the current best solution found by the swarm.
+    \item \textbf{Modified }: the employed bees generate new solutions by perturbing their current solution, but the perturbation is multi-dimensional, thourgh a vector of random numbers and mutation rate, that is the probability that each dimension is perturbed.
+    \item \textbf{Directed}: this mutation incorporates information about the direction of the search, for each dimension is added a direction information. For better understandind of this strategy, please refer to the documentation of the library \cite{beeoptimal}.
+\end{itemize}
+For the selection strategy we propose a custom implementation of the mutation strategy, even if they will be no-performing. 
+The selection strategy implemented are based on the idea of the paper \cite{iABC}, and consist of two variants of Intelligent ABC algorithms: \textbf{iABC} and \textbf{iABC-block}.
+\\[1em]
+\textbf{Intelligent Donor Selection:} Both variants use the function \texttt{get\_iabc\_donor()} which implements an adaptive donor selection mechanism based on fitness-relative comparisons:
+\begin{enumerate}
+    \item Calculate the average fitness $\bar{f}$ across the entire population.
+    \item For a bee with current fitness $f_i$:
+    \begin{itemize}
+        \item If $f_i < \bar{f}$ (better than average): select donor from all bees except the current one.
+        \item If $f_i \geq \bar{f}$ (worse than or equal to average): select donor only from bees with strictly better fitness ($f_j < f_i$).
+        \item If no better bees exist: fallback to selecting from all bees except current.
+    \end{itemize}
+\end{enumerate}
+This strategy promotes intelligent exploration by ensuring each bee is matched with appropriately challenging donors based on its relative fitness position.
+\\[1em]
+\textbf{iABC Mutation Strategy:} Extends the Modified ABC approach with intelligent donor selection. It modifies multiple dimensions using:
+\begin{itemize}
+    \item A mutation mask per dimension: $M_i = \mathcal{U}(0,1) < \text{mutation rate}$ 
+    \item A single scaling factor $\phi \in [-\text{sf}, \text{sf}]$ applied to all mutated dimensions.
+    \item Update rule: $x_{\text{new}}[i] = x[i] + \phi \cdot (x[i] - x_{\text{donor}}[i])$ for each dimension where $M_i = \text{True}$.
+\end{itemize}
+\noindent
+\textbf{iABC-block Mutation Strategy:} Introduces block-structured mutations to handle correlated variables:
+\begin{itemize}
+    \item Block size calculation: $b = \max(3, \lfloor 0.2 \cdot D \rfloor)$ where $D$ is problem dimensionality.
+    \item Randomly select $b$ dimensions to form a mutation block.
+    \item Generate independent scaling factors $\phi_i \in [-\text{sf}, \text{sf}]$ for each dimension in the block.
+    \item Apply per-dimension mutation mask: $M_i = \mathcal{U}(0,1) < \text{mr}$.
+    \item Update only selected block dimensions: $x_{\text{new}}[i] = x[i] + \phi_i \cdot (x[i] - x_{\text{donor}}[i])$ where $M_i = \text{True}$.
+\end{itemize}
+The block-based approach promotes coordinated mutations of related variables, potentially improving convergence on separable and partially separable functions.
+\\[1em]
+\textbf{Implementation Details:} These variants are enabled via runtime patching through the \texttt{patch\_iabc()} function, which dynamically extends the base ABC algorithm's \texttt{get\_candidate\_neighbor\_} method without modifying the underlying library code. This allows seamless integration of iABC and iABC-block into the experimental framework alongside standard mutation strategies.
+
 \subsubsection{\texttt{Framework.py}}
 The \texttt{Framework} module is responsible for executing and saving the various experiments ran on the different problem instances with the different algorithms and seeds. It allows to execute the experiments in parallel, which results are then saved in a common CSV format, in order to be easily retrieved and analyzed by the other modules.
 \subsubsection{\texttt{AggregateCSV.py}}
@@ -282,6 +333,34 @@ Since there are:
 \end{itemize}
 The total number of combinations of parameters for the PSO algorithm is $2\cdot3\cdot2\cdot2\cdot2\cdot2\cdot1=96$, meaning there are $96$ different algorithms to be compared for the PSO family.
 \subsubsection{ABC}
+The parameters combinations of the ABC algorithm are as follows:
+\begin{lstlisting}
+[{
+    'algorithm': ArtificialBeeColony,
+    'args': {
+        'population': 100, 
+        'max_scouts': Combine([5, 10,20]),
+        'limit': Combine([2000, 2500, 3000]),
+        'selection_strategy':  'Tournament' 
+        'mutation_strategy': Combine(['StandardABC', 'ModifiedABC', 'DirectedABC','iABC']),
+        'initialization_strategy': 'random',
+        'tournament_size': Combine([3, 5, 7])
+    },
+    'name': 'ABC',
+}]
+\end{lstlisting}
+there are:
+\begin{itemize}
+    \item One population size
+    \item Three values for the maximum number of scouts
+    \item Three values for the limit
+    \item One selection strategy (the custom tournament selection strategy)
+    \item Four mutation strategies
+    \item One initialization strategy (the random initialization strategy)
+    \item Three values for the tournament size of the selection strategy
+\end{itemize}
+The total number of combinations of parameters for the ABC algorithm is $1\cdot3\cdot3\cdot1\cdot4\cdot1\cdot3=108$, meaning there are $108$ different algorithms to be compared for the ABC family.
+
 \subsection{Planning}
 Both the PSO and ABC algorithms undergo the same procedure, since they have almost the same amount of parameters combinations to be tested. The procedure is divided into five main steps. The first step consists in testing all the algorithms on some problems of each class in order to split the algorithms into three subsets: one for each class. The second and third steps consist in filtering, and are executed separately for each class. The continuous filtering helps to obtain more robust results without increasing the number of algorithms to be compared and experiments to be executed.
 \\[1em]
@@ -547,6 +626,129 @@ The first algorithm shown in the table is also the first algorithm of each class
 \\[1em]
 The fact that the same algorithm is the best for all the classes means it is robust to the different types of problems. Since the next step supposes to compare the "best" of each class, it will be skipped.
 \subsection{ABC}
+In the following subsection, the results obtained from the experiments on the ABC algorithms are discussed, along with the influence of the different parameters on the performance of the algorithms in the different classes of problems. The results are discussed separately for each step and each class.
+\subsubsection{All algorithms on each class}
+Each of the $108$ algorithms is tested on three problems for each class, thus obtaining $108$ mean ranks for each class. In the following tables the mean ranks of the algorithms are reported, for each class.
+\begin{longtable}{||ccccc||cc||cc||cc||}
+\caption{Risultati aggregati}
+\label{tab:results} \\
+\hline
+    \multicolumn{5}{||c||}{Algorithm parameters}  & \multicolumn{2}{c||}{Class 1} & \multicolumn{2}{c||}{Class 2} & \multicolumn{2}{c||}{Class 3} \\
+    \hline
+    \hline
+    \texttt{init} & \texttt{limit} & \texttt{max\_scouts} & \texttt{mut} &  \texttt{tour\_size} & Rank & Ts & Rank & Ts & Rank & Ts \\
+    \hline
+random & 2000 & 15 & ModifiedABC & 7 & 25.40 & 0 & 45.50 & 0 & 9.80 & 0 \\
+random & 3000 & 10 & ModifiedABC & 7 & 25.40 & 0 & 45.50 & 0 & 9.80 & 0 \\
+random & 2000 & 20 & ModifiedABC & 7 & 25.40 & 0 & 45.50 & 0 & 9.80 & 0 \\
+random & 3000 & 15 & ModifiedABC & 7 & 25.40 & 0 & 45.50 & 0 & 9.80 & 0 \\
+random & 2500 & 20 & ModifiedABC & 7 & 25.40 & 0 & 45.50 & 0 & 9.80 & 0 \\
+random & 2000 & 10 & ModifiedABC & 7 & 25.40 & 0 & 45.50 & 0 & 9.80 & 0 \\
+random & 3000 & 20 & ModifiedABC & 7 & 25.40 & 0 & 45.50 & 0 & 9.80 & 0 \\
+random & 2500 & 10 & ModifiedABC & 7 & 25.40 & 0 & 45.50 & 0 & 9.80 & 0 \\
+random & 2500 & 15 & ModifiedABC & 7 & 25.40 & 0 & 45.50 & 0 & 9.80 & 0 \\
+random & 2500 & 20 & ModifiedABC & 5 & 43.10 & 0 & 55.70 & 0 & 12.20 & 0 \\
+random & 2500 & 10 & ModifiedABC & 5 & 43.10 & 0 & 55.70 & 0 & 12.20 & 0 \\
+random & 2000 & 10 & ModifiedABC & 5 & 43.10 & 0 & 55.70 & 0 & 12.20 & 0 \\
+random & 3000 & 15 & ModifiedABC & 5 & 43.10 & 0 & 55.70 & 0 & 12.20 & 0 \\
+random & 2000 & 15 & ModifiedABC & 5 & 43.10 & 0 & 55.70 & 0 & 12.20 & 0 \\
+random & 2000 & 20 & ModifiedABC & 5 & 43.10 & 0 & 55.70 & 0 & 12.20 & 0 \\
+random & 3000 & 10 & ModifiedABC & 5 & 43.10 & 0 & 55.70 & 0 & 12.20 & 0 \\
+random & 3000 & 20 & ModifiedABC & 5 & 43.10 & 0 & 55.70 & 0 & 12.20 & 0 \\
+random & 2500 & 15 & ModifiedABC & 5 & 43.10 & 0 & 55.70 & 0 & 12.20 & 0 \\
+random & 2000 & 10 & DirectedABC & 5 & 20.00 & 0 & 33.50 & 0 & 60.50 & 0 \\
+random & 2000 & 15 & DirectedABC & 5 & 20.00 & 0 & 33.50 & 0 & 60.50 & 0 \\
+random & 2000 & 20 & DirectedABC & 5 & 20.00 & 0 & 33.50 & 0 & 60.50 & 0 \\
+random & 3000 & 15 & DirectedABC & 5 & 20.00 & 0 & 33.50 & 0 & 60.50 & 0 \\
+random & 2500 & 15 & DirectedABC & 5 & 20.00 & 0 & 33.50 & 0 & 60.50 & 0 \\
+random & 2500 & 10 & DirectedABC & 5 & 20.00 & 0 & 33.50 & 0 & 60.50 & 0 \\
+random & 2500 & 20 & DirectedABC & 5 & 20.00 & 0 & 33.50 & 0 & 60.50 & 0 \\
+random & 3000 & 10 & DirectedABC & 5 & 20.00 & 0 & 33.50 & 0 & 60.50 & 0 \\
+random & 3000 & 20 & DirectedABC & 5 & 20.00 & 0 & 33.50 & 0 & 60.50 & 0 \\
+random & 2000 & 10 & DirectedABC & 7 & 23.60 & 0 & 35.00 & 0 & 59.90 & 0 \\
+random & 3000 & 10 & DirectedABC & 7 & 23.60 & 0 & 35.00 & 0 & 59.90 & 0 \\
+random & 2000 & 15 & DirectedABC & 7 & 23.60 & 0 & 35.00 & 0 & 59.90 & 0 \\
+random & 2500 & 20 & DirectedABC & 7 & 23.60 & 0 & 35.00 & 0 & 59.90 & 0 \\
+random & 3000 & 15 & DirectedABC & 7 & 23.60 & 0 & 35.00 & 0 & 59.90 & 0 \\
+random & 2000 & 20 & DirectedABC & 7 & 23.60 & 0 & 35.00 & 0 & 59.90 & 0 \\
+random & 3000 & 20 & DirectedABC & 7 & 23.60 & 0 & 35.00 & 0 & 59.90 & 0 \\
+random & 2500 & 10 & DirectedABC & 7 & 23.60 & 0 & 35.00 & 0 & 59.90 & 0 \\
+random & 2500 & 15 & DirectedABC & 7 & 23.60 & 0 & 35.00 & 0 & 59.90 & 0 \\
+random & 2000 & 10 & DirectedABC & 3 & 37.40 & 0 & 46.10 & 0 & 63.20 & 0 \\
+random & 3000 & 20 & DirectedABC & 3 & 37.40 & 0 & 46.10 & 0 & 63.20 & 0 \\
+random & 2000 & 20 & DirectedABC & 3 & 37.40 & 0 & 46.10 & 0 & 63.20 & 0 \\
+random & 3000 & 15 & DirectedABC & 3 & 37.40 & 0 & 46.10 & 0 & 63.20 & 0 \\
+random & 2500 & 10 & DirectedABC & 3 & 37.40 & 0 & 46.10 & 0 & 63.20 & 0 \\
+random & 2500 & 20 & DirectedABC & 3 & 37.40 & 0 & 46.10 & 0 & 63.20 & 0 \\
+random & 3000 & 10 & DirectedABC & 3 & 37.40 & 0 & 46.10 & 0 & 63.20 & 0 \\
+random & 2000 & 15 & DirectedABC & 3 & 37.40 & 0 & 46.10 & 0 & 63.20 & 0 \\
+random & 2500 & 15 & DirectedABC & 3 & 37.40 & 0 & 46.10 & 0 & 63.20 & 0 \\
+random & 3000 & 20 & StandardABC & 7 & 46.70 & 0 & 40.40 & 0 & 65.30 & 0 \\
+random & 2000 & 10 & StandardABC & 7 & 46.70 & 0 & 40.40 & 0 & 65.30 & 0 \\
+random & 2500 & 15 & StandardABC & 7 & 46.70 & 0 & 40.40 & 0 & 65.30 & 0 \\
+random & 2500 & 10 & StandardABC & 7 & 46.70 & 0 & 40.40 & 0 & 65.30 & 0 \\
+random & 2500 & 20 & StandardABC & 7 & 46.70 & 0 & 40.40 & 0 & 65.30 & 0 \\
+random & 3000 & 15 & StandardABC & 7 & 46.70 & 0 & 40.40 & 0 & 65.30 & 0 \\
+random & 2000 & 20 & StandardABC & 7 & 46.70 & 0 & 40.40 & 0 & 65.30 & 0 \\
+random & 3000 & 10 & StandardABC & 7 & 46.70 & 0 & 40.40 & 0 & 65.30 & 0 \\
+random & 2000 & 15 & StandardABC & 7 & 46.70 & 0 & 40.40 & 0 & 65.30 & 0 \\
+random & 2500 & 20 & StandardABC & 5 & 45.50 & 0 & 42.20 & 0 & 65.30 & 0 \\
+random & 3000 & 15 & StandardABC & 5 & 45.50 & 0 & 42.20 & 0 & 65.30 & 0 \\
+random & 2000 & 15 & StandardABC & 5 & 45.50 & 0 & 42.20 & 0 & 65.30 & 0 \\
+random & 2500 & 10 & StandardABC & 5 & 45.50 & 0 & 42.20 & 0 & 65.30 & 0 \\
+random & 2500 & 15 & StandardABC & 5 & 45.50 & 0 & 42.20 & 0 & 65.30 & 0 \\
+random & 2000 & 10 & StandardABC & 5 & 45.50 & 0 & 42.20 & 0 & 65.30 & 0 \\
+random & 3000 & 20 & StandardABC & 5 & 45.50 & 0 & 42.20 & 0 & 65.30 & 0 \\
+random & 3000 & 10 & StandardABC & 5 & 45.50 & 0 & 42.20 & 0 & 65.30 & 0 \\
+random & 2000 & 20 & StandardABC & 5 & 45.50 & 0 & 42.20 & 0 & 65.30 & 0 \\
+random & 2500 & 10 & ModifiedABC & 3 & 70.70 & 0 & 62.60 & 0 & 20.00 & 0 \\
+random & 3000 & 10 & ModifiedABC & 3 & 70.70 & 0 & 62.60 & 0 & 20.00 & 0 \\
+random & 2000 & 15 & ModifiedABC & 3 & 70.70 & 0 & 62.60 & 0 & 20.00 & 0 \\
+random & 2000 & 10 & ModifiedABC & 3 & 70.70 & 0 & 62.60 & 0 & 20.00 & 0 \\
+random & 2000 & 20 & ModifiedABC & 3 & 70.70 & 0 & 62.60 & 0 & 20.00 & 0 \\
+random & 3000 & 15 & ModifiedABC & 3 & 70.70 & 0 & 62.60 & 0 & 20.00 & 0 \\
+random & 3000 & 20 & ModifiedABC & 3 & 70.70 & 0 & 62.60 & 0 & 20.00 & 0 \\
+random & 2500 & 15 & ModifiedABC & 3 & 70.70 & 0 & 62.60 & 0 & 20.00 & 0 \\
+random & 2500 & 20 & ModifiedABC & 3 & 70.70 & 0 & 62.60 & 0 & 20.00 & 0 \\
+random & 2500 & 20 & StandardABC & 3 & 56.60 & 0 & 49.70 & 0 & 71.90 & 0 \\
+random & 2500 & 10 & StandardABC & 3 & 56.60 & 0 & 49.70 & 0 & 71.90 & 0 \\
+random & 2000 & 10 & StandardABC & 3 & 56.60 & 0 & 49.70 & 0 & 71.90 & 0 \\
+random & 3000 & 20 & StandardABC & 3 & 56.60 & 0 & 49.70 & 0 & 71.90 & 0 \\
+random & 2500 & 15 & StandardABC & 3 & 56.60 & 0 & 49.70 & 0 & 71.90 & 0 \\
+random & 2000 & 15 & StandardABC & 3 & 56.60 & 0 & 49.70 & 0 & 71.90 & 0 \\
+random & 3000 & 15 & StandardABC & 3 & 56.60 & 0 & 49.70 & 0 & 71.90 & 0 \\
+random & 2000 & 20 & StandardABC & 3 & 56.60 & 0 & 49.70 & 0 & 71.90 & 0 \\
+random & 3000 & 10 & StandardABC & 3 & 56.60 & 0 & 49.70 & 0 & 71.90 & 0 \\
+random & 3000 & 10 & iABC & 5 & 91.40 & 0 & 75.20 & 0 & 74.30 & 0 \\
+random & 2000 & 15 & iABC & 5 & 91.40 & 0 & 75.20 & 0 & 74.30 & 0 \\
+random & 2000 & 20 & iABC & 5 & 91.40 & 0 & 75.20 & 0 & 74.30 & 0 \\
+random & 3000 & 15 & iABC & 5 & 91.40 & 0 & 75.20 & 0 & 74.30 & 0 \\
+random & 2500 & 10 & iABC & 5 & 91.40 & 0 & 75.20 & 0 & 74.30 & 0 \\
+random & 2000 & 10 & iABC & 5 & 91.40 & 0 & 75.20 & 0 & 74.30 & 0 \\
+random & 2500 & 15 & iABC & 5 & 91.40 & 0 & 75.20 & 0 & 74.30 & 0 \\
+random & 3000 & 20 & iABC & 5 & 91.40 & 0 & 75.20 & 0 & 74.30 & 0 \\
+random & 2500 & 20 & iABC & 5 & 91.40 & 0 & 75.20 & 0 & 74.30 & 0 \\
+random & 3000 & 20 & iABC & 7 & 94.70 & 0 & 80.00 & 0 & 81.80 & 0 \\
+random & 2000 & 20 & iABC & 7 & 94.70 & 0 & 80.00 & 0 & 81.80 & 0 \\
+random & 2500 & 15 & iABC & 7 & 94.70 & 0 & 80.00 & 0 & 81.80 & 0 \\
+random & 2000 & 10 & iABC & 7 & 94.70 & 0 & 80.00 & 0 & 81.80 & 0 \\
+random & 2000 & 15 & iABC & 7 & 94.70 & 0 & 80.00 & 0 & 81.80 & 0 \\
+random & 3000 & 15 & iABC & 7 & 94.70 & 0 & 80.00 & 0 & 81.80 & 0 \\
+random & 3000 & 10 & iABC & 7 & 94.70 & 0 & 80.00 & 0 & 81.80 & 0 \\
+random & 2500 & 20 & iABC & 7 & 94.70 & 0 & 80.00 & 0 & 81.80 & 0 \\
+random & 2500 & 10 & iABC & 7 & 94.70 & 0 & 80.00 & 0 & 81.80 & 0 \\
+random & 3000 & 20 & iABC & 3 & 98.90 & 0 & 88.10 & 0 & 69.80 & 0 \\
+random & 2000 & 10 & iABC & 3 & 98.90 & 0 & 88.10 & 0 & 69.80 & 0 \\
+random & 2500 & 20 & iABC & 3 & 98.90 & 0 & 88.10 & 0 & 69.80 & 0 \\
+random & 2500 & 10 & iABC & 3 & 98.90 & 0 & 88.10 & 0 & 69.80 & 0 \\
+random & 2500 & 15 & iABC & 3 & 98.90 & 0 & 88.10 & 0 & 69.80 & 0 \\
+random & 3000 & 10 & iABC & 3 & 98.90 & 0 & 88.10 & 0 & 69.80 & 0 \\
+random & 2000 & 20 & iABC & 3 & 98.90 & 0 & 88.10 & 0 & 69.80 & 0 \\
+random & 2000 & 15 & iABC & 3 & 98.90 & 0 & 88.10 & 0 & 69.80 & 0 \\
+random & 3000 & 15 & iABC & 3 & 98.90 & 0 & 88.10 & 0 & 69.80 & 0 \\
+\hline
+\end{longtable}
+
 \subsection{PSO vs ABC}
 
 \section{Conclusion}

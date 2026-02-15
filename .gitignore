@@ -199,4 +199,4 @@ doc/Documentation-blx.bib
 doc/Documentation.bbl
 *.csv
 *.txt
-*.png
+*results*/*.png

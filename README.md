@@ -19,7 +19,7 @@ This file contains the settings of the current run, in the version given by the 
 + A method `expand_algorithms` that uses the `Combine` class to replicate the algorithms
 + An utility method `load_from_csv` that takes as input the ranks file obtained from the `StatComparison.py` module, in order to select at most $n$ algorithms inside a specific critical difference
 
-This file exports the literal `EXPERIMENTS` which contains the algorithm parameters configurations to run. In turn, this variable uses `_list_algorithms`, which is a dictionary of algorithm where the key is the class of problems where to run the experiments. The $-1$ key is used when those algorithms must be ran across multiple classes.
+This file exports the literal `EXPERIMENTS` which contains the algorithm parameters configurations to run. In turn, this variable uses `_list_algorithms`, which is a dictionary of algorithm where the key is the class of problems where to run the experiments. The $-1$ key is used when those algorithms must be run across multiple classes.
 
 ### `AggregateCSV.py`
 This file is used mainly to aggregate the various file returned by the processes ran on the High Performance Cluster. It reorganizes the experiments results data in:

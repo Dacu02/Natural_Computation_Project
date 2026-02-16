@@ -7,6 +7,7 @@
 \usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{geometry}
+\usepackage{multirow}
 \usepackage{float}
 \usepackage{setspace}
 \usepackage{longtable}
@@ -215,12 +216,6 @@ Where $E[W^+]$ and $Var(W^+)$ are the mean and variance of the test
 statistic $W$ under the null hypothesis, which can be calculated as:
 $$E[W^+] = \dfrac{n(n+1)}{4},\quad Var(W^+) = \dfrac{n(n+1)(2n+1)}{24}$$
 The p-value can then be calculated using the standard normal distribution.
-
-
-
-
-
-
 \section{Execution}
 In the following section, the execution procedure is thoroughly explained, along with the machines used for the experiments.
 \\[1em]
@@ -342,7 +337,8 @@ The parameters combinations of the ABC algorithm are as follows:
         'max_scouts': Combine([5, 10,20]),
         'limit': Combine([2000, 2500, 3000]),
         'selection_strategy':  'Tournament' 
-        'mutation_strategy': Combine(['StandardABC', 'ModifiedABC', 'DirectedABC','iABC']),
+        'mutation_strategy': Combine(['StandardABC', 'ModifiedABC', 
+            'DirectedABC', 'iABC']),
         'initialization_strategy': 'random',
         'tournament_size': Combine([3, 5, 7])
     },
@@ -382,11 +378,15 @@ The very same procedure of the first filtering is performed again, but with $60$
 In this case, the best algorithm is selected not only on the basis of the statistical tests, but also by considering the mean ranks obtained from the Friedman ranking. This is because statistical tests alone are not able to identify a single best algorithm without further increasing the number of experiments to an extent that cannot be determined a priori, as it depends on the observed differences in mean ranks among the algorithms.
 \\[1em]
 For this reason, the best algorithm is chosen as the one with the lowest mean rank, among those that are statistically significantly better than the others. It will be improperly referred as the "best algorithm" of the class, even though it is not statistically proven. The statistical tests only allow to determine the best subset of algorithms of that class (or the best algorithm if the subset contains only one algorithm).
-\subsubsection{Best algorithms on all classes}
-After the second filtering, the best algorithm of each class is selected, and then a final comparison is performed between these three algorithms on all the problems of all the classes, with $100$ seeds for each problem. This time, the mean ranks are not averaged by class, but they are calculated on the overall results obtained from all the problems and seeds, in order to obtain an estimation of the overall performance: $$\bar r_j=\dfrac1{n\cdot m\cdot c}\sum_{\substack{i=1,\ldots,n\\k=1,\ldots,m\\c=1,\ldots,C}}r_{ijkc}$$
-Where $C=3$ is the number of classes, and $n$, $m$, and $r_{ijkc}$ are defined as before. The Friedman test is performed again to determine whether there are statistically significant differences among the three algorithms, and if the null hypothesis is rejected, the Nemenyi post-hoc test is performed to determine which pairs of algorithms differ significantly in their performance by a critical difference. Otherwise, if the null hypothesis is not rejected, it can be concluded that there are no statistically significant differences among the three algorithms.
-\\[1em] In either case, the algorithm is chosen as the same way as before, which will be improperly referred as the "best algorithm" of the family.
+\subsubsection{Best algorithms on each class}
+The retrieval of the best algorithm for each class requires to perform a really high number of experiments, not known a priori, since it depends on the observed differences in mean ranks among the algorithms. In an extreme case, it may happen that two algorithms may be equal and thus make impossible to determine a single best algorithm. For this reason, the procedure is not based on statistical tests, but it is a free selection from the set of algorithms that are statistically significantly better than the others, usually taking into account the mean ranks obtained from the previous step.
+\\[1em]
+Since the problems are very different from each other, and the algorithms may perform differently on different problems, it is not possible to determine a single best algorithm for all the classes. For this reason, the best algorithm of each class is selected, thus three algorithms are selected for the final comparison.
+% After the second filtering, the best algorithm of each class is selected, and then a final comparison is performed between these three algorithms on all the problems of all the classes, with $100$ seeds for each problem. This time, the mean ranks are not averaged by class, but they are calculated on the overall results obtained from all the problems and seeds, in order to obtain an estimation of the overall performance: $$\bar r_j=\dfrac1{n\cdot m\cdot c}\sum_{\substack{i=1,\ldots,n\\k=1,\ldots,m\\c=1,\ldots,C}}r_{ijkc}$$
+% Where $C=3$ is the number of classes, and $n$, $m$, and $r_{ijkc}$ are defined as before. The Friedman test is performed again to determine whether there are statistically significant differences among the three algorithms, and if the null hypothesis is rejected, the Nemenyi post-hoc test is performed to determine which pairs of algorithms differ significantly in their performance by a critical difference. Otherwise, if the null hypothesis is not rejected, it can be concluded that there are no statistically significant differences among the three algorithms.
+% \\[1em] In either case, the algorithm is chosen as the same way as before, which will be improperly referred as the "best algorithm" of the family.
 \subsubsection{Final comparison}
+In the final comparison a couple of algorithms are compared: the best algorithm of each family for that specific class. Since there are only two algorithms, the Friedman test is not applicable, and the Wilcoxon test is performed instead, in order to determine whether there are statistically significant differences between the two algorithms on that class of problems. In this case, in order to obtain more information about the performance of the two algorithms, the comparison is performed on each problem separately. Also, various statistics are calculated for each problem, such as the mean, the median and the standard deviation of the error from the optimal solution, in order to have a more complete picture of the performance of the two algorithms on each problem.
 \section{Results discussion}
 \subsection{PSO}
 In the following subsection, the results obtained from the experiments on the PSO algorithms are discussed, along with the influence of the different parameters on the performance of the algorithms in the different classes of problems. The results are discussed separately for each step and each class.
@@ -457,7 +457,7 @@ What emerges from the results is the poor performance of the Star topology, sinc
 \\[1em]
 Regarding the other parameters, the population size does not seem to have a clear influence, neither does the local weight. Meanwhile, the inertia and global weights seem to be more influential, but they need further investigation. 
 \\[1em]
-In order to have a statistical confirmation of these observations, the Friedman test is performed on the results of each class, and the Nemenyi post-hoc test is performed if the null hypothesis is rejected. Since the Friedman rejects the null hypothesis for all the classes, the Nemenyi post-hoc test is performed, and the algorithm are plotted in the critical difference diagram in figure \ref{fig:cd1}.
+In order to have a statistical confirmation of these observations, the Friedman test is performed on the results of each class, and the Nemenyi post-hoc test is performed if the null hypothesis is rejected. Since the Friedman rejects the null hypothesis for all the classes with a $p$-value less than 0.025, the Nemenyi post-hoc test is performed, and the algorithm are plotted in the critical difference diagram in figure \ref{fig:cd1}.
 \begin{figure}[H]
     \centering
     \begin{subfigure}[b]{\textwidth}
@@ -565,7 +565,7 @@ gw & inertia & lw & pop. & topology & Rank & $10^{-8}$ & Rank & $10^{-8}$ & Rank
     \label{fig:cd2}
 \end{figure}
 \noindent Indeed the Star topology is statistically significantly worse than the others, especially for the second and third classes, while the Random topology seems slightly better than the Torus topology, especially in the first class. The population now plays a little role in the performance of the algorithms. 
-\subsection{Second filtering}
+\subsubsection{Second filtering}
 The remaining algorithms are tested once more with now $60$ seeds for $6$ problems for each class, the results are reported with the same format as before in table \ref{tab:results_step3}, and the critical difference diagrams are plotted in figure \ref{fig:cd3}.
 \begin{longtable}{||ccccc||cc||cc||cc||}
 \caption{Third step results for the PSO algorithms}
@@ -749,8 +749,157 @@ random & 3000 & 15 & iABC & 3 & 98.90 & 0 & 88.10 & 0 & 69.80 & 0 \\
 \hline
 \end{longtable}
 
-\subsection{PSO vs ABC}
+\subsection{Final Comparison}
+Now that the best algorithms of each class and family are identified, a more detailed comparison can be made between them. In the next subsections the best algorithms of each family are compared with each other, discussing the differences in their performance and the influence of their parameters on the different problems.
+\subsubsection{First class}
+The problems of the first class where the algorithms are tested are the 7th and the 8th. In the following table \ref{tab:best_algorithms_class1} the results for each family are reported.
+\begin{table}[h]
+\centering
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{|c|c||c|ccccc|}
+\hline
+\multicolumn{2}{|c||}{C1} & \textbf{Algorithm} & \textbf{MeanError} & \textbf{MedianError} & \textbf{StdError} & \textbf{MeanSE} & \textbf{Thresholds} \\
+\hline
 
+\multirow{4}{*}{\rotatebox{90}{\textbf{Problems}}}
+
+& \multirow{2}{*}{7} 
+& ABC & $8.93\times 10^{-6}$ & $1.52\times 10^{-5}$ & $8.93\times 10^{-6}$ & $8.93\times 10^{-7}$ & 0 \\
+
+& 
+& PSO & $1.14\times 10^{-13}$ & $1.14\times 10^{-13}$ & 0.0 & 0.0 & 100 \\
+
+\cline{2-8}
+
+& \multirow{2}{*}{8} 
+& ABC & 0.1765 & 0.1779 & 0.1817 & 0.0018 & 0 \\
+
+& 
+& PSO & 0.0382 & 0.0 & 0.1364 & 0.0136 & 79 \\
+
+\hline
+\end{tabular}
+\caption{Performance comparison by problem}
+\label{tab:best_algorithms_class1}
+\end{table}
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{imgs/plot/convergence_summary_comparison7.png}
+        \caption{Convergence plot on problem 7}
+        \label{fig:p7_convergence}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{imgs/plot/convergence_summary_comparison8.png}
+        \caption{Convergence plot on problem 8}
+        \label{fig:p8_convergence}
+    \end{subfigure}
+    \caption{Convergence comparison on class 1 problems}
+    \label{fig:class1_comparison}
+\end{figure}
+\noindent From the table and the plots \ref{fig:class1_comparison} it can be observed that the PSO algorithm is much better than the ABC algorithm on the first class of problems: it reaches all the thresholds in the first problems, and 79 out of 100 in the second problem. The ABC algorithm does not reach any threshold in both problems, and it has a much higher mean and variance of the error. The convergence plots also show that the PSO algorithm converges much faster than the ABC algorithm.
+\\[1em]
+Although, it must be noted that this does not come unexpected. The parameters of the PSO is more explorative than the ABC algorithm, and thus it benefits from the problems structure.
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{imgs/Figures/f7.jpg}
+        \caption{Problem 7 shape on the first two dimensions}
+        \label{fig:problem7}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{imgs/Figures/f8.jpg}
+        \caption{Problem 8 shape on the first two dimensions}
+        \label{fig:problem8}
+    \end{subfigure}
+    \caption{Class 1 problems shapes}
+    \label{fig:problem78}
+\end{figure}
+\noindent Indeed from the figures in \ref{fig:problem78} it can be observed that the problems of the first class have a structure exploitable by the PSO algorithm. On the other hand, the ABC algorithm will slowly find better solutions, since the bees have to first randomly find a good solution. Once a good solution is found, the bees will randomly explore around it, thus slowly improving the solution. The PSO algorithm particles are instead able to quickly exploit the problem thanks to the solutions found by the neighbors, thus quickly converging to the optimal solution.
+\\[1em]
+The Wilcoxon test confirms that the PSO algorithm is statistically significantly better than the ABC algorithm on the first class of problems, with $p$-values $3.956\times 10^{-18}$ and $3.24\times 10^{-13}$ for the first and the second problem respectively. Of course, the first $p$-value is far lower than the second one, this is expected due to their different mean errors on the two problems.
+\subsubsection{Second class}
+The second class problems on which ABC and PSO are compared are the 15th and the 16th. The results are reported in table \ref{tab:best_algorithms_class2}, and the convergence plots are shown in figure \ref{fig:class2_comparison}.
+\begin{table}[h]
+\centering
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{|c|c||c|ccccc|}
+\hline
+\multicolumn{2}{|c||}{C2} & \textbf{Algorithm} & \textbf{MeanError} & \textbf{MedianError} & \textbf{StdError} & \textbf{MeanSE} & \textbf{Thresholds} \\
+\hline
+
+\multirow{4}{*}{\rotatebox{90}{\textbf{Problems}}}
+
+& \multirow{2}{*}{15} 
+& ABC & $4.883\times10^8$ & $4.738\times10^8$ & $1.672\times10^8$ & $1.672\times10^7$ & $0$ \\
+
+& 
+& PSO & $9.894\times10^5$ & $3.086\times10^5$ & $1.747\times10^6$ & $1.747\times10^5$ & $0$ \\
+
+\cline{2-8}
+
+& \multirow{2}{*}{16} 
+& ABC & $1.66$ & $0.14$ & $3.7$ & $0.37$ & $0$ \\
+
+& 
+& PSO & $22.33$ & $10.5$ & $24$ & $2.4$ & $3$ \\
+
+\hline
+\end{tabular}
+\caption{Performance comparison by problem}
+\label{tab:best_algorithms_class2}
+\end{table}
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{imgs/plot/convergence_summary_comparison15.png}
+        \caption{Convergence plot on problem 15}
+        \label{fig:p15_convergence}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{imgs/plot/convergence_summary_comparison16.png}
+        \caption{Convergence plot on problem 16}
+        \label{fig:p16_convergence}
+    \end{subfigure}
+    \caption{Convergence comparison on class 2 problems}
+    \label{fig:class2_comparison}
+\end{figure}
+\noindent In this case the competition is more balanced. In the first problem, the PSO algorithm has a much lower mean error than the ABC algorithm, although they both do not reach any threshold. Compared to the previous class, the PSO algorithm is not robust: the standard deviation is even higher than the mean, thus making it very random. The ABC algorithm is instead more robust, with a lower standard deviation than the mean, although it is still very high. For this reason, the PSO algorithms performs better than the ABC algorithm in terms of mean error, but is less robust.
+\\[1em]
+\noindent In the second problem, the ABC algorithm finally takes the upper hand, with a much lower mean error than the PSO algorithm. Surprisingly the PSO algorithm reaches 3 thresholds, while the ABC algorithm does not reach any threshold. This is explained by the standard deviation and the median: the first one is high, even a bit more than the mean error. Meanwhile, the median is almost half the mean error. This means that the results are really sparse, with some runs that find very good solutions, while others that find very bad solutions. The ABC algorithm is even less robust, with a much higher standard deviation than the mean error, thus making it even more random. But comparing it with the PSO algorithm, it performs better, even though it does not reach any threshold.
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{imgs/Figures/f15.jpg}
+        \caption{Problem 15 shape on the first two dimensions}
+        \label{fig:problem15}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{imgs/Figures/f16.jpg}
+        \caption{Problem 16 shape on the first two dimensions}
+        \label{fig:problem16}
+    \end{subfigure}
+    \caption{Class 2 problems shapes}
+    \label{fig:problem1516}
+\end{figure}
+\noindent From the figures in \ref{fig:problem1516} it can be observed that the problems of the second class are more complex than the ones of the first class. But the first one is still suitable for the PSO algorithm, since it has a structure that can be exploited by the particles. Some particles may fall in one of the steps, but since it is a network structure, they can quickly know where to find better solutions thanks to the neighbors that surpassed the little step where the previous fell. However, this is one of the worst case for the bees, where each step may become a source that has to be completely exploited and abandoned after it reaches the maximum limit before looking for another solution. 
+\\[1em]
+The second problem is the perfect opposite of the first one. It is a very rugged problem, with many local minima, thus making it very hard for the PSO algorithm to find good solutions. The swarm may fall on a local minimum and take time to escape. Also, the inertia plays a crucial role here, if the particles move fastly enough, they may be able to escape the local minima. But the ABC is able to manage this, since the bees leave a solution after a while. 
+\\[1em]
+This is where the ABC algorithm is able to outperform the PSO algorithm, and will become clear in the last class problems. Since now, the variables that made the problem instances were merged with linear relations. But in the last class, they are putted together with many non-linear relations. This makes the problem more rugged and harder for the PSO.
+\subsubsection{Third class}
 \section{Conclusion}
 
 \printbibliography

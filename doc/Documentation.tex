@@ -14,8 +14,8 @@
 \usepackage[style=numeric, backend=bibtex]{biblatex}
 \addbibresource{Documentation.bib}
 \usepackage{xcolor}
-\pagecolor[rgb]{0.05,0.05,0.05}
-\color[rgb]{0.9,0.9,0.9}
+%\pagecolor[rgb]{0.05,0.05,0.05}
+%\color[rgb]{0.9,0.9,0.9}
 
 \geometry{margin=1in}
 \onehalfspacing
@@ -628,126 +628,404 @@ The fact that the same algorithm is the best for all the classes means it is rob
 \subsection{ABC}
 In the following subsection, the results obtained from the experiments on the ABC algorithms are discussed, along with the influence of the different parameters on the performance of the algorithms in the different classes of problems. The results are discussed separately for each step and each class.
 \subsubsection{All algorithms on each class}
-Each of the $108$ algorithms is tested on three problems for each class, thus obtaining $108$ mean ranks for each class. In the following tables the mean ranks of the algorithms are reported, for each class.
-\begin{longtable}{||ccccc||cc||cc||cc||}
+Each of the $108$ algorithms is tested on three problems for each class, thus obtaining $108$ mean ranks for each class. In the following tables the mean ranks of the algorithms are reported, for each class. The inizialization strategy is not reported in tables because its the same for all the algorithms. 
+\begin{longtable}{||cccc||cc||cc||cc||}
 \caption{Risultati aggregati}
 \label{tab:results} \\
 \hline
-    \multicolumn{5}{||c||}{Algorithm parameters}  & \multicolumn{2}{c||}{Class 1} & \multicolumn{2}{c||}{Class 2} & \multicolumn{2}{c||}{Class 3} \\
+    \multicolumn{4}{||c||}{Algorithm parameters}  & \multicolumn{2}{c||}{Class 1} & \multicolumn{2}{c||}{Class 2} & \multicolumn{2}{c||}{Class 3} \\
     \hline
     \hline
-    \texttt{init} & \texttt{limit} & \texttt{max\_scouts} & \texttt{mut} &  \texttt{tour\_size} & Rank & Ts & Rank & Ts & Rank & Ts \\
+    \texttt{limit} & \texttt{max\_scouts} & \texttt{mut} &  \texttt{tour\_size} & Rank & $10^{-8}$ & Rank & $10^{-8}$ & Rank & $10^{-8}$ \\
     \hline
-random & 2000 & 15 & ModifiedABC & 7 & 25.40 & 0 & 45.50 & 0 & 9.80 & 0 \\
-random & 3000 & 10 & ModifiedABC & 7 & 25.40 & 0 & 45.50 & 0 & 9.80 & 0 \\
-random & 2000 & 20 & ModifiedABC & 7 & 25.40 & 0 & 45.50 & 0 & 9.80 & 0 \\
-random & 3000 & 15 & ModifiedABC & 7 & 25.40 & 0 & 45.50 & 0 & 9.80 & 0 \\
-random & 2500 & 20 & ModifiedABC & 7 & 25.40 & 0 & 45.50 & 0 & 9.80 & 0 \\
-random & 2000 & 10 & ModifiedABC & 7 & 25.40 & 0 & 45.50 & 0 & 9.80 & 0 \\
-random & 3000 & 20 & ModifiedABC & 7 & 25.40 & 0 & 45.50 & 0 & 9.80 & 0 \\
-random & 2500 & 10 & ModifiedABC & 7 & 25.40 & 0 & 45.50 & 0 & 9.80 & 0 \\
-random & 2500 & 15 & ModifiedABC & 7 & 25.40 & 0 & 45.50 & 0 & 9.80 & 0 \\
-random & 2500 & 20 & ModifiedABC & 5 & 43.10 & 0 & 55.70 & 0 & 12.20 & 0 \\
-random & 2500 & 10 & ModifiedABC & 5 & 43.10 & 0 & 55.70 & 0 & 12.20 & 0 \\
-random & 2000 & 10 & ModifiedABC & 5 & 43.10 & 0 & 55.70 & 0 & 12.20 & 0 \\
-random & 3000 & 15 & ModifiedABC & 5 & 43.10 & 0 & 55.70 & 0 & 12.20 & 0 \\
-random & 2000 & 15 & ModifiedABC & 5 & 43.10 & 0 & 55.70 & 0 & 12.20 & 0 \\
-random & 2000 & 20 & ModifiedABC & 5 & 43.10 & 0 & 55.70 & 0 & 12.20 & 0 \\
-random & 3000 & 10 & ModifiedABC & 5 & 43.10 & 0 & 55.70 & 0 & 12.20 & 0 \\
-random & 3000 & 20 & ModifiedABC & 5 & 43.10 & 0 & 55.70 & 0 & 12.20 & 0 \\
-random & 2500 & 15 & ModifiedABC & 5 & 43.10 & 0 & 55.70 & 0 & 12.20 & 0 \\
-random & 2000 & 10 & DirectedABC & 5 & 20.00 & 0 & 33.50 & 0 & 60.50 & 0 \\
-random & 2000 & 15 & DirectedABC & 5 & 20.00 & 0 & 33.50 & 0 & 60.50 & 0 \\
-random & 2000 & 20 & DirectedABC & 5 & 20.00 & 0 & 33.50 & 0 & 60.50 & 0 \\
-random & 3000 & 15 & DirectedABC & 5 & 20.00 & 0 & 33.50 & 0 & 60.50 & 0 \\
-random & 2500 & 15 & DirectedABC & 5 & 20.00 & 0 & 33.50 & 0 & 60.50 & 0 \\
-random & 2500 & 10 & DirectedABC & 5 & 20.00 & 0 & 33.50 & 0 & 60.50 & 0 \\
-random & 2500 & 20 & DirectedABC & 5 & 20.00 & 0 & 33.50 & 0 & 60.50 & 0 \\
-random & 3000 & 10 & DirectedABC & 5 & 20.00 & 0 & 33.50 & 0 & 60.50 & 0 \\
-random & 3000 & 20 & DirectedABC & 5 & 20.00 & 0 & 33.50 & 0 & 60.50 & 0 \\
-random & 2000 & 10 & DirectedABC & 7 & 23.60 & 0 & 35.00 & 0 & 59.90 & 0 \\
-random & 3000 & 10 & DirectedABC & 7 & 23.60 & 0 & 35.00 & 0 & 59.90 & 0 \\
-random & 2000 & 15 & DirectedABC & 7 & 23.60 & 0 & 35.00 & 0 & 59.90 & 0 \\
-random & 2500 & 20 & DirectedABC & 7 & 23.60 & 0 & 35.00 & 0 & 59.90 & 0 \\
-random & 3000 & 15 & DirectedABC & 7 & 23.60 & 0 & 35.00 & 0 & 59.90 & 0 \\
-random & 2000 & 20 & DirectedABC & 7 & 23.60 & 0 & 35.00 & 0 & 59.90 & 0 \\
-random & 3000 & 20 & DirectedABC & 7 & 23.60 & 0 & 35.00 & 0 & 59.90 & 0 \\
-random & 2500 & 10 & DirectedABC & 7 & 23.60 & 0 & 35.00 & 0 & 59.90 & 0 \\
-random & 2500 & 15 & DirectedABC & 7 & 23.60 & 0 & 35.00 & 0 & 59.90 & 0 \\
-random & 2000 & 10 & DirectedABC & 3 & 37.40 & 0 & 46.10 & 0 & 63.20 & 0 \\
-random & 3000 & 20 & DirectedABC & 3 & 37.40 & 0 & 46.10 & 0 & 63.20 & 0 \\
-random & 2000 & 20 & DirectedABC & 3 & 37.40 & 0 & 46.10 & 0 & 63.20 & 0 \\
-random & 3000 & 15 & DirectedABC & 3 & 37.40 & 0 & 46.10 & 0 & 63.20 & 0 \\
-random & 2500 & 10 & DirectedABC & 3 & 37.40 & 0 & 46.10 & 0 & 63.20 & 0 \\
-random & 2500 & 20 & DirectedABC & 3 & 37.40 & 0 & 46.10 & 0 & 63.20 & 0 \\
-random & 3000 & 10 & DirectedABC & 3 & 37.40 & 0 & 46.10 & 0 & 63.20 & 0 \\
-random & 2000 & 15 & DirectedABC & 3 & 37.40 & 0 & 46.10 & 0 & 63.20 & 0 \\
-random & 2500 & 15 & DirectedABC & 3 & 37.40 & 0 & 46.10 & 0 & 63.20 & 0 \\
-random & 3000 & 20 & StandardABC & 7 & 46.70 & 0 & 40.40 & 0 & 65.30 & 0 \\
-random & 2000 & 10 & StandardABC & 7 & 46.70 & 0 & 40.40 & 0 & 65.30 & 0 \\
-random & 2500 & 15 & StandardABC & 7 & 46.70 & 0 & 40.40 & 0 & 65.30 & 0 \\
-random & 2500 & 10 & StandardABC & 7 & 46.70 & 0 & 40.40 & 0 & 65.30 & 0 \\
-random & 2500 & 20 & StandardABC & 7 & 46.70 & 0 & 40.40 & 0 & 65.30 & 0 \\
-random & 3000 & 15 & StandardABC & 7 & 46.70 & 0 & 40.40 & 0 & 65.30 & 0 \\
-random & 2000 & 20 & StandardABC & 7 & 46.70 & 0 & 40.40 & 0 & 65.30 & 0 \\
-random & 3000 & 10 & StandardABC & 7 & 46.70 & 0 & 40.40 & 0 & 65.30 & 0 \\
-random & 2000 & 15 & StandardABC & 7 & 46.70 & 0 & 40.40 & 0 & 65.30 & 0 \\
-random & 2500 & 20 & StandardABC & 5 & 45.50 & 0 & 42.20 & 0 & 65.30 & 0 \\
-random & 3000 & 15 & StandardABC & 5 & 45.50 & 0 & 42.20 & 0 & 65.30 & 0 \\
-random & 2000 & 15 & StandardABC & 5 & 45.50 & 0 & 42.20 & 0 & 65.30 & 0 \\
-random & 2500 & 10 & StandardABC & 5 & 45.50 & 0 & 42.20 & 0 & 65.30 & 0 \\
-random & 2500 & 15 & StandardABC & 5 & 45.50 & 0 & 42.20 & 0 & 65.30 & 0 \\
-random & 2000 & 10 & StandardABC & 5 & 45.50 & 0 & 42.20 & 0 & 65.30 & 0 \\
-random & 3000 & 20 & StandardABC & 5 & 45.50 & 0 & 42.20 & 0 & 65.30 & 0 \\
-random & 3000 & 10 & StandardABC & 5 & 45.50 & 0 & 42.20 & 0 & 65.30 & 0 \\
-random & 2000 & 20 & StandardABC & 5 & 45.50 & 0 & 42.20 & 0 & 65.30 & 0 \\
-random & 2500 & 10 & ModifiedABC & 3 & 70.70 & 0 & 62.60 & 0 & 20.00 & 0 \\
-random & 3000 & 10 & ModifiedABC & 3 & 70.70 & 0 & 62.60 & 0 & 20.00 & 0 \\
-random & 2000 & 15 & ModifiedABC & 3 & 70.70 & 0 & 62.60 & 0 & 20.00 & 0 \\
-random & 2000 & 10 & ModifiedABC & 3 & 70.70 & 0 & 62.60 & 0 & 20.00 & 0 \\
-random & 2000 & 20 & ModifiedABC & 3 & 70.70 & 0 & 62.60 & 0 & 20.00 & 0 \\
-random & 3000 & 15 & ModifiedABC & 3 & 70.70 & 0 & 62.60 & 0 & 20.00 & 0 \\
-random & 3000 & 20 & ModifiedABC & 3 & 70.70 & 0 & 62.60 & 0 & 20.00 & 0 \\
-random & 2500 & 15 & ModifiedABC & 3 & 70.70 & 0 & 62.60 & 0 & 20.00 & 0 \\
-random & 2500 & 20 & ModifiedABC & 3 & 70.70 & 0 & 62.60 & 0 & 20.00 & 0 \\
-random & 2500 & 20 & StandardABC & 3 & 56.60 & 0 & 49.70 & 0 & 71.90 & 0 \\
-random & 2500 & 10 & StandardABC & 3 & 56.60 & 0 & 49.70 & 0 & 71.90 & 0 \\
-random & 2000 & 10 & StandardABC & 3 & 56.60 & 0 & 49.70 & 0 & 71.90 & 0 \\
-random & 3000 & 20 & StandardABC & 3 & 56.60 & 0 & 49.70 & 0 & 71.90 & 0 \\
-random & 2500 & 15 & StandardABC & 3 & 56.60 & 0 & 49.70 & 0 & 71.90 & 0 \\
-random & 2000 & 15 & StandardABC & 3 & 56.60 & 0 & 49.70 & 0 & 71.90 & 0 \\
-random & 3000 & 15 & StandardABC & 3 & 56.60 & 0 & 49.70 & 0 & 71.90 & 0 \\
-random & 2000 & 20 & StandardABC & 3 & 56.60 & 0 & 49.70 & 0 & 71.90 & 0 \\
-random & 3000 & 10 & StandardABC & 3 & 56.60 & 0 & 49.70 & 0 & 71.90 & 0 \\
-random & 3000 & 10 & iABC & 5 & 91.40 & 0 & 75.20 & 0 & 74.30 & 0 \\
-random & 2000 & 15 & iABC & 5 & 91.40 & 0 & 75.20 & 0 & 74.30 & 0 \\
-random & 2000 & 20 & iABC & 5 & 91.40 & 0 & 75.20 & 0 & 74.30 & 0 \\
-random & 3000 & 15 & iABC & 5 & 91.40 & 0 & 75.20 & 0 & 74.30 & 0 \\
-random & 2500 & 10 & iABC & 5 & 91.40 & 0 & 75.20 & 0 & 74.30 & 0 \\
-random & 2000 & 10 & iABC & 5 & 91.40 & 0 & 75.20 & 0 & 74.30 & 0 \\
-random & 2500 & 15 & iABC & 5 & 91.40 & 0 & 75.20 & 0 & 74.30 & 0 \\
-random & 3000 & 20 & iABC & 5 & 91.40 & 0 & 75.20 & 0 & 74.30 & 0 \\
-random & 2500 & 20 & iABC & 5 & 91.40 & 0 & 75.20 & 0 & 74.30 & 0 \\
-random & 3000 & 20 & iABC & 7 & 94.70 & 0 & 80.00 & 0 & 81.80 & 0 \\
-random & 2000 & 20 & iABC & 7 & 94.70 & 0 & 80.00 & 0 & 81.80 & 0 \\
-random & 2500 & 15 & iABC & 7 & 94.70 & 0 & 80.00 & 0 & 81.80 & 0 \\
-random & 2000 & 10 & iABC & 7 & 94.70 & 0 & 80.00 & 0 & 81.80 & 0 \\
-random & 2000 & 15 & iABC & 7 & 94.70 & 0 & 80.00 & 0 & 81.80 & 0 \\
-random & 3000 & 15 & iABC & 7 & 94.70 & 0 & 80.00 & 0 & 81.80 & 0 \\
-random & 3000 & 10 & iABC & 7 & 94.70 & 0 & 80.00 & 0 & 81.80 & 0 \\
-random & 2500 & 20 & iABC & 7 & 94.70 & 0 & 80.00 & 0 & 81.80 & 0 \\
-random & 2500 & 10 & iABC & 7 & 94.70 & 0 & 80.00 & 0 & 81.80 & 0 \\
-random & 3000 & 20 & iABC & 3 & 98.90 & 0 & 88.10 & 0 & 69.80 & 0 \\
-random & 2000 & 10 & iABC & 3 & 98.90 & 0 & 88.10 & 0 & 69.80 & 0 \\
-random & 2500 & 20 & iABC & 3 & 98.90 & 0 & 88.10 & 0 & 69.80 & 0 \\
-random & 2500 & 10 & iABC & 3 & 98.90 & 0 & 88.10 & 0 & 69.80 & 0 \\
-random & 2500 & 15 & iABC & 3 & 98.90 & 0 & 88.10 & 0 & 69.80 & 0 \\
-random & 3000 & 10 & iABC & 3 & 98.90 & 0 & 88.10 & 0 & 69.80 & 0 \\
-random & 2000 & 20 & iABC & 3 & 98.90 & 0 & 88.10 & 0 & 69.80 & 0 \\
-random & 2000 & 15 & iABC & 3 & 98.90 & 0 & 88.10 & 0 & 69.80 & 0 \\
-random & 3000 & 15 & iABC & 3 & 98.90 & 0 & 88.10 & 0 & 69.80 & 0 \\
+2000 & 15 & ModifiedABC & 7 & 25.40 & 0 & 45.50 & 0 & 9.80 & 0 \\
+3000 & 10 & ModifiedABC & 7 & 25.40 & 0 & 45.50 & 0 & 9.80 & 0 \\
+2000 & 20 & ModifiedABC & 7 & 25.40 & 0 & 45.50 & 0 & 9.80 & 0 \\
+3000 & 15 & ModifiedABC & 7 & 25.40 & 0 & 45.50 & 0 & 9.80 & 0 \\
+2500 & 20 & ModifiedABC & 7 & 25.40 & 0 & 45.50 & 0 & 9.80 & 0 \\
+2000 & 10 & ModifiedABC & 7 & 25.40 & 0 & 45.50 & 0 & 9.80 & 0 \\
+3000 & 20 & ModifiedABC & 7 & 25.40 & 0 & 45.50 & 0 & 9.80 & 0 \\
+2500 & 10 & ModifiedABC & 7 & 25.40 & 0 & 45.50 & 0 & 9.80 & 0 \\
+2500 & 15 & ModifiedABC & 7 & 25.40 & 0 & 45.50 & 0 & 9.80 & 0 \\
+2500 & 20 & ModifiedABC & 5 & 43.10 & 0 & 55.70 & 0 & 12.20 & 0 \\
+2500 & 10 & ModifiedABC & 5 & 43.10 & 0 & 55.70 & 0 & 12.20 & 0 \\
+2000 & 10 & ModifiedABC & 5 & 43.10 & 0 & 55.70 & 0 & 12.20 & 0 \\
+3000 & 15 & ModifiedABC & 5 & 43.10 & 0 & 55.70 & 0 & 12.20 & 0 \\
+2000 & 15 & ModifiedABC & 5 & 43.10 & 0 & 55.70 & 0 & 12.20 & 0 \\
+2000 & 20 & ModifiedABC & 5 & 43.10 & 0 & 55.70 & 0 & 12.20 & 0 \\
+3000 & 10 & ModifiedABC & 5 & 43.10 & 0 & 55.70 & 0 & 12.20 & 0 \\
+3000 & 20 & ModifiedABC & 5 & 43.10 & 0 & 55.70 & 0 & 12.20 & 0 \\
+2500 & 15 & ModifiedABC & 5 & 43.10 & 0 & 55.70 & 0 & 12.20 & 0 \\
+2000 & 10 & DirectedABC & 5 & 20.00 & 0 & 33.50 & 0 & 60.50 & 0 \\
+2000 & 15 & DirectedABC & 5 & 20.00 & 0 & 33.50 & 0 & 60.50 & 0 \\
+2000 & 20 & DirectedABC & 5 & 20.00 & 0 & 33.50 & 0 & 60.50 & 0 \\
+3000 & 15 & DirectedABC & 5 & 20.00 & 0 & 33.50 & 0 & 60.50 & 0 \\
+2500 & 15 & DirectedABC & 5 & 20.00 & 0 & 33.50 & 0 & 60.50 & 0 \\
+2500 & 10 & DirectedABC & 5 & 20.00 & 0 & 33.50 & 0 & 60.50 & 0 \\
+2500 & 20 & DirectedABC & 5 & 20.00 & 0 & 33.50 & 0 & 60.50 & 0 \\
+3000 & 10 & DirectedABC & 5 & 20.00 & 0 & 33.50 & 0 & 60.50 & 0 \\
+3000 & 20 & DirectedABC & 5 & 20.00 & 0 & 33.50 & 0 & 60.50 & 0 \\
+2000 & 10 & DirectedABC & 7 & 23.60 & 0 & 35.00 & 0 & 59.90 & 0 \\
+3000 & 10 & DirectedABC & 7 & 23.60 & 0 & 35.00 & 0 & 59.90 & 0 \\
+2000 & 15 & DirectedABC & 7 & 23.60 & 0 & 35.00 & 0 & 59.90 & 0 \\
+2500 & 20 & DirectedABC & 7 & 23.60 & 0 & 35.00 & 0 & 59.90 & 0 \\
+3000 & 15 & DirectedABC & 7 & 23.60 & 0 & 35.00 & 0 & 59.90 & 0 \\
+2000 & 20 & DirectedABC & 7 & 23.60 & 0 & 35.00 & 0 & 59.90 & 0 \\
+3000 & 20 & DirectedABC & 7 & 23.60 & 0 & 35.00 & 0 & 59.90 & 0 \\
+2500 & 10 & DirectedABC & 7 & 23.60 & 0 & 35.00 & 0 & 59.90 & 0 \\
+2500 & 15 & DirectedABC & 7 & 23.60 & 0 & 35.00 & 0 & 59.90 & 0 \\
+2000 & 10 & DirectedABC & 3 & 37.40 & 0 & 46.10 & 0 & 63.20 & 0 \\
+3000 & 20 & DirectedABC & 3 & 37.40 & 0 & 46.10 & 0 & 63.20 & 0 \\
+2000 & 20 & DirectedABC & 3 & 37.40 & 0 & 46.10 & 0 & 63.20 & 0 \\
+3000 & 15 & DirectedABC & 3 & 37.40 & 0 & 46.10 & 0 & 63.20 & 0 \\
+2500 & 10 & DirectedABC & 3 & 37.40 & 0 & 46.10 & 0 & 63.20 & 0 \\
+2500 & 20 & DirectedABC & 3 & 37.40 & 0 & 46.10 & 0 & 63.20 & 0 \\
+3000 & 10 & DirectedABC & 3 & 37.40 & 0 & 46.10 & 0 & 63.20 & 0 \\
+2000 & 15 & DirectedABC & 3 & 37.40 & 0 & 46.10 & 0 & 63.20 & 0 \\
+2500 & 15 & DirectedABC & 3 & 37.40 & 0 & 46.10 & 0 & 63.20 & 0 \\
+3000 & 20 & StandardABC & 7 & 46.70 & 0 & 40.40 & 0 & 65.30 & 0 \\
+2000 & 10 & StandardABC & 7 & 46.70 & 0 & 40.40 & 0 & 65.30 & 0 \\
+2500 & 15 & StandardABC & 7 & 46.70 & 0 & 40.40 & 0 & 65.30 & 0 \\
+2500 & 10 & StandardABC & 7 & 46.70 & 0 & 40.40 & 0 & 65.30 & 0 \\
+2500 & 20 & StandardABC & 7 & 46.70 & 0 & 40.40 & 0 & 65.30 & 0 \\
+3000 & 15 & StandardABC & 7 & 46.70 & 0 & 40.40 & 0 & 65.30 & 0 \\
+2000 & 20 & StandardABC & 7 & 46.70 & 0 & 40.40 & 0 & 65.30 & 0 \\
+3000 & 10 & StandardABC & 7 & 46.70 & 0 & 40.40 & 0 & 65.30 & 0 \\
+2000 & 15 & StandardABC & 7 & 46.70 & 0 & 40.40 & 0 & 65.30 & 0 \\
+2500 & 20 & StandardABC & 5 & 45.50 & 0 & 42.20 & 0 & 65.30 & 0 \\
+3000 & 15 & StandardABC & 5 & 45.50 & 0 & 42.20 & 0 & 65.30 & 0 \\
+2000 & 15 & StandardABC & 5 & 45.50 & 0 & 42.20 & 0 & 65.30 & 0 \\
+2500 & 10 & StandardABC & 5 & 45.50 & 0 & 42.20 & 0 & 65.30 & 0 \\
+2500 & 15 & StandardABC & 5 & 45.50 & 0 & 42.20 & 0 & 65.30 & 0 \\
+2000 & 10 & StandardABC & 5 & 45.50 & 0 & 42.20 & 0 & 65.30 & 0 \\
+3000 & 20 & StandardABC & 5 & 45.50 & 0 & 42.20 & 0 & 65.30 & 0 \\
+3000 & 10 & StandardABC & 5 & 45.50 & 0 & 42.20 & 0 & 65.30 & 0 \\
+2000 & 20 & StandardABC & 5 & 45.50 & 0 & 42.20 & 0 & 65.30 & 0 \\
+2500 & 10 & ModifiedABC & 3 & 70.70 & 0 & 62.60 & 0 & 20.00 & 0 \\
+3000 & 10 & ModifiedABC & 3 & 70.70 & 0 & 62.60 & 0 & 20.00 & 0 \\
+2000 & 15 & ModifiedABC & 3 & 70.70 & 0 & 62.60 & 0 & 20.00 & 0 \\
+2000 & 10 & ModifiedABC & 3 & 70.70 & 0 & 62.60 & 0 & 20.00 & 0 \\
+2000 & 20 & ModifiedABC & 3 & 70.70 & 0 & 62.60 & 0 & 20.00 & 0 \\
+3000 & 15 & ModifiedABC & 3 & 70.70 & 0 & 62.60 & 0 & 20.00 & 0 \\
+3000 & 20 & ModifiedABC & 3 & 70.70 & 0 & 62.60 & 0 & 20.00 & 0 \\
+2500 & 15 & ModifiedABC & 3 & 70.70 & 0 & 62.60 & 0 & 20.00 & 0 \\
+2500 & 20 & ModifiedABC & 3 & 70.70 & 0 & 62.60 & 0 & 20.00 & 0 \\
+2500 & 20 & StandardABC & 3 & 56.60 & 0 & 49.70 & 0 & 71.90 & 0 \\
+2500 & 10 & StandardABC & 3 & 56.60 & 0 & 49.70 & 0 & 71.90 & 0 \\
+2000 & 10 & StandardABC & 3 & 56.60 & 0 & 49.70 & 0 & 71.90 & 0 \\
+3000 & 20 & StandardABC & 3 & 56.60 & 0 & 49.70 & 0 & 71.90 & 0 \\
+2500 & 15 & StandardABC & 3 & 56.60 & 0 & 49.70 & 0 & 71.90 & 0 \\
+2000 & 15 & StandardABC & 3 & 56.60 & 0 & 49.70 & 0 & 71.90 & 0 \\
+3000 & 15 & StandardABC & 3 & 56.60 & 0 & 49.70 & 0 & 71.90 & 0 \\
+2000 & 20 & StandardABC & 3 & 56.60 & 0 & 49.70 & 0 & 71.90 & 0 \\
+3000 & 10 & StandardABC & 3 & 56.60 & 0 & 49.70 & 0 & 71.90 & 0 \\
+3000 & 10 & iABC & 5 & 91.40 & 0 & 75.20 & 0 & 74.30 & 0 \\
+2000 & 15 & iABC & 5 & 91.40 & 0 & 75.20 & 0 & 74.30 & 0 \\
+2000 & 20 & iABC & 5 & 91.40 & 0 & 75.20 & 0 & 74.30 & 0 \\
+3000 & 15 & iABC & 5 & 91.40 & 0 & 75.20 & 0 & 74.30 & 0 \\
+2500 & 10 & iABC & 5 & 91.40 & 0 & 75.20 & 0 & 74.30 & 0 \\
+2000 & 10 & iABC & 5 & 91.40 & 0 & 75.20 & 0 & 74.30 & 0 \\
+2500 & 15 & iABC & 5 & 91.40 & 0 & 75.20 & 0 & 74.30 & 0 \\
+3000 & 20 & iABC & 5 & 91.40 & 0 & 75.20 & 0 & 74.30 & 0 \\
+2500 & 20 & iABC & 5 & 91.40 & 0 & 75.20 & 0 & 74.30 & 0 \\
+3000 & 20 & iABC & 7 & 94.70 & 0 & 80.00 & 0 & 81.80 & 0 \\
+2000 & 20 & iABC & 7 & 94.70 & 0 & 80.00 & 0 & 81.80 & 0 \\
+2500 & 15 & iABC & 7 & 94.70 & 0 & 80.00 & 0 & 81.80 & 0 \\
+2000 & 10 & iABC & 7 & 94.70 & 0 & 80.00 & 0 & 81.80 & 0 \\
+2000 & 15 & iABC & 7 & 94.70 & 0 & 80.00 & 0 & 81.80 & 0 \\
+3000 & 15 & iABC & 7 & 94.70 & 0 & 80.00 & 0 & 81.80 & 0 \\
+3000 & 10 & iABC & 7 & 94.70 & 0 & 80.00 & 0 & 81.80 & 0 \\
+2500 & 20 & iABC & 7 & 94.70 & 0 & 80.00 & 0 & 81.80 & 0 \\
+2500 & 10 & iABC & 7 & 94.70 & 0 & 80.00 & 0 & 81.80 & 0 \\
+3000 & 20 & iABC & 3 & 98.90 & 0 & 88.10 & 0 & 69.80 & 0 \\
+2000 & 10 & iABC & 3 & 98.90 & 0 & 88.10 & 0 & 69.80 & 0 \\
+2500 & 20 & iABC & 3 & 98.90 & 0 & 88.10 & 0 & 69.80 & 0 \\
+2500 & 10 & iABC & 3 & 98.90 & 0 & 88.10 & 0 & 69.80 & 0 \\
+2500 & 15 & iABC & 3 & 98.90 & 0 & 88.10 & 0 & 69.80 & 0 \\
+3000 & 10 & iABC & 3 & 98.90 & 0 & 88.10 & 0 & 69.80 & 0 \\
+2000 & 20 & iABC & 3 & 98.90 & 0 & 88.10 & 0 & 69.80 & 0 \\
+2000 & 15 & iABC & 3 & 98.90 & 0 & 88.10 & 0 & 69.80 & 0 \\
+3000 & 15 & iABC & 3 & 98.90 & 0 & 88.10 & 0 & 69.80 & 0 \\
 \hline
 \end{longtable}
+From the results we can see the poor performance of algorithms with mutation strategy "iABC", which are ranked in the last positions for all the classes, while the algorithms with mutation strategy "ModifiedABC" are ranked in the first positions for all the classes. The algorithms with mutation strategy "StandardABC" are ranked in the middle positions for all the classes. The influence of the other parameters is not clear from the results, since there are algorithms with different parameters that are ranked in similar positions. In order to statistically confirm these observations, the Friedman and Nemenyi tests are performed, and the critical difference diagrams are plotted in figure \ref{fig:cd1}.
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{\textwidth}
+        \centering
+        \caption{Class 1}
+        \includegraphics[width=0.66\textwidth]{imgs/abc/step1/1_critical_difference.png}
+    \end{subfigure}
+    \begin{subfigure}[b]{\textwidth}
+        \centering
+        \caption{Class 2}
+        \includegraphics[width=0.66\textwidth]{imgs/abc/step1/2_critical_difference.png}
+    \end{subfigure}
+    \begin{subfigure}[b]{\textwidth}
+        \centering
+        \caption{Class 3}
+        \includegraphics[width=0.66\textwidth]{imgs/abc/step1/3_critical_difference.png}
+    \end{subfigure}
+    \caption{Critical Difference diagrams for ABC algorithms}
+    \label{fig:cd1}
+\end{figure}
+\noindent
+In these scatter plots, each point represents an algorithm, and the x-axis represents the rank of the algorithm. The y-axis represents the tournament size parameter. The color of the points represents the mutation operator used in the algorithm. 
+From the critical difference diagrams, it can be observed that the algorithms with mutation strategy "ModifiedABC" are statistically significantly better than the algorithms with mutation strategy "iABC", while the algorithms with mutation strategy "StandardABC" are not statistically significantly different from the other two groups. The influence of the tournament size parameter is not clear from the diagrams, since there are algorithms with different tournament sizes that are ranked in similar positions. 
+
+\subsection{First filtering}
+The first filtering is done by testing all the algorithms on three problems for each class, with $30$ seeds. The results are reported in table \ref{tab:results_step2}, and the critical difference diagrams are plotted in figure \ref{fig:cd2}.
+
+\begin{longtable}{||cccc||cc||cc||cc||}
+\caption{Second step results for the ABC algorithms}
+\label{tab:results_step2} \\
+\hline
+\multicolumn{4}{||c||}{Algorithm parameters}  & \multicolumn{2}{c||}{Class 1} & \multicolumn{2}{c||}{Class 2} & \multicolumn{2}{c||}{Class 3} \\
+\hline
+\texttt{limit} & \texttt{max\_scouts} & \texttt{mut} &  \texttt{tour\_size} & Rank & $10^{-8}$ & Rank & $10^{-8}$ & Rank & $10^{-8}$ \\
+\hline
+2000 & 10 & ModifiedABC & 7 & 24.0 & 0 & 49.4 & 0 & 10.0 & 0 \\
+2000 & 15 & ModifiedABC & 7 & 24.0 & 0 & 49.4 & 0 & 10.0 & 0 \\
+2000 & 20 & ModifiedABC & 7 & 24.0 & 0 & 49.4 & 0 & 10.0 & 0 \\
+2500 & 10 & ModifiedABC & 7 & 24.0 & 0 & 49.4 & 0 & 10.0 & 0 \\
+2500 & 15 & ModifiedABC & 7 & 24.0 & 0 & 49.4 & 0 & 10.0 & 0 \\
+2500 & 20 & ModifiedABC & 7 & 24.0 & 0 & 49.4 & 0 & 10.0 & 0 \\
+3000 & 10 & ModifiedABC & 7 & 24.0 & 0 & 49.4 & 0 & 10.0 & 0 \\
+3000 & 15 & ModifiedABC & 7 & 24.0 & 0 & 49.4 & 0 & 10.0 & 0 \\
+3000 & 20 & ModifiedABC & 7 & 24.0 & 0 & 49.4 & 0 & 10.0 & 0 \\
+2000 & 10 & DirectedABC & 7 & 24.6 & 0 & 32.4 & 0 & 36.6 & 0 \\
+2000 & 15 & DirectedABC & 7 & 24.6 & 0 & 32.4 & 0 & 36.6 & 0 \\
+2000 & 20 & DirectedABC & 7 & 24.6 & 0 & 32.4 & 0 & 36.6 & 0 \\
+2500 & 10 & DirectedABC & 7 & 24.6 & 0 & 32.4 & 0 & 36.6 & 0 \\
+2500 & 15 & DirectedABC & 7 & 24.6 & 0 & 32.4 & 0 & 36.6 & 0 \\
+2500 & 20 & DirectedABC & 7 & 24.6 & 0 & 32.4 & 0 & 36.6 & 0 \\
+3000 & 10 & DirectedABC & 7 & 24.6 & 0 & 32.4 & 0 & 36.6 & 0 \\
+3000 & 15 & DirectedABC & 7 & 24.6 & 0 & 32.4 & 0 & 36.6 & 0 \\
+3000 & 20 & DirectedABC & 7 & 24.6 & 0 & 32.4 & 0 & 36.6 & 0 \\
+2000 & 10 & DirectedABC & 5 & 24.5 & 0 & 37.8 & 0 & 36.4 & 0 \\
+2000 & 15 & DirectedABC & 5 & 24.5 & 0 & 37.8 & 0 & 36.4 & 0 \\
+2000 & 20 & DirectedABC & 5 & 24.5 & 0 & 37.8 & 0 & 36.4 & 0 \\
+2500 & 10 & DirectedABC & 5 & 24.5 & 0 & 37.8 & 0 & 36.4 & 0 \\
+2500 & 15 & DirectedABC & 5 & 24.5 & 0 & 37.8 & 0 & 36.4 & 0 \\
+2500 & 20 & DirectedABC & 5 & 24.5 & 0 & 37.8 & 0 & 36.4 & 0 \\
+3000 & 10 & DirectedABC & 5 & 24.5 & 0 & 37.8 & 0 & 36.4 & 0 \\
+3000 & 15 & DirectedABC & 5 & 24.5 & 0 & 37.8 & 0 & 36.4 & 0 \\
+3000 & 20 & DirectedABC & 5 & 24.5 & 0 & 37.8 & 0 & 36.4 & 0 \\
+2000 & 10 & ModifiedABC & 5 & 40.5 & 0 & 52.7 & 0 & 12.6 & 0 \\
+2000 & 15 & ModifiedABC & 5 & 40.5 & 0 & 52.7 & 0 & 12.6 & 0 \\
+2000 & 20 & ModifiedABC & 5 & 40.5 & 0 & 52.7 & 0 & 12.6 & 0 \\
+2500 & 10 & ModifiedABC & 5 & 40.5 & 0 & 52.7 & 0 & 12.6 & 0 \\
+2500 & 15 & ModifiedABC & 5 & 40.5 & 0 & 52.7 & 0 & 12.6 & 0 \\
+2500 & 20 & ModifiedABC & 5 & 40.5 & 0 & 52.7 & 0 & 12.6 & 0 \\
+3000 & 10 & ModifiedABC & 5 & 40.5 & 0 & 52.7 & 0 & 12.6 & 0 \\
+3000 & 15 & ModifiedABC & 5 & 40.5 & 0 & 52.7 & 0 & 12.6 & 0 \\
+3000 & 20 & ModifiedABC & 5 & 40.5 & 0 & 52.7 & 0 & 12.6 & 0 \\
+2000 & 10 & ModifiedABC & 3 & 69.4 & 0 & 59.2 & 0 & 19.5 & 0 \\
+2000 & 15 & ModifiedABC & 3 & 69.4 & 0 & 59.2 & 0 & 19.5 & 0 \\
+2000 & 20 & ModifiedABC & 3 & 69.4 & 0 & 59.2 & 0 & 19.5 & 0 \\
+2500 & 10 & ModifiedABC & 3 & 69.4 & 0 & 59.2 & 0 & 19.5 & 0 \\
+2500 & 15 & ModifiedABC & 3 & 69.4 & 0 & 59.2 & 0 & 19.5 & 0 \\
+2500 & 20 & ModifiedABC & 3 & 69.4 & 0 & 59.2 & 0 & 19.5 & 0 \\
+3000 & 10 & ModifiedABC & 3 & 69.4 & 0 & 59.2 & 0 & 19.5 & 0 \\
+3000 & 15 & ModifiedABC & 3 & 69.4 & 0 & 59.2 & 0 & 19.5 & 0 \\
+3000 & 20 & ModifiedABC & 3 & 69.4 & 0 & 59.2 & 0 & 19.5 & 0 \\
+2000 & 10 & DirectedABC & 3 & 36.8 & 0 & 44.8 & 0 & --- & --- \\
+2000 & 15 & DirectedABC & 3 & 36.8 & 0 & 44.8 & 0 & --- & --- \\
+2000 & 20 & DirectedABC & 3 & 36.8 & 0 & 44.8 & 0 & --- & --- \\
+2500 & 10 & DirectedABC & 3 & 36.8 & 0 & 44.8 & 0 & --- & --- \\
+2500 & 15 & DirectedABC & 3 & 36.8 & 0 & 44.8 & 0 & --- & --- \\
+2500 & 20 & DirectedABC & 3 & 36.8 & 0 & 44.8 & 0 & --- & --- \\
+3000 & 10 & DirectedABC & 3 & 36.8 & 0 & 44.8 & 0 & --- & --- \\
+3000 & 15 & DirectedABC & 3 & 36.8 & 0 & 44.8 & 0 & --- & --- \\
+3000 & 20 & DirectedABC & 3 & 36.8 & 0 & 44.8 & 0 & --- & --- \\
+2000 & 10 & StandardABC & 7 & 45.7 & 0 & 37.0 & 0 & --- & --- \\
+2000 & 15 & StandardABC & 7 & 45.7 & 0 & 37.0 & 0 & --- & --- \\
+2000 & 20 & StandardABC & 7 & 45.7 & 0 & 37.0 & 0 & --- & --- \\
+2500 & 10 & StandardABC & 7 & 45.7 & 0 & 37.0 & 0 & --- & --- \\
+2500 & 15 & StandardABC & 7 & 45.7 & 0 & 37.0 & 0 & --- & --- \\
+2500 & 20 & StandardABC & 7 & 45.7 & 0 & 37.0 & 0 & --- & --- \\
+3000 & 10 & StandardABC & 7 & 45.7 & 0 & 37.0 & 0 & --- & --- \\
+3000 & 15 & StandardABC & 7 & 45.7 & 0 & 37.0 & 0 & --- & --- \\
+3000 & 20 & StandardABC & 7 & 45.7 & 0 & 37.0 & 0 & --- & --- \\
+2000 & 10 & StandardABC & 5 & 45.1 & 0 & 39.9 & 0 & --- & --- \\
+2000 & 15 & StandardABC & 5 & 45.1 & 0 & 39.9 & 0 & --- & --- \\
+2000 & 20 & StandardABC & 5 & 45.1 & 0 & 39.9 & 0 & --- & --- \\
+2500 & 10 & StandardABC & 5 & 45.1 & 0 & 39.9 & 0 & --- & --- \\
+2500 & 15 & StandardABC & 5 & 45.1 & 0 & 39.9 & 0 & --- & --- \\
+2500 & 20 & StandardABC & 5 & 45.1 & 0 & 39.9 & 0 & --- & --- \\
+3000 & 10 & StandardABC & 5 & 45.1 & 0 & 39.9 & 0 & --- & --- \\
+3000 & 15 & StandardABC & 5 & 45.1 & 0 & 39.9 & 0 & --- & --- \\
+3000 & 20 & StandardABC & 5 & 45.1 & 0 & 39.9 & 0 & --- & --- \\
+2000 & 10 & StandardABC & 3 & 58.4 & 0 & 47.8 & 0 & --- & --- \\
+2000 & 15 & StandardABC & 3 & 58.4 & 0 & 47.8 & 0 & --- & --- \\
+2000 & 20 & StandardABC & 3 & 58.4 & 0 & 47.8 & 0 & --- & --- \\
+2500 & 10 & StandardABC & 3 & 58.4 & 0 & 47.8 & 0 & --- & --- \\
+2500 & 15 & StandardABC & 3 & 58.4 & 0 & 47.8 & 0 & --- & --- \\
+2500 & 20 & StandardABC & 3 & 58.4 & 0 & 47.8 & 0 & --- & --- \\
+3000 & 10 & StandardABC & 3 & 58.4 & 0 & 47.8 & 0 & --- & --- \\
+3000 & 15 & StandardABC & 3 & 58.4 & 0 & 47.8 & 0 & --- & --- \\
+3000 & 20 & StandardABC & 3 & 58.4 & 0 & 47.8 & 0 & --- & --- \\
+2000 & 10 & iABC & 5 & --- & --- & 72.8 & 0 & --- & --- \\
+2000 & 15 & iABC & 5 & --- & --- & 72.8 & 0 & --- & --- \\
+2000 & 20 & iABC & 5 & --- & --- & 72.8 & 0 & --- & --- \\
+2500 & 10 & iABC & 5 & --- & --- & 72.8 & 0 & --- & --- \\
+2500 & 15 & iABC & 5 & --- & --- & 72.8 & 0 & --- & --- \\
+2500 & 20 & iABC & 5 & --- & --- & 72.8 & 0 & --- & --- \\
+3000 & 10 & iABC & 5 & --- & --- & 72.8 & 0 & --- & --- \\
+3000 & 15 & iABC & 5 & --- & --- & 72.8 & 0 & --- & --- \\
+3000 & 20 & iABC & 5 & --- & --- & 72.8 & 0 & --- & --- \\
+2000 & 10 & iABC & 7 & --- & --- & 76.3 & 0 & --- & --- \\
+2000 & 15 & iABC & 7 & --- & --- & 76.3 & 0 & --- & --- \\
+2000 & 20 & iABC & 7 & --- & --- & 76.3 & 0 & --- & --- \\
+2500 & 10 & iABC & 7 & --- & --- & 76.3 & 0 & --- & --- \\
+2500 & 15 & iABC & 7 & --- & --- & 76.3 & 0 & --- & --- \\
+2500 & 20 & iABC & 7 & --- & --- & 76.3 & 0 & --- & --- \\
+3000 & 10 & iABC & 7 & --- & --- & 76.3 & 0 & --- & --- \\
+3000 & 15 & iABC & 7 & --- & --- & 76.3 & 0 & --- & --- \\
+3000 & 20 & iABC & 7 & --- & --- & 76.3 & 0 & --- & --- \\
+\hline
+\end{longtable}
+\noindent \\
+Now we can see that the algorithms with mutation strategy "ModifiedABC" are ranked in the first positions for all the classes, while the algorithms with mutation strategy "DirectedABC" are ranked in the middle positions for all the classes, apart from the first class where they are ranked in the first positions. From previous analysis we expect that "DirectedABC" and "ModifiedABC" could be statistically significantly better than other mutation strategy, because they are the only mutation strategies that add "information" about dimensionality to the search process. As explained in the previous section,the Friedman and Nemenyi tests are performed, and the critical difference diagrams are plotted in figure \ref{fig:cd2}. 
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{\textwidth}
+        \centering
+        \caption{Class 1}
+        \includegraphics[width=0.66\textwidth]{imgs/abc/step2/1_critical_difference.png}
+    \end{subfigure}
+    \begin{subfigure}[b]{\textwidth}
+        \centering
+        \caption{Class 2}
+        \includegraphics[width=0.66\textwidth]{imgs/abc/step2/2_critical_difference.png}
+    \end{subfigure}
+    \begin{subfigure}[b]{\textwidth}
+        \centering
+        \caption{Class 3}
+        \includegraphics[width=0.66\textwidth]{imgs/abc/step2/3_critical_difference.png}
+    \end{subfigure}
+    \caption{Critical Difference diagrams for ABC algorithms after the first filtering step}
+    \label{fig:cd2}
+\end{figure}
+From the critical difference diagrams, it can be observed that the algorithms with mutation strategy "ModifiedABC" are statistically significantly better than the algorithms with mutation strategy "StandardABC" and "iABC", while the algorithms with mutation strategy "DirectedABC" are not statistically significantly different from the other two groups. The influence of the tournament size parameter is not clear from the diagrams, since there are algorithms with different tournament sizes that are ranked in similar positions. We can expect that for second and third class, the algorithms with higher limit, max\_scouts and tourrnament\_size parameters could be ranked in better positions, because they are more "explorative" and the second and third class problems are more difficult than the first class problems. However, from the critical difference diagrams we can see that there are algorithms with different parameters that are ranked in similar positions, so we cannot confirm this observation.
+
+
+\subsection{Second filtering}
+The second filtering is done by testing the best algorithms of the first filtering on 6 problems for each class, with $60$ seeds. The results are reported in table \ref{tab:results_step3}, and the critical difference diagrams are plotted in figure \ref{fig:cd3}.
+\begin{longtable}{||cccc||cc||cc||cc||}
+\caption{Third step results for the ABC algorithms}
+\label{tab:results_step3} \\
+\hline
+\multicolumn{4}{||c||}{Algorithm parameters}  & \multicolumn{2}{c||}{Class 1} & \multicolumn{2}{c||}{Class 2} & \multicolumn{2}{c||}{Class 3} \\
+\hline  
+\texttt{limit} & \texttt{max\_scouts} & \texttt{mut} &  \texttt{tour\_size} & Rank & $10^{-8}$ & Rank & $10^{-8}$ & Rank & $10^{-8}$ \\
+\hline
+
+3000 & 20 & ModifiedABC & 7 & 23.8 & 0 & 6.8 & 0 & 11.2 & 0 \\
+2000 & 15 & ModifiedABC & 7 & 23.8 & 0 & 6.8 & 0 & 12.4 & 0 \\
+2000 & 20 & ModifiedABC & 7 & 23.8 & 0 & 18.9 & 0 & 8.7 & 0 \\
+2500 & 10 & ModifiedABC & 7 & 23.8 & 0 & 18.9 & 0 & 8.7 & 0 \\
+2500 & 15 & ModifiedABC & 7 & 23.8 & 0 & 18.9 & 0 & 8.7 & 0 \\
+2500 & 20 & ModifiedABC & 7 & 23.8 & 0 & 18.9 & 0 & 8.7 & 0 \\
+3000 & 10 & ModifiedABC & 7 & 23.8 & 0 & 18.9 & 0 & 8.7 & 0 \\
+3000 & 15 & ModifiedABC & 7 & 23.8 & 0 & 18.9 & 0 & 8.7 & 0 \\
+2000 & 10 & ModifiedABC & 7 & 23.8 & 0 & 6.8 & 0 & 24.2 & 0 \\
+2000 & 20 & ModifiedABC & 5 & 33.1 & 0 & 21.8 & 0 & 10.3 & 0 \\
+2000 & 10 & ModifiedABC & 5 & 33.1 & 0 & 21.8 & 0 & 10.4 & 0 \\
+2000 & 15 & ModifiedABC & 5 & 33.1 & 0 & 21.8 & 0 & 10.4 & 0 \\
+2500 & 10 & ModifiedABC & 5 & 33.1 & 0 & 21.8 & 0 & 10.4 & 0 \\
+2500 & 20 & ModifiedABC & 5 & 33.1 & 0 & 21.8 & 0 & 10.4 & 0 \\
+3000 & 10 & ModifiedABC & 5 & 33.1 & 0 & 21.8 & 0 & 10.4 & 0 \\
+3000 & 20 & ModifiedABC & 5 & 33.1 & 0 & 21.8 & 0 & 10.4 & 0 \\
+2500 & 15 & ModifiedABC & 5 & 33.1 & 0 & 21.8 & 0 & 24.4 & 0 \\
+3000 & 15 & ModifiedABC & 5 & 33.1 & 0 & 21.8 & 0 & 24.4 & 0 \\
+2500 & 10 & DirectedABC & 7 & 16.8 & \textbf{60} & 28.5 & 0 & --- & --- \\
+2500 & 15 & DirectedABC & 7 & 16.8 & \textbf{60} & 28.5 & 0 & --- & --- \\
+2500 & 20 & DirectedABC & 7 & 16.8 & \textbf{60} & 28.5 & 0 & --- & --- \\
+3000 & 10 & DirectedABC & 7 & 16.8 & \textbf{60} & 28.5 & 0 & --- & --- \\
+3000 & 15 & DirectedABC & 7 & 16.8 & \textbf{60} & 28.5 & 0 & --- & --- \\
+3000 & 20 & DirectedABC & 7 & 16.8 & \textbf{60} & 28.5 & 0 & --- & --- \\
+2000 & 10 & DirectedABC & 5 & 17.2 & \textbf{60} & 30.2 & 0 & --- & --- \\
+2000 & 15 & DirectedABC & 5 & 17.2 & \textbf{60} & 30.2 & 0 & --- & --- \\
+2000 & 20 & DirectedABC & 5 & 17.2 & \textbf{60} & 30.2 & 0 & --- & --- \\
+3000 & 10 & DirectedABC & 5 & 17.2 & \textbf{60} & 30.2 & 0 & --- & --- \\
+3000 & 15 & DirectedABC & 5 & 17.2 & \textbf{60} & 30.2 & 0 & --- & --- \\
+3000 & 20 & DirectedABC & 5 & 17.2 & \textbf{60} & 30.2 & 0 & --- & --- \\
+2000 & 20 & DirectedABC & 3 & 24.1 & \textbf{60} & 34.5 & 0 & --- & --- \\
+2500 & 10 & DirectedABC & 3 & 24.1 & \textbf{60} & 34.5 & 0 & --- & --- \\
+2500 & 15 & DirectedABC & 3 & 24.1 & \textbf{60} & 34.5 & 0 & --- & --- \\
+2500 & 20 & DirectedABC & 3 & 24.1 & \textbf{60} & 34.5 & 0 & --- & --- \\
+3000 & 10 & DirectedABC & 3 & 24.1 & \textbf{60} & 34.5 & 0 & --- & --- \\
+3000 & 15 & DirectedABC & 3 & 24.1 & \textbf{60} & 34.5 & 0 & --- & --- \\
+2000 & 10 & DirectedABC & 7 & 16.8 & \textbf{60} & 42.2 & 0 & --- & --- \\
+2000 & 15 & DirectedABC & 7 & 16.8 & \textbf{60} & 42.2 & 0 & --- & --- \\
+2000 & 20 & DirectedABC & 7 & 16.8 & \textbf{60} & 42.2 & 0 & --- & --- \\
+2500 & 10 & DirectedABC & 5 & 17.2 & \textbf{60} & 44.0 & 0 & --- & --- \\
+2500 & 15 & DirectedABC & 5 & 17.2 & \textbf{60} & 44.0 & 0 & --- & --- \\
+2500 & 20 & DirectedABC & 5 & 17.2 & \textbf{60} & 44.0 & 0 & --- & --- \\
+2000 & 10 & DirectedABC & 3 & 24.1 & \textbf{60} & 47.9 & 0 & --- & --- \\
+2000 & 15 & DirectedABC & 3 & 24.1 & \textbf{60} & 47.9 & 0 & --- & --- \\
+3000 & 20 & DirectedABC & 3 & 24.1 & \textbf{60} & 47.9 & 0 & --- & --- \\
+3000 & 15 & ModifiedABC & 3 & --- & --- & --- & --- & 10.8 & 0 \\
+2000 & 20 & ModifiedABC & 3 & --- & --- & --- & --- & 12.0 & 0 \\
+2000 & 10 & ModifiedABC & 3 & --- & --- & --- & --- & 14.9 & 0 \\
+2500 & 10 & ModifiedABC & 3 & --- & --- & --- & --- & 14.9 & 0 \\
+2500 & 15 & ModifiedABC & 3 & --- & --- & --- & --- & 14.9 & 0 \\
+2500 & 20 & ModifiedABC & 3 & --- & --- & --- & --- & 14.9 & 0 \\
+2000 & 15 & ModifiedABC & 3 & --- & --- & --- & --- & 24.7 & 0 \\
+3000 & 10 & ModifiedABC & 3 & --- & --- & --- & --- & 24.7 & 0 \\
+3000 & 20 & ModifiedABC & 3 & --- & --- & --- & --- & 24.7 & 0 \\
+2000 & 20 & StandardABC & 7 & --- & --- & 31.1 & 0 & --- & --- \\
+2500 & 10 & StandardABC & 7 & --- & --- & 31.1 & 0 & --- & --- \\
+2500 & 15 & StandardABC & 7 & --- & --- & 31.1 & 0 & --- & --- \\
+2500 & 20 & StandardABC & 7 & --- & --- & 31.1 & 0 & --- & --- \\
+3000 & 15 & StandardABC & 7 & --- & --- & 31.1 & 0 & --- & --- \\
+3000 & 20 & StandardABC & 7 & --- & --- & 31.1 & 0 & --- & --- \\
+2000 & 10 & StandardABC & 5 & --- & --- & 32.6 & 0 & --- & --- \\
+2000 & 15 & StandardABC & 5 & --- & --- & 32.6 & 0 & --- & --- \\
+2000 & 20 & StandardABC & 5 & --- & --- & 32.6 & 0 & --- & --- \\
+2500 & 10 & StandardABC & 5 & --- & --- & 32.6 & 0 & --- & --- \\
+2500 & 15 & StandardABC & 5 & --- & --- & 32.6 & 0 & --- & --- \\
+2500 & 20 & StandardABC & 5 & --- & --- & 32.6 & 0 & --- & --- \\
+3000 & 10 & StandardABC & 5 & --- & --- & 32.6 & 0 & --- & --- \\
+3000 & 15 & StandardABC & 5 & --- & --- & 32.6 & 0 & --- & --- \\
+3000 & 20 & StandardABC & 5 & --- & --- & 32.6 & 0 & --- & --- \\
+2000 & 10 & StandardABC & 3 & --- & --- & 35.3 & 0 & --- & --- \\
+2000 & 15 & StandardABC & 3 & --- & --- & 35.3 & 0 & --- & --- \\
+2000 & 20 & StandardABC & 3 & --- & --- & 35.3 & 0 & --- & --- \\
+2500 & 20 & StandardABC & 3 & --- & --- & 35.3 & 0 & --- & --- \\
+3000 & 10 & StandardABC & 3 & --- & --- & 35.3 & 0 & --- & --- \\
+3000 & 20 & StandardABC & 3 & --- & --- & 35.3 & 0 & --- & --- \\
+2000 & 10 & StandardABC & 7 & --- & --- & 44.8 & 0 & --- & --- \\
+2000 & 15 & StandardABC & 7 & --- & --- & 44.8 & 0 & --- & --- \\
+3000 & 10 & StandardABC & 7 & --- & --- & 44.8 & 0 & --- & --- \\
+2500 & 10 & StandardABC & 3 & --- & --- & 46.7 & 0 & --- & --- \\
+2500 & 15 & StandardABC & 3 & --- & --- & 46.7 & 0 & --- & --- \\
+3000 & 15 & StandardABC & 3 & --- & --- & 46.7 & 0 & --- & --- \\
+\hline
+\end{longtable}
+As we can see from the table, the only algorithm that reaches the thresholds in the first class is the "DirectedABC", while the "ModifiedABC" algorithm is the only one that reaches the thresholds in the second and third class. From the critical difference diagrams, it can be observed that the "DirectedABC" algorithm is statistically significantly better than the "ModifiedABC" algorithm on the first class, while the "ModifiedABC" algorithm is statistically significantly better than the "DirectedABC" algorithm on the second and third class.
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{\textwidth}
+        \centering
+        \caption{Class 1}
+        \includegraphics[width=0.66\textwidth]{imgs/abc/step3/1_critical_difference.png}
+    \end{subfigure}
+    \begin{subfigure}[b]{\textwidth}
+        \centering
+        \caption{Class 2}
+        \includegraphics[width=0.66\textwidth]{imgs/abc/step3/2_critical_difference.png}
+    \end{subfigure}
+    \begin{subfigure}[b]{\textwidth}
+        \centering
+        \caption{Class 3}
+        \includegraphics[width=0.66\textwidth]{imgs/abc/step3/3_critical_difference.png}
+    \end{subfigure}
+    \caption{Critical Difference diagrams for ABC algorithms after the second filtering step}
+    \label{fig:cd3}
+\end{figure}
 
 \subsection{Final Comparison}
 Now that the best algorithms of each class and family are identified, a more detailed comparison can be made between them. In the next subsections the best algorithms of each family are compared with each other, discussing the differences in their performance and the influence of their parameters on the different problems.

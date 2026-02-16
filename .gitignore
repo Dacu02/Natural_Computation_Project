@@ -185,7 +185,7 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
-experiments.py
+ments.py
 doc/Documentation.pdf
 .gitignore
 doc/Documentation.aux

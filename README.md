@@ -51,7 +51,7 @@ cd $HOME
 eval "$(conda shell.bash hook)"
 conda activate nc_env
 cd Natural_Computation_Project
-python -u Framework.py $SLURM_ARRAY_JOB_ID $SLURM_ARRAY_TASK_COUNT test 2 10 18 100 200 300
+python -u Framework.py $SLURM_ARRAY_TASK_ID $SLURM_ARRAY_TASK_COUNT test 2 10 18 100 200 300
 ```
 In this script example a SLURM job is defined in which the experiments defined in `experiments.py` will be run across the problems 2, 10, 18 on the seeds 100, 200, 300. The first seed number must be bigger than 24 in order to be correctly inputted.
 

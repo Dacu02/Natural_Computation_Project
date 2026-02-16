@@ -126,7 +126,7 @@ _list_algorithms[1] = load_from_csv("aggregated_results/aggregated_results__step
 _list_algorithms[2] = load_from_csv("aggregated_results/aggregated_results__step1/data_analysis/2_mean_ranks.csv", CLASS, CD[1])
 _list_algorithms[3] = load_from_csv("aggregated_results/aggregated_results__step1/data_analysis/3_mean_ranks.csv", CLASS, CD[2])
 ```
-Where the CD is obtained from the plots, in our experiments for PSO `CD=[45.38]*3` while for ABC `CD=[]`. 
+Where the CD is obtained from the plots, in our experiments for PSO `CD=[45.38]*3` while for ABC `CD=[51.58]*3`. 
 
 After this, it is possible to define the literals of the `Frameworks.py` file:
 ```python
@@ -156,7 +156,7 @@ _list_algorithms[1] = load_from_csv("aggregated_results/aggregated_results__step
 _list_algorithms[2] = load_from_csv("aggregated_results/aggregated_results__step2_class2/data_analysis/2_mean_ranks.csv", CLASS, CD[1])
 _list_algorithms[3] = load_from_csv("aggregated_results/aggregated_results__step2_class3/data_analysis/3_mean_ranks.csv", CLASS, CD[2])
 ```
-Where, from the results, we set `CD=[12.59,15.07,9.66]` for PSO and `CD=[]` for ABC.
+Where, from the results, we set `CD=[12.59,15.07,9.66]` for PSO and `CD=[18.85, 23.46, 9.91]` for ABC.
 
 Now, the new set of seeds must be passed to the `Framework.py` file:
 ```python
@@ -179,3 +179,93 @@ python StatComparison aggregated_results/aggregated_results__step3_class2/by_cla
 python AggregateCSV.py step3_class3
 python StatComparison aggregated_results/aggregated_results__step3_class3/by_class Friedman
 ```
+Again, the usual CSV files with the mean ranks will be produced and the plot with the critical difference value will be available in the same folder. For both the families, the first algorithm in terms of ranking was picked.
+### Final Comparison
+Now that the final algorithms to compare between the two families are picked, the `_list_algorithms` variable must be redefined in the `experiments.py` file:
+```python
+PSO: AlgorithmStructure = {
+    'algorithm': ParticleSwarmOptimization,
+    'args': {
+        'population': 13*13,
+        'topology': 'Random',
+        'local_weight': 1.25,
+        'global_weight': 0.75,
+        'inertia': 0.7,
+        'velocity_clamp': (-.15 * RANGE, .15 * RANGE),
+        'end_inertia': 0.4,
+    },
+    'name': 'PSO',
+}
+
+_list_algorithms: dict[int, list[AlgorithmStructure]] = {
+    1: [PSO, {
+        'algorithm': ArtificialBeeColony,
+        'args': {
+            'population':100,
+            'max_scouts': 10,
+            'limit': 2000,
+            'selection_strategy': 'Tournament',
+            'mutation_strategy': 'DirectedABC',
+            'initialization_strategy': 'random',
+            'tournament_size': 7
+        },
+        'name': 'ABC',
+    }],
+    2: [PSO, {
+        'algorithm': ArtificialBeeColony,
+        'args': {
+            'population':100,
+            'max_scouts': 20,
+            'limit': 3000,
+            'selection_strategy': 'Tournament',
+            'mutation_strategy': 'ModifiedABC',
+            'initialization_strategy': 'random',
+            'tournament_size': 7
+        },
+        'name': 'ABC',
+    }],
+    3: [PSO, {
+        'algorithm': ArtificialBeeColony,
+        'args': {
+            'population':100,
+            'max_scouts': 15,
+            'limit': 3000,
+            'selection_strategy': 'Tournament',
+            'mutation_strategy': 'ModifiedABC',
+            'initialization_strategy': 'random',
+            'tournament_size': 7
+        },
+        'name': 'ABC',
+    }]
+}
+```
+Next, the settings in the `Framework.py` file:
+```python
+DEFAULT_SEEDS: list[int] = [
+46366, 5646433, 6594, 3647, 8946546, 98794565, 48797564, 49876521, 2687984, 165498, 454687, 1646879, 654654, 1236879, 1456879, 49878976, 45687897, 3213213, 46668844, 164987132, 687987, 8954621, 46637632, 63443, 76447, 733883, 8743489, 4648239, 1664632, 53654235, 6564644, 645435, 5644546, 8971432, 9754646, 987855, 5432563, 9853528, 35553265, 3553254, 5546535, 2135532, 35565456, 532889, 53524544, 53212336, 51853265, 52483925, 553892574, 84435644, 546435663, 46364688, 54654363, 6546364, 53466435, 19745436, 789354643, 7543643, 56446365, 45665346, 5326353, 553834266, 76845639, 41234550, 35020550, 63202550, 8028505, 20320506, 8305205, 8325532, 3452355, 354520, 53526500, 554352505, 45382655, 8973505, 53852105, 3258950, 8525320, 8955654, 5634520, 3556405, 5354560, 365542650, 32650, 35653560, 3552540, 5460054, 5526340, 45643463, 352564, 3245523, 53255325, 3526456200, 5624005, 43520053, 543426503, 35250053, 3522532, 53252332
+]
+MINIMAL_FRAMEWORK = False
+```
+Now it is possible to run the experiments on each class of problem, with the following script:
+```bash
+python Framework.py 0 1 class1_comparison 7 8
+python Framework.py 0 1 class2_comparison 15 16
+python Framework.py 0 1 class3_comparison 23 24
+
+python Plot.py results/class1_comparison PSO ABC
+python Plot.py results/class2_comparison PSO ABC
+python Plot.py results/class3_comparison PSO ABC
+```
+
+After this, the various plots and CSVs will be generated inside the experiment folder. The same results can now be aggregated, and then used to compute the Wilcoxon statistics:
+```bash
+python AggregateCSV.py class1_comparison
+python AggregateCSV.py class2_comparison
+python AggregateCSV.py class3_comparison
+
+python StatComparison.py results/class1_comparison/by_problem Wilcoxon
+python StatComparison.py results/class2_comparison/by_problem Wilcoxon
+python StatComparison.py results/class3_comparison/by_problem Wilcoxon
+```
+
+The script will output the result of the Wilcoxon test for each problem.

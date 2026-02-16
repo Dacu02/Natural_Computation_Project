@@ -35,6 +35,7 @@ DEFAULT_PROBLEMS: list[int] = [
     10, 12, 14, # C2
     18, 20, 22, # C3
 ]
+MINIMAL_FRAMEWORK = True # Se true, disabilita stampe extra e dati non essenziali
 BOUNDS_MULTIPLIER = 100
 FUNCTIONS_PATH = os.path.join(os.getcwd())
 # Define the GNBG class
@@ -221,8 +222,6 @@ if __name__ == '__main__':
 
     results = os.path.join(os.getcwd(), 'results', run_name)
     os.makedirs(results, exist_ok=True)
-
-    MINIMAL_FRAMEWORK = len(algorithms) > 2 # Se true, disabilita stampe extra e dati non essenziali
     
     def execution(seed:int, problem:int, alg_class:Type[Algorithm], alg_args:Dict[str, Any], description:str, folder:str):
         np.random.seed(seed)  
